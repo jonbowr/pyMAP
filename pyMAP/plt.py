@@ -266,15 +266,10 @@ def group_plot(sms_run,group_keys=None):
                                    list(LineGroups),use_data = data_col)
         display(gen_gridbox(pltm.children[:-1],2))
         display(pltm.children[-1])
-#         print([t for t in pltm.children])
-#         display(Box([t for t in pltm.children]),layout =Layout(display='flex',
-#                                                                  flex_flow='column'))
     up = interactive(update_update,{'manual':True})
-#     display(Box([up.children[0],up.children[1]]))
     
     display(gen_gridbox(up.children[:-2],2))
     for c in up.children[-2:]:display(c)
-#     display(up.children[-1])
 
 def filter_plot(s_run,group_keys):
     ll = jj.filters.filter_gen(s_run,group_keys)[0]
