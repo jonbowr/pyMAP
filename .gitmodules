@@ -1,0 +1,3 @@
+[submodule "bowPy"]
+	path = bowPy
+	url = https://github.com/jonbowr/bowPy.git
