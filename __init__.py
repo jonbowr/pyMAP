@@ -1,1 +1,1 @@
-from pyMAP.pyMAP import tools,tof,data
+from pyMAP.pyMAP import tools,data,plt,tof

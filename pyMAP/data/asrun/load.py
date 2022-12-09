@@ -6,7 +6,10 @@ def load_v1(as_runloc,sheet_name = 0):
     df = pd.concat(pd.read_excel(as_runloc,
                 sheet_name = sheet_name,header=2,index_col = np.arange(4))).stack().unstack(level  = [0,-1])
     df = df.dropna(axis = 0,how = 'all')
-    df['ETU_tof','data'] = asrun.get_dat(df['ETU_tof'],home = '../Test Data/csv',load_dt = pd.read_csv,dtype = 'TOF_DE_sample').values()
+    df = df.dropna(axis = 1,how = 'all')
+    df['ETU_tof','dat_de'] = asrun.get_dat(df['ETU_tof'],home = '../Test Data/csv',load_dt = pd.read_csv,dtype = 'TOF_DE_sample').values()
+    df['ETU_tof','dat_tof'] = asrun.get_dat(df['ETU_tof'],home = '../Test Data/csv',load_dt = pd.read_csv,dtype = 'ILO_TOF_BD').values()
+    df['ETU_tof','dat_ifb'] = asrun.get_dat(df['ETU_tof'],home = '../Test Data/csv',load_dt = pd.read_csv,dtype = 'ILO_IFB').values()
     return(df)
 
 loadlib = {'v001':load_v1}

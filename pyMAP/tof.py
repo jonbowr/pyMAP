@@ -6,7 +6,7 @@ import periodictable as perd
 tof_3_peaks = [0.6900568049562702, 4.018218774092078, 7.277728085556459, 11.991842880356202]
 # electron flight time determined through simulation
 t_elec = {1:4.375828,2:4.097131}
-tof_dims = {'tof0':50,'tof1':22.5,'tof2':27.7}
+tof_dims = {'TOF0':50,'TOF1':22.5,'TOF2':27.7}
 
 def tof_expected(ke_in=np.array(17500),
                  species = 'H',
@@ -23,7 +23,7 @@ def tof_expected(ke_in=np.array(17500),
     dfs = []
     for spec in species:
         tof3_expected = quadrant*4
-        d_out = {thing:[] for thing in ['species','m','ke','v0','delay']+list(tof_dims.keys())+['tof3']}
+        d_out = {thing:[] for thing in ['species','m','ke','v0','delay']+list(tof_dims.keys())+['TOF3']}
     
         if mass is None:
             m = perd.elements.symbol(spec).mass
@@ -32,7 +32,7 @@ def tof_expected(ke_in=np.array(17500),
 
         v0 = v_00(m,ke*(1-e_loss),q)
         v1 = v0*(1-e_loss)**(1/2)
-        v_t = {'tof0':(v0+v1)/2,'tof1':v1,'tof2':v0}
+        v_t = {'TOF0':(v0+v1)/2,'TOF1':v1,'TOF2':v0}
         d_out['species'] = np.array([spec]*len(ke))
         d_out['m']=np.array([m]*len(ke))
         d_out['ke']=ke
@@ -41,12 +41,12 @@ def tof_expected(ke_in=np.array(17500),
         for lab,val in tof_dims.items():
             tof_offset = 0
             if include_delay == True:
-                if lab == 'tof0':
+                if lab == 'TOF0':
                     tof_offset = -tof3_expected/2
-                elif lab == 'tof1':
+                elif lab == 'TOF1':
                     tof_offset = tof3_expected/2
             d_out[lab]=val/v_t[lab]+tof_offset
-        d_out['tof3']=np.array([tof3_expected]*len(ke))
+        d_out['TOF3']=np.array([tof3_expected]*len(ke))
         dfs.append(pd.DataFrame(d_out))
     dfs = pd.concat(dfs, ignore_index = True)
     # dfs.columns = pd.MultiIndex.from_arrays([list(dfs.keys().values),units],names  =['','Units']) 
@@ -76,8 +76,21 @@ def delay_line_offset(tof3=tof_3_peaks):
     return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,columns = ['Q','tof3','b0','b3']))
 
 
-def remove_delay_line(tof0,tof1,tof2,tof3):
+def tof_speeds(df):
+    mindt = 0
+    di = tof_dims
+    vs = {}
+    for lab in di:
+        vs[lab] = di[lab]/df[lab]
+    return(vs)
 
+def remove_delay_line(df):
+
+    tof0 = df['TOF0']
+    tof1 = df['TOF1']
+    tof2 = df['TOF2']
+    tof3 = df['TOF3']
+    
     from scipy.interpolate import interp1d
     def delay_interp(tof3,d_effects):
         f_rn = interp1d(d_effects['tof3'],d_effects['Q'],kind = 'nearest',
@@ -87,14 +100,81 @@ def remove_delay_line(tof0,tof1,tof2,tof3):
     # define the newly calculated tof values
     delay = delay_interp(tof3,delay_line_offset())
 
-    dat = {}
-    dat['tof0_ac'] = tof0-delay['b0'].values +t_elec[1]
-    dat['tof1_ac'] = tof1-delay['b3'].values + t_elec[1]
-    dat['tof2_ac'] = tof2+t_elec[2] - t_elec[2]
+    df['TOF0'] = tof0-delay['b0'].values +t_elec[1]
+    df['TOF1'] = tof1-delay['b3'].values + t_elec[1]
+    df['TOF2'] = tof2+t_elec[2] - t_elec[2]
 
-    return(dat)
+    return(df)
 
 def calc_checksum(tof0,tof1,tof2,tof3):
-    return((tof0+tof3-tof2-tof3))
+    return((tof0+tof3-tof2-tof1))
 
+def log_checksum(df,check_max = 1):
+    return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
+
+def log_trips(athing):
+    log_good = []
+    for stuff in athing:
+        if 'validtof' in stuff.lower():
+
+            # print(stuff)
+            log_good.append(athing[stuff].values.astype(bool))
+    return(np.logical_and.reduce(log_good))
+
+def log_speeds(df):
+    vs = tof_speeds(df)
+    return(np.logical_and(vs['TOF1']<vs['TOF2'],
+                          vs['TOF0']<vs['TOF2']))
+
+def clean(df_in,
+              remove_delay = True,
+              filt_triples = False,
+              checksum = np.inf,
+              filt_speed = False,
+              tof3_picker = None,
+
+              min_tof = 0,
+              min_apply = ['TOF0','TOF1','TOF2','TOF3']):
+    df = df_in.copy()
+
+
+
+    log_good = [np.ones(len(df)).astype(bool)]
+
+    # Filter for tripples
+    if filt_triples:
+        log_good.append(log_trips(df))
+    
+    # Filter for checksum max value
+    log_good.append(log_checksum(df,checksum))
+
+
+    # Remove the delay line offset and electron flight time
+    if remove_delay:
+        df = remove_delay_line(df)
+    
+    # Filter for only logical ToF combinations according to ion speed
+    if filt_speed:
+        log_good.append(log_speeds(df))
+
+    # Select only events from a single quadrant
+    if type(tof3_picker)== str and tof3_picker.lower() == 'auto':
+        bb = int(np.sum(np.logical_and.reduce(log_good))/5)
+        h,bins = np.histogram(df.loc[np.logical_and.reduce(log_good)]['TOF3'],
+                              (bb if bb > 2 else 5))
+        bm = (bins[1:]+bins[:-1])/2
+        p = bm[np.argmax(h)]
+        log_good.append(df['TOF3']>p-1.5)
+        log_good.append(df['TOF3']<p+1.5)
+    elif type(tof3_picker) == int:
+        p = tof3_picker*4
+        log_good.append(df['TOF3']>p-1.5)
+        log_good.append(df['TOF3']<p+1.5)
+
+
+    # Select ToFs above a min ToF
+    for stuff in min_apply:
+        log_good.append(df[stuff]>min_tof)
+    
+    return(df.loc[np.logical_and.reduce(log_good)])
 
