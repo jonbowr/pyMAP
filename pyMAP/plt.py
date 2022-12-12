@@ -106,7 +106,8 @@ def s_run_plotg(s_run_loc,
                auto_params = {'binw':1,'buffer':.3},
                plot_params = {'hist_plt':['TOF2','TOF0','TOF1','TOF3']},
                clean_params = {},
-               home = './',ref_spec = ['H','O'],
+               home = './',
+               ref_spec = [1,10],
                ref_ke = [7000,16000],
                data_col = 'dat_de',
                log_bins = False,
@@ -150,7 +151,7 @@ def s_run_plotg(s_run_loc,
 
 def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                         use_data = 'dat_de',
-                        ref_spec_in = 'H,O',
+                        ref_spec_in = '1,16',
                         ref_energies_in  = '16000',
                         ):
     from ipywidgets import FloatSlider,interact,interactive,SelectMultiple
@@ -185,7 +186,7 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                         logx = False,
                         logbins = False,
                         legend = True,
-                        ref_species = ref_spec_in,
+                        ref_mass = ref_spec_in,
                         ref_energies = ref_energies_in,
                         spec_line = True,
                                 eng_line = True,):
@@ -198,10 +199,10 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                             'tof3_picker':(None if ~tof3_picker else 'auto')}
 
             group = pd.concat([s_s_run.loc[group_dict[v]] for v in Plot_values])
-            if ref_species == 'auto':
+            if ref_mass == 'auto':
                 species = np.unique(group['species'].str.replace('+',''))
             else:
-                species = ref_species.split(',')
+                species = ref_mass.split(',')
             
             energies = np.array(ref_energies.split(',')).astype(float)
             plt.close('all')
@@ -224,7 +225,7 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
             n = 1
             for spec in species: 
                 for e in energies:
-                    tof_expect = tof_expected([e],[spec],e_loss=0)
+                    tof_expect = tof_expected([e],mass = [int(spec)],e_loss=0)
                     e = e/1000
                     for a,loc in zip(ax.flatten(),tof_expect[[s for s in Plot_times]].values.flatten()):
                         if spec_line and eng_line: 

@@ -12,23 +12,25 @@ def tof_expected(ke_in=np.array(17500),
                  species = 'H',
                  mass = None,
                 quadrant = 0,include_delay = False,q = 1,e_loss = 0):
-    if type(ke_in)!=np.array:
-        ke = np.array(ke_in).reshape(-1)
+
+    ke = np.array(ke_in).reshape(-1)
+    if type(species) is str:
+        species = np.array(species.split(',')).reshape(-1)
     else:
-        ke = ke_in
+        species = np.array(species).reshape(-1)
 
-
+    if mass is None:
+        mass = np.array([perd.elements.symbol(spec).mass for spec in species]).reshape(-1)
+    else: 
+        mass = np.array(mass).reshape(-1)
+    
+    
     units = ['','[amu]','[eV]','[cm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
         
     dfs = []
-    for spec in species:
+    for spec,m in zip(species,mass):
         tof3_expected = quadrant*4
         d_out = {thing:[] for thing in ['species','m','ke','v0','delay']+list(tof_dims.keys())+['TOF3']}
-    
-        if mass is None:
-            m = perd.elements.symbol(spec).mass
-        else: 
-            m = mass
 
         v0 = v_00(m,ke*(1-e_loss),q)
         v1 = v0*(1-e_loss)**(1/2)
