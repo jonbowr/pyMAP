@@ -155,8 +155,8 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                         ):
     from ipywidgets import FloatSlider,interact,interactive,SelectMultiple
     from pyMAP.pyMAP.tof import tof_expected
-    from bowPy.bowPy.plotJon.annot import vline
-
+    from pyMAP.bowPy.bowPy.plotJon.annot import vline
+    from pyMAP.bowPy.bowPy.plotJon.legend import legend_loc
 
     group_dict = {str(lab):ind for lab,ind in s_s_run.groupby(PlotGroups).groups.items()}
 
@@ -181,11 +181,10 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                         tof3_picker = False,
 
                         norm = False,
-                        peak_info = False,
                         logy = True,
                         logx = False,
                         logbins = False,
-                        legend_location = 'right',
+                        legend = True,
                         ref_species = ref_spec_in,
                         ref_energies = ref_energies_in,
                         spec_line = True,
@@ -212,8 +211,7 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                                 plot_params = {'norm':(None if not norm else 'max'),
                                                'hist_plt':list(Plot_times),
                                                'leg_lab':LineGroups,
-                                               'info':peak_info,
-                                               'legend_loc':legend_location,
+                                               # 'legend_loc':legend_location,
                                                },
                                 ref_spec = species,
                                 ref_ke = energies,
@@ -223,16 +221,19 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                                 clean_params = clean_params,
                                 )
             
+            n = 1
             for spec in species: 
                 for e in energies:
                     tof_expect = tof_expected([e],[spec],e_loss=0)
+                    e = e/1000
                     for a,loc in zip(ax.flatten(),tof_expect[[s for s in Plot_times]].values.flatten()):
                         if spec_line and eng_line: 
-                            vline(loc,'%.1feV,%s:%.1f'%(e,spec,loc),ax = a,rot = 0)
+                            
+                            vline(loc,'%.0fkeV,%s: %.1fns'%(e,spec,loc),ax = a,rot = 45)
                         elif spec_line:
-                            vline(loc,'%s:%.1f'%(spec,loc),ax = a,rot = 0)
+                            vline(loc,'%s: %.1fns'%(spec,loc),ax = a,rot = 45)
                         elif eng_line: 
-                            vline(loc,'%.1feV:%.1f'%(e,loc),ax = a,rot = 0)
+                            vline(loc,'%.0fkeV: %.1fns'%(e,loc),ax = a,rot = 45)
                         if logy:
                             a.semilogy()
                         if logx:
