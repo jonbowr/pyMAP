@@ -8,12 +8,14 @@ from scipy.ndimage import gaussian_filter as gf
 
 def plot_tofs(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
                         bins = {
-                           'TOF2':np.linspace(10,150,75),
+                           'TOF2':np.linspace(5,150,75),
                            'TOF3':np.linspace(0,15,50),
-                            'TOF0': np.linspace(10,350,150),
-                           'TOF1':np.linspace(10,150,75),  
+                            'TOF0': np.linspace(5,350,150),
+                           'TOF1':np.linspace(5,150,75),  
                                 },
-                        norm = None,leg_lab = '',info = False,
+                        norm = None,
+                        leg_lab = '',
+                        info = False,
                         legend_loc='right'):
     
     if len(hist_plt)>1:
@@ -23,7 +25,13 @@ def plot_tofs(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
         axs = np.array([ax])
     fig.set_size_inches(9,4*len(axs))
     
-    for lab,thing in dats.items():
+    if type(dats) is dict:
+        itter = dats.items()
+    elif type(dats) is pd.DataFrame:
+        itter = zip(['',[dats]])
+    else: 
+        itter = dats
+    for lab,thing in itter:
         if info:
             # slabel = '%4s: \n     (%6s,%6s)'%(str(lab),'Mean','Peak')
             slabel = '%4s: \n%12s(%6s)'%(str(lab),' ','Peak')
@@ -65,12 +73,14 @@ def plot_tofs(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
 
 def plot_tofs_2d(thing,pltx,plty,binnum = 75,
                     bin_range = {
-                       'TOF2':[0,150],
-                       'TOF3':[0,15],
-                        'TOF0': [0,350],
-                       'TOF1':[0,250],},  
+                       'TOF2':[.1,150],
+                       'TOF3':[.1,50],
+                        'TOF0': [.1,350],
+                       'TOF1':[.1,250],},  
                             fig = None,ax = None,
-                            logbins = False,logcol =True):
+                            logbins = False,
+                            logcol =True):
+    from pyMAP import bowPy as bp
     bins = {}
     if type(binnum) is int:
         for pl in [pltx,plty]:
@@ -107,7 +117,7 @@ def s_run_plotg(s_run_loc,
                plot_params = {'hist_plt':['TOF2','TOF0','TOF1','TOF3']},
                clean_params = {},
                home = './',
-               ref_spec = [1,10],
+               ref_mass = [1,10],
                ref_ke = [7000,16000],
                data_col = 'dat_de',
                log_bins = False,
@@ -126,13 +136,15 @@ def s_run_plotg(s_run_loc,
     if dats:
         if hist_bins == 'auto':
             
-            tofs_ideal = tof_expected(ref_ke,ref_spec)
+            tofs_ideal = tof_expected(ref_ke,mass = ref_mass)
             bins = {}
             for val in plot_params['hist_plt']:
                 bin_start = np.min(tofs_ideal[val].values*(cpt-auto_params['buffer']))
+                print(bin_start)
                 if bin_start <0:
                     bin_start = 0
                 bin_stop = np.max(tofs_ideal[val].values*(cpt+auto_params['buffer']))
+                print(bin_stop)
                 if bin_start == bin_stop:
                     bin_start = 0
                     bin_stop = 100
@@ -189,7 +201,8 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                         ref_mass = ref_spec_in,
                         ref_energies = ref_energies_in,
                         spec_line = True,
-                                eng_line = True,):
+                                eng_line = True,
+                                ):
             
             checksum = float(checksum)
             clean_params = {'remove_delay':remove_delay,
@@ -199,10 +212,8 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                             'tof3_picker':(None if ~tof3_picker else 'auto')}
 
             group = pd.concat([s_s_run.loc[group_dict[v]] for v in Plot_values])
-            if ref_mass == 'auto':
-                species = np.unique(group['species'].str.replace('+',''))
-            else:
-                species = ref_mass.split(',')
+            
+            species = [float(m) for m in ref_mass.split(',')]
             
             energies = np.array(ref_energies.split(',')).astype(float)
             plt.close('all')
@@ -214,7 +225,7 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                                                'leg_lab':LineGroups,
                                                # 'legend_loc':legend_location,
                                                },
-                                ref_spec = species,
+                                ref_mass = species,
                                 ref_ke = energies,
                                 data_col = use_data,
                                 cpt = window,
@@ -229,16 +240,17 @@ def s_run_plot_interact(s_s_run,PlotGroups,LineGroups,
                     e = e/1000
                     for a,loc in zip(ax.flatten(),tof_expect[[s for s in Plot_times]].values.flatten()):
                         if spec_line and eng_line: 
-                            
-                            vline(loc,'%.0fkeV,%s: %.1fns'%(e,spec,loc),ax = a,rot = 45)
+                            vline(loc,'%.0fkeV,%sAMU: %.1fns'%(e,spec,loc),ax = a,rot = 20)
                         elif spec_line:
-                            vline(loc,'%s: %.1fns'%(spec,loc),ax = a,rot = 45)
+                            vline(loc,'%sAMU: %.1fns'%(spec,loc),ax = a,rot = 20)
                         elif eng_line: 
-                            vline(loc,'%.0fkeV: %.1fns'%(e,loc),ax = a,rot = 45)
+                            vline(loc,'%.0fkeV: %.1fns'%(e,loc),ax = a,rot = 20)
                         if logy:
                             a.semilogy()
                         if logx:
                             a.semilogx()
+                        if legend:
+                            a.legend()
 
             fig.suptitle('%s : %s'%(PlotGroups,Plot_values),y = 1,x = .5,ha = 'center')
             fig.text(0.04, 0.5, 'counts [norm]', va='center',ha='center', rotation='vertical',fontsize = 20)

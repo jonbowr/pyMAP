@@ -8,7 +8,7 @@ tof_3_peaks = [0.6900568049562702, 4.018218774092078, 7.277728085556459, 11.9918
 t_elec = {1:4.375828,2:4.097131}
 tof_dims = {'TOF0':50,'TOF1':22.5,'TOF2':27.7}
 
-def tof_expected(ke_in=np.array(17500),
+def tof_expected(ke_in=16000,
                  species = 'H',
                  mass = None,
                 quadrant = 0,include_delay = False,q = 1,e_loss = 0):
@@ -23,7 +23,7 @@ def tof_expected(ke_in=np.array(17500),
         mass = np.array([perd.elements.symbol(spec).mass for spec in species]).reshape(-1)
     else: 
         mass = np.array(mass).reshape(-1)
-    
+        species = ['NaN']*len(mass)
     
     units = ['','[amu]','[eV]','[cm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
         
@@ -86,27 +86,33 @@ def tof_speeds(df):
         vs[lab] = di[lab]/df[lab]
     return(vs)
 
-def remove_delay_line(df):
-
-    tof0 = df['TOF0']
-    tof1 = df['TOF1']
-    tof2 = df['TOF2']
-    tof3 = df['TOF3']
+# def remove_delay_line(df_in):
+#     df = df_in.copy()      
+#     tof0 = df['TOF0']
+#     tof1 = df['TOF1']
+#     tof2 = df['TOF2']
+#     tof3 = df['TOF3']
     
-    from scipy.interpolate import interp1d
-    def delay_interp(tof3,d_effects):
-        f_rn = interp1d(d_effects['tof3'],d_effects['Q'],kind = 'nearest',
-                            bounds_error = False,fill_value="extrapolate")
-        return(d_effects[['b0','b3']].loc[f_rn(tof3).astype(int)]) 
+#     from scipy.interpolate import interp1d
+#     def delay_interp(tof3,d_effects):
+#         f_rn = interp1d(d_effects['tof3'],d_effects['Q'],kind = 'nearest',
+#                             bounds_error = False,fill_value="extrapolate")
+#         return(d_effects[['b0','b3']].loc[f_rn(tof3).astype(int)]) 
 
-    # define the newly calculated tof values
-    delay = delay_interp(tof3,delay_line_offset())
+#     # define the newly calculated tof values
+#     delay = delay_interp(tof3,delay_line_offset())
 
-    df['TOF0'] = tof0-delay['b0'].values +t_elec[1]
-    df['TOF1'] = tof1-delay['b3'].values + t_elec[1]
-    df['TOF2'] = tof2+t_elec[2] - t_elec[2]
+#     df['TOF0'] = tof0-delay['b0'].values +t_elec[1]
+#     df['TOF1'] = tof1-delay['b3'].values + t_elec[1]
+#     df['TOF2'] = tof2+t_elec[2] - t_elec[2]
 
-    return(df)
+#     return(df)
+
+def remove_delay_line(df):
+    df_nd = df.copy()
+    df_nd['TOF0'] =df_nd['TOF0']+df_nd['TOF3']/2 
+    df_nd['TOF1'] =df_nd['TOF1']-df_nd['TOF3']/2 
+    return(df_nd)
 
 def calc_checksum(tof0,tof1,tof2,tof3):
     return((tof0+tof3-tof2-tof1))
