@@ -186,3 +186,26 @@ def clean(df_in,
     
     return(df.loc[np.logical_and.reduce(log_good)])
 
+
+def calc_eff(dat):
+    df = dat.copy()
+    df['SILVER'] = df[df.keys().values[df.T.reset_index()['index'].str.contains('SILVER')]].sum(axis =1)
+    df['STOP_B'] = df[['STOP_B0', 'STOP_B3']].sum(axis= 1)
+    
+    df['Eff_A0'] = df['TOF0']/df['STOP_B']
+    df['Eff_A2'] = df['TOF2']/df['START_C']
+    df['Eff_A'] = df['SILVER']/df['TOF1']
+    
+    df['Eff_C1'] = df['TOF1']/df['STOP_B']
+    df['Eff_C2'] = df['TOF2']/df['START_A']
+    df['Eff_C'] = df['SILVER']/df['TOF0']
+    
+    df['Eff_B1'] = df['TOF1']/df['START_C']
+    df['Eff_B0'] = df['TOF0']/df['START_A']
+    df['Eff_B'] = df['SILVER']/df['TOF2']
+    
+    df['Eff_TRIP1'] = df['Eff_A0']*df['Eff_C1']*df['Eff_B1']
+    df['Eff_TRIP2'] = df['Eff_A2']*df['Eff_C2']*df['Eff_B0']
+    df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
+    
+    return(df)
