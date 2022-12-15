@@ -1,2 +1,2 @@
 from .load import load
-from . import asrun
+from .asrun import *

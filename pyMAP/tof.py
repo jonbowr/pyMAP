@@ -189,7 +189,7 @@ def clean(df_in,
 
 def calc_eff(dat):
     df = dat.copy()
-    df['SILVER'] = df[df.keys().values[df.T.reset_index()['index'].str.contains('SILVER')]].sum(axis =1)
+    df['SILVER'] = df[df.keys().values[df.T.reset_index()['index'].str.contains('SILVER_TRIPLE')]].sum(axis =1)
     df['STOP_B'] = df[['STOP_B0', 'STOP_B3']].sum(axis= 1)
     
     df['Eff_A0'] = df['TOF0']/df['STOP_B']

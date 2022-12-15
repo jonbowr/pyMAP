@@ -1,20 +1,10 @@
 import numpy as np
 import pandas as pd
-from pyMAP.pyMAP.data.import_tools import getListOfFiles
+from pyMAP.pyMAP.data.load import getListOfFiles,dat_loc
 # Find the tof file if it exists
 
 
-def dat_loc(fil,home,dtype = ''):
-    import os
-    # f_indicator = fil.strip('.rec').split('_')[-2:]
 
-    f_indicator = fil.split('.')[0].replace('_','').lower()
-    fs = []
-    for f in getListOfFiles(home):
-        ff = f.split('\\',)[-1].split('.')[0].replace('_','').lower()
-        if f_indicator in ff and '.rec' not in f and dtype in f:
-            fs.append(f)
-    return(fs)
 
 def get_dat(s_run_loc,
              dtype = '',
@@ -29,7 +19,7 @@ def get_dat(s_run_loc,
         floc = dat_loc(str(fil).strip('.rec'),home = home,dtype = dtype)
         if floc:
             for ff in floc:
-                dats[str(rn)].append(load_dt(ff,**load_params))
+                dats[str(rn)].append(load_dt(ff,dtype = dtype,**load_params))
 
     for lab,vals in dats.items():
         if vals:
@@ -37,4 +27,4 @@ def get_dat(s_run_loc,
         else: 
             dats[lab] = np.nan
     return(dats)
-    
+
