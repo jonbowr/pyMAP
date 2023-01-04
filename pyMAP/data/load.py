@@ -1,4 +1,4 @@
-from . import instrument,facility
+from . import instrument
 import numpy as np
 import pandas as pd
 loadlib = {

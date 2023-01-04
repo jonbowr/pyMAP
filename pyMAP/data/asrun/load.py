@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from . import asrun
-from pyMAP.pyMAP.data.load import load as loader
+from pyMAP.data.load import load as loader
 
 def load_v1(f_as_run,home = './',sheet_name = 0):
     import os
