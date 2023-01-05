@@ -38,7 +38,8 @@ def get_all_dat(dirName = './',
                     dtype = '',
                     load_dt = lambda x: np.nan,
                     load_params = {},
-                    reduce = False):
+                    reduce = False,
+                    run_tag = ''):
     # Function to search directory and load in all data of a given type
     import os
     import pandas as pd
@@ -53,7 +54,7 @@ def get_all_dat(dirName = './',
                 ds['name'] = f.replace(dtype,'')
                 ds['file'] = fil
                 ds['dtype'] = dtype
-                dats.append(ds.set_index(['name','file','dtype']))
+                dats.append(ds)
         return(pd.concat(dats))
     else:
         ds = {}
@@ -63,7 +64,7 @@ def get_all_dat(dirName = './',
         
         for fil in fils:
             f = os.path.basename(fil).split('.')[0]
-            if dtype in f:
+            if dtype in f and run_tag in f:
                 ds['name'].append(f.replace(dtype,'').lower())
                 ds[dtype+'_file'].append(fil)
                 ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))

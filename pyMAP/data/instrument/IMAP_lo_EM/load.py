@@ -3,11 +3,14 @@ import numpy as np
 
 def load_DE_v1(loc):
     df = pd.read_csv(loc,header = 0)
-    return(df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna().set_index('SPIN_SECONDS'))
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna()
+    df['SHCOARSE'] = df['SPIN_SECONDS']+2**31
+    return(df.set_index('SHCOARSE'))
 
 def load_HK_v1(loc):
     df = pd.read_csv(loc,header = 0)
-    return(df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna().set_index('SHCOARSE'))
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 1).set_index('SHCOARSE')
+    return(df)
 
 def load_CNT_v1(loc):
     # cnt rate and tof files both have TOF0 keys, may want to rename the rates
@@ -22,7 +25,10 @@ def load_RAW_DE_v1(loc):
     nk = df.keys().to_frame()[0].str.split('_').apply(lambda x: pd.Series([ '_'.join(x[:-1]),x[-1]]))
     nk.columns = ['TOF','cnt']
     df.columns = pd.MultiIndex.from_frame(nk)
-    return(df.stack())
+    df = df.stack().reset_index()
+    df['SHCOARSE'] = df['SPIN_SECONDS']+2**31
+    return(df.set_index('SHCOARSE'))
+
 
 loadlib = {
             'TOF_DE_sample':{

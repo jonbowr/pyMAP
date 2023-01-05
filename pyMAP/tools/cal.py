@@ -21,3 +21,14 @@ def cal_headder(fil):
                 print('dat import failed: %s'%fil)
                 return
     return(head)
+
+
+def db_init(loc = './',test_name = ''):
+    [
+    'AsPlanned.xlxs',
+    'AsRun.xlxs',
+    'Test_Procedure.docx',
+    'Test_Plan.docx',
+    ]
+
+    import os
