@@ -1,4 +1,4 @@
-from . import instrument,facility
+from . import instrument
 import numpy as np
 import pandas as pd
 loadlib = {
@@ -84,7 +84,7 @@ def combiner(base,other_in, usecol = 'index'):
         
     dat_parts = [base.reset_index()]
     for other in other_IT: 
-        if usecol is 'index':
+        if usecol == 'index':
             base_id = base.index
             other_id = other.index
         elif usecol is 'index_norm':

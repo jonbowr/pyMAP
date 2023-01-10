@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from pyMAP.pyMAP.data.load import getListOfFiles,dat_loc
+from pyMAP.data.load import getListOfFiles,dat_loc
 # Find the tof file if it exists
 
 
