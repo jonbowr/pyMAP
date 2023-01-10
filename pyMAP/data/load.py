@@ -65,7 +65,9 @@ def get_all_dat(dirName = './',
         for fil in fils:
             f = os.path.basename(fil).split('.')[0]
             if dtype in f and run_tag in f:
-                ds['name'].append(f.replace(dtype,'').lower())
+                nam = f.replace(dtype,'').lower()
+
+                ds['name'].append('_'.join(nam.split('_')[:-2]))
                 ds[dtype+'_file'].append(fil)
                 ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))
                 
@@ -93,7 +95,8 @@ def combiner(base,other_in, usecol = 'index'):
         else: 
             base_id = base[usecol]
             other_id = other[usecol]
-        dat_parts.append(other.iloc[np.digitize(base_id,other_id)-1].reset_index())
+        dat_parts.append(other.iloc[np.digitize(base_id,other_id)-1].reset_index().drop(
+                                                    columns = (other_id.name if usecol is 'index' else usecol)))
     return(pd.concat(dat_parts,axis = 1))
 
 def dat_loc(file_name,home,dtype = ''):
