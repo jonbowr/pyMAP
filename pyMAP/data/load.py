@@ -50,12 +50,15 @@ def get_all_dat(dirName = './',
         for fil in fils:
             f = os.path.basename(fil).split('.')[0]
             if dtype in f:
-                ds = load_dt(fil,dtype = dtype,**load_params)
-                ds['name'] = f.replace(dtype,'')
-                ds['file'] = fil
-                ds['dtype'] = dtype
-                dats.append(ds)
-        return(pd.concat(dats))
+                try:
+                    ds = load_dt(fil,dtype = dtype,**load_params)
+                    # ds['name'] = f.replace(dtype,'')
+                    # ds['file'] = fil
+                    ds[dtype+'_fil'] = fil
+                    dats.append(ds)
+                except: 
+                    print('LOAD FAILED ON FILE: %s'%fil)
+        return(pd.concat(dats,axis = 0).sort_index())
     else:
         ds = {}
         ds['name'] = []
@@ -65,13 +68,20 @@ def get_all_dat(dirName = './',
         for fil in fils:
             f = os.path.basename(fil).split('.')[0]
             if dtype in f and run_tag in f:
-                nam = f.replace(dtype,'').lower()
+                # try:
+                    nam = f.replace(dtype,'').lower()
 
-                ds['name'].append('_'.join(nam.split('_')[:-2]))
-                ds[dtype+'_file'].append(fil)
-                ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))
-                
-        return(pd.DataFrame(ds).set_index('name'))
+                    # ds['name'].append('_'.join(nam.split('_')[:-2]))
+
+                    ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))
+                    ds['name'].append(nam[:-4])
+                    ds[dtype+'_file'].append(fil)
+                # except: 
+                #     print('LOAD FAILED ON FILE: %s'%f)
+        dats = pd.DataFrame(ds)
+        dats.groupby('name').agg({dtype+'_file':list,
+                                 dtype:lambda x: pd.concat(list(x),axis = 0).sort_index()})
+        return(dats.set_index('name'))
 
 
 def combiner(base,other_in, usecol = 'index'):

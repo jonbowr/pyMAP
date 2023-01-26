@@ -13,6 +13,8 @@ def tof_expected(ke_in=16000,
                  mass = None,
                 quadrant = 0,include_delay = False,q = 1,e_loss = 0):
 
+
+
     ke = np.array(ke_in).reshape(-1)
     if type(species) is str:
         species = np.array(species.split(',')).reshape(-1)
@@ -20,7 +22,7 @@ def tof_expected(ke_in=16000,
         species = np.array(species).reshape(-1)
 
     if mass is None:
-        mass = np.array([perd.elements.symbol(spec).mass for spec in species]).reshape(-1)
+        mass = np.array([perd.elements.symbol(spec if spec != 'H2' else 'D').mass for spec in species]).reshape(-1)
     else: 
         mass = np.array(mass).reshape(-1)
         species = ['NaN']*len(mass)
@@ -61,7 +63,6 @@ def v_00(m,Vinc=7000,q = 1):
     qVinc = Vinc*1.6*10**-19*q
     return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
 
-
 def delay_line_offset(tof3=tof_3_peaks):
 
     A = np.array([ [ 1, 1, 1, 1],
@@ -77,14 +78,22 @@ def delay_line_offset(tof3=tof_3_peaks):
     ft3 = (lambda x,y: abs(x-y))
     return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,columns = ['Q','tof3','b0','b3']))
 
+def calc_checksum(tof0,tof1,tof2,tof3):
+    return((tof0+tof3-tof2-tof1))
 
 def tof_speeds(df):
+    # calculates the tof speeds from the ToF dimensions in cm/ns
+    # assumes a straight line trajectory
     mindt = 0
     di = tof_dims
     vs = {}
     for lab in di:
         vs[lab] = di[lab]/df[lab]
     return(vs)
+
+def calc_eLoss(df):
+    vs = tof_speeds(df)
+    return(vs['TOF1']**2/vs['TOF2']**2)
 
 # def remove_delay_line(df_in):
 #     df = df_in.copy()      
@@ -114,9 +123,6 @@ def remove_delay_line(df):
     df_nd['TOF1'] =df_nd['TOF1']-df_nd['TOF3']/2 
     return(df_nd)
 
-def calc_checksum(tof0,tof1,tof2,tof3):
-    return((tof0+tof3-tof2-tof1))
-
 def log_checksum(df,check_max = 1):
     return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
 
@@ -131,8 +137,9 @@ def log_trips(athing):
 
 def log_speeds(df):
     vs = tof_speeds(df)
-    return(np.logical_and(vs['TOF1']<vs['TOF2'],
-                          vs['TOF0']<vs['TOF2']))
+    return(np.logical_and.reduce([vs['TOF1']<vs['TOF2'],
+                                  vs['TOF0']<vs['TOF2'],
+                                  vs['TOF1']<vs['TOF0']]))
 
 def clean(df_in,
               remove_delay = True,
@@ -140,7 +147,6 @@ def clean(df_in,
               checksum = np.inf,
               filt_speed = False,
               tof3_picker = None,
-
               min_tof = 0,
               min_apply = ['TOF0','TOF1','TOF2','TOF3']):
     df = df_in.copy()
@@ -209,3 +215,20 @@ def calc_eff(dat):
     df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
     
     return(df)
+
+
+def fit_tofs(df,
+             tof_ranges = {'TOF0':[0,255],
+                             'TOF1':[0,255],
+                             'TOF2':[0,255]
+                          },
+                 bin_ns = 2
+                ):
+    import bowPy as bp
+    fits = {}
+    for tf in ['TOF0','TOF1','TOF2']:
+        bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
+        fits[tf] = bp.Jonda(data = df[tf],bins = bins)
+        fits[tf].bin_data()
+        fits[tf].interp_xy(kind = 'cubic')
+    return(pd.Series(fits))

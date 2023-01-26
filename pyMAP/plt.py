@@ -25,12 +25,16 @@ def plot_tofs(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
         axs = np.array([ax])
     fig.set_size_inches(9,4*len(axs))
     
-    if type(dats) is dict:
+    if type(dats) is dict or type(dats) is pd.Series:
         itter = dats.items()
     elif type(dats) is pd.DataFrame:
-        itter = zip(['',[dats]])
+        itter = zip([''],[dats])
+        print('sdfds')
     else: 
         itter = dats
+
+
+
     for lab,thing in itter:
         if info:
             # slabel = '%4s: \n     (%6s,%6s)'%(str(lab),'Mean','Peak')
