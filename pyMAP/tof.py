@@ -106,7 +106,7 @@ def calc_eLoss(df):
 #     def delay_interp(tof3,d_effects):
 #         f_rn = interp1d(d_effects['tof3'],d_effects['Q'],kind = 'nearest',
 #                             bounds_error = False,fill_value="extrapolate")
-#         return(d_effects[['b0','b3']].loc[f_rn(tof3).astype(int)]) 
+#         return(d_effects[['b0','b3']].iloc[f_rn(tof3).astype(int)]) 
 
 #     # define the newly calculated tof values
 #     delay = delay_interp(tof3,delay_line_offset())
@@ -174,7 +174,7 @@ def clean(df_in,
     # Select only events from a single quadrant
     if type(tof3_picker)== str and tof3_picker.lower() == 'auto':
         bb = int(np.sum(np.logical_and.reduce(log_good))/5)
-        h,bins = np.histogram(df.loc[np.logical_and.reduce(log_good)]['TOF3'],
+        h,bins = np.histogram(df.iloc[np.logical_and.reduce(log_good)]['TOF3'],
                               (bb if bb > 2 else 5))
         bm = (bins[1:]+bins[:-1])/2
         p = bm[np.argmax(h)]
@@ -190,7 +190,7 @@ def clean(df_in,
     for stuff in min_apply:
         log_good.append(df[stuff]>min_tof)
     
-    return(df.loc[np.logical_and.reduce(log_good)])
+    return(df.iloc[np.logical_and.reduce(log_good)])
 
 
 def calc_eff(dat):

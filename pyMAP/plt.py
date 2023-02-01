@@ -292,6 +292,6 @@ def group_plot(sms_run,group_keys=None):
 def filter_plot(s_run,group_keys):
     ll = jj.filters.filter_gen(s_run,group_keys)[0]
     print(np.sum(ll))
-    sms_run = s_run.loc[ll].dropna(subset = ['species'])
+    sms_run = s_run.iloc[ll].dropna(subset = ['species'])
     jj.buttons.button_gen('plot',group_plot,[sms_run,group_keys])
 #     interact(update_update)
