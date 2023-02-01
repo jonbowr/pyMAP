@@ -29,9 +29,10 @@ def get_dat(s_run_loc,
     for lab,vals in dats.items():
         if vals:
             dats[lab] = pd.concat(vals,axis = 0,sort=True)
+            # print(len(vals))
         else: 
             dats[lab] = np.nan
-    print(len(dats))
+
     return(dats)
 
 

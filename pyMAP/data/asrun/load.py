@@ -7,7 +7,10 @@ def load_v1(f_as_run,home = './',sheet_name = 0):
     import os
     
     df = pd.concat(pd.read_excel(os.path.join(home,f_as_run),
-                sheet_name = sheet_name,header=2,index_col = np.arange(4))).stack().unstack(level  = [0,-1]).T.reset_index(level =0, drop = True ).T
+                sheet_name = sheet_name,
+                header=2,
+                index_col = [0,1,2,3]
+                ),axis = 1).T.reset_index(level =0, drop = True ).T
     df = df.dropna(axis = 0,how = 'all')
     df = df.dropna(axis = 1,how = 'all')
     
