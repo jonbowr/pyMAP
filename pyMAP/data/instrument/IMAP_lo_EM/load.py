@@ -1,10 +1,12 @@
 import pandas as pd
 import numpy as np
 
+import pyMAP.pyMAP.tools.time as time_set
+
 def load_DE_v1(loc):
     df = pd.read_csv(loc,header = 0)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
-    df['SHCOARSE'] = df['SPIN_SECONDS']+2**31
+    df['SHCOARSE'] = time_set.spin_to_shcoarse(df['SPIN_SECONDS'].values)
     return(df.set_index('SHCOARSE'))
 
 def load_HK_v1(loc):
@@ -36,7 +38,7 @@ def load_RAW_DE_v1(loc):
     df.columns = pd.MultiIndex.from_frame(nk)
     df = df.stack().reset_index()
     # Calculate SHCOARSE from SPIN_SECONDS and assign as index
-    df['SHCOARSE'] = df['SPIN_SECONDS'].values+2**31
+    df['SHCOARSE'] = time_set.spin_to_shcoarse(df['SPIN_SECONDS'].values)
     df.set_index('SHCOARSE',inplace = True)
     return(df)
 
@@ -60,5 +62,15 @@ loadlib = {
             }
 
 def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001'):
+    
     print('Loading %s'%as_runloc)
-    return(loadlib[dtype][version](as_runloc))
+    df = loadlib[dtype][version](as_runloc)
+
+    # attempt to assign datetime index if index fails, resort to default SHCOARSE
+    try:
+        df['time'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
+        return(df.reset_index().set_index('time'))
+    except: 
+        import warnings
+        warnings.warn('Time Indexing Failed, Default Index Used Instead')
+        return(df)

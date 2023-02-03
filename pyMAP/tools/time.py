@@ -29,3 +29,17 @@ def orbit_fraction(df):
     func = lambda x: (x-np.nanmin(x))/(np.nanmax(x)-np.nanmin(x))
     orbit_frac = df.groupby(['orbit'],as_index = False)['time'].apply(func)
     return(df['orbit'].values+orbit_frac.values/2)
+
+def spin_to_shcoarse(spinsec):
+    return(spinsec+2**31)
+
+def shcoarse_to_datetime(timestanp):
+    #turn start date of IMAP-LO epoch into a time stamp in seconds
+    epoch=dt(2010, 1, 1, 0, 0, 0)
+        
+    # convert Shecoarse to spin seconds
+    spin_sec = timestanp-(2**31)
+    now = spin_sec+epoch.timestamp()
+    date_time= dt.fromtimestamp(now)
+
+    return date_time
