@@ -117,6 +117,9 @@ def calc_eLoss(df):
 
 #     return(df)
 
+def get_checksum(df):
+    return(calc_checksum(*[df['TOF%d'%i] for i in range(4)]))
+
 def remove_delay_line(df):
     df_nd = df.copy()
     df_nd['TOF0'] =df_nd['TOF0']+df_nd['TOF3']/2 
@@ -193,7 +196,7 @@ def clean(df_in,
     return(df.iloc[np.logical_and.reduce(log_good)])
 
 
-def calc_eff(dat):
+def get_eff(dat):
     df = dat.copy()
     df['SILVER'] = df[df.keys().values[df.T.reset_index()['index'].str.contains('SILVER_TRIPLE')]].sum(axis =1)
     df['STOP_B'] = df[['STOP_B0', 'STOP_B3']].sum(axis= 1)

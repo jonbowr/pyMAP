@@ -1,4 +1,4 @@
-from . import instrument,facility
+from . import instrument
 import numpy as np
 import pandas as pd
 loadlib = {
@@ -48,7 +48,7 @@ def get_all_dat(dirName = './',
     if reduce:
         dats = []
         for fil in fils:
-            f = os.path.basename(fil).split('.')[0]
+            f = os.path.basename(fil)#.split('.')[0]
             if dtype in f:
                 try:
                     ds = load_dt(fil,dtype = dtype,**load_params)
@@ -66,7 +66,7 @@ def get_all_dat(dirName = './',
         ds[dtype] = []    
         
         for fil in fils:
-            f = os.path.basename(fil).split('.')[0]
+            f = os.path.basename(fil)#.split('.')[0]
             if dtype in f and run_tag in f:
                 # try:
                     nam = f.replace(dtype,'').lower()
