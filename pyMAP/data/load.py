@@ -53,8 +53,8 @@ def get_all_dat(dirName = './',
                 try:
                     ds = load_dt(fil,dtype = dtype,**load_params)
                     # ds['name'] = f.replace(dtype,'')
-                    # ds['file'] = fil
-                    ds[dtype+'_fil'] = fil
+                    # ds['file'] = f
+                    ds[dtype+'_fil'] = f
                     dats.append(ds)
                 except: 
                     print('LOAD FAILED ON FILE: %s'%fil)
@@ -74,6 +74,8 @@ def get_all_dat(dirName = './',
                     # ds['name'].append('_'.join(nam.split('_')[:-2]))
 
                     ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))
+                    # add name as a tag, remove last 4 characters to give files with same tag,
+                    # generated within same 100s the same name
                     ds['name'].append(nam[:-4])
                     ds[dtype+'_file'].append(fil)
                 # except: 
