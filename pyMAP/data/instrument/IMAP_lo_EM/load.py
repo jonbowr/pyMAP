@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from .EM_data_types import EM_dtypes
 
 import pyMAP.pyMAP.tools.time as time_set
 
@@ -16,7 +17,8 @@ def load_HK_v1(loc):
 
 def load_IFB_v1(loc):
     df = pd.read_csv(loc,header = 0)
-    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
+    df = df.astype(dtype = EM_dtypes['ILO_IFB']).set_index('SHCOARSE')
     df['PAC_VM_volt'] = df['PAC_VM']*7500 #Use Brians voltage calculation to transform mon value to volts
     return(df.drop_duplicates())
 

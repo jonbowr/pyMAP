@@ -57,7 +57,8 @@ def get_all_dat(dirName = './',
                     ds[dtype+'_fil'] = f
                     dats.append(ds)
                 except: 
-                    print('LOAD FAILED ON FILE: %s'%fil)
+                    import warnings
+                    warnings.warn('LOAD FAILED ON FILE: %s'%fil)
         return(pd.concat(dats,axis = 0).sort_index())
     else:
         ds = {}
