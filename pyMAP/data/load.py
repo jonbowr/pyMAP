@@ -98,10 +98,10 @@ def combiner(base,other_in, usecol = 'index'):
         
     dat_parts = [base.reset_index()]
     for other in other_IT: 
-        if usecol is 'index':
+        if usecol == 'index':
             base_id = base.index
             other_id = other.index
-        elif usecol is 'index_norm':
+        elif usecol == 'index_norm':
             base_id = rng_norm(base.index)
             other_id = rng_norm(other.index)
         else: 
@@ -117,7 +117,7 @@ def dat_loc(file_name,home,dtype = ''):
     import os
 
     # make input filename itterable if just a string
-    if type(file_name) is str:
+    if type(file_name) == str:
         file_name = [file_name]
 
     fs = []
