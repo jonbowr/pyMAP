@@ -13,8 +13,6 @@ def tof_expected(ke_in=16000,
                  mass = None,
                 quadrant = 0,include_delay = False,q = 1,e_loss = 0):
 
-
-
     ke = np.array(ke_in).reshape(-1)
     if type(species) is str:
         species = np.array(species.split(',')).reshape(-1)
@@ -217,7 +215,7 @@ def get_eff(dat):
     df['Eff_TRIP2'] = df['Eff_A2']*df['Eff_C2']*df['Eff_B0']
     df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
     
-    return(df)
+    return(df.replace([np.inf, -np.inf], np.nan))
 
 
 def fit_tofs(df,

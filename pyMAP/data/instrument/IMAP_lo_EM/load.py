@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from .EM_data_types import EM_dtypes
 
 import pyMAP.pyMAP.tools.time as time_set
 
@@ -12,20 +13,21 @@ def load_DE_v1(loc):
 def load_HK_v1(loc):
     df = pd.read_csv(loc,header = 0)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
-    return(df)
+    return(df.drop_duplicates())
 
 def load_IFB_v1(loc):
     df = pd.read_csv(loc,header = 0)
-    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
+    df = df.astype(dtype = EM_dtypes['ILO_IFB']).set_index('SHCOARSE')
     df['PAC_VM_volt'] = df['PAC_VM']*7500 #Use Brians voltage calculation to transform mon value to volts
-    return(df)
+    return(df.drop_duplicates())
 
 def load_CNT_v1(loc):
     # cnt rate and tof files both have TOF0 keys, may want to rename the rates
-    from pyMAP.pyMAP.tof import calc_eff
+    from pyMAP.pyMAP.tof import get_eff
     df = pd.read_csv(loc,header = 0)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
-    return(calc_eff(df))
+    return(get_eff(df).drop_duplicates())
 
 def load_RAW_DE_v1(loc):
     #import data from csv, drop corrupt lines
@@ -68,9 +70,11 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001'):
 
     # attempt to assign datetime index if index fails, resort to default SHCOARSE
     try:
-        df['time'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
-        return(df.reset_index().set_index('time'))
+        df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
+        return(df.reset_index().set_index('dateTime'))
     except: 
         import warnings
-        warnings.warn('Time Indexing Failed, Default Index Used Instead')
-        return(df)
+        from datetime import datetime as dt
+        warnings.warn('Time Indexing Failed, Use SHCOARSE instead')
+        df['dateTime'] = dt(2010, 1, 1, 0, 0, 0)
+        return(df.reset_index().set_index('dateTime'))
