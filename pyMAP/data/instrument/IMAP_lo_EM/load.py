@@ -30,18 +30,62 @@ def load_CNT_v1(loc):
     return(get_eff(df).drop_duplicates())
 
 def load_RAW_DE_v1(loc):
-    #import data from csv, drop corrupt lines
-    df = pd.read_csv(loc,header = 0).apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
+    # check the headder for names and assign datatypes
+    nanvals = {
+            'TOF0':0.4225755257233885,
+            'TOF1':0.458300954435785,
+            'TOF2':0.3144102748020856,
+            'TOF3':1.1962577109060106   
+            }
+
+    def nan_col_vals(keys):
+        nan_cols = {}
+        for lab in keys:
+            lab = lab.strip()
+            if 'tof' in lab.lower() and 'valid' not in lab.lower():
+                nan_cols[lab] =nanvals[lab.split('_')[0]]
+        return(nan_cols) 
+    
+    def raw_DE_type_getter(lab):
+        if 'valid' in lab.lower():
+            return('integer')
+        elif 'tof' in lab.lower() or 'offset_ms' in lab.lower() or 'spin' in lab.lower():
+            return('float')
+        else:
+            return('float')
+    
+    fil = open(loc,'r')
+    head = fil.readline().split(',')
+    fil.close()
+    #import data from csv, assign blank tofvalues to nans
+    df = pd.read_csv(loc,header = 0,
+                     na_values = nan_col_vals(head),
+                     # na_filter = False,
+                     low_memory=False,
+                     )
+    # remove empty data rows
+    df = df.iloc[(pd.to_numeric(df['DIRECT_EVENT_COUNT'],errors = 'coerce')>0).values]
     # Assign Index
     df.set_index(['SPIN_SECONDS','SPIN_SUBSECONDS', 'DIRECT_EVENT_COUNT'],append = True,inplace = True)
+    
     # Stack counts put in standard DE format
     nk = df.keys().to_frame()[0].str.split('_').apply(lambda x: pd.Series([ '_'.join(x[:-1]),x[-1]]))
-    nk.columns = ['TOF','cnt']
+    nk.columns = ['TOF','order']
     df.columns = pd.MultiIndex.from_frame(nk)
     df = df.stack().reset_index()
+
+    #Drop empty trailing data
+    df = df.iloc[pd.to_numeric(df['order'],errors = 'coerce').values<
+                    pd.to_numeric(df['DIRECT_EVENT_COUNT'],errors = 'coerce').values]
+
+    # Define dataframe as numeric and assign data types to the columns
+    dtypes = {l.strip():raw_DE_type_getter(l.strip()) for l in df.keys()}
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce',downcast = dtypes[x.name])).dropna(axis = 0,how = 'all')
+    
     # Calculate SHCOARSE from SPIN_SECONDS and assign as index
     df['SHCOARSE'] = time_set.spin_to_shcoarse(df['SPIN_SECONDS'].values)
     df.set_index('SHCOARSE',inplace = True)
+
     return(df)
 
 
