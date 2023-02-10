@@ -106,10 +106,12 @@ def combiner(base,other_in, usecol = 'index'):
             base_id = rng_norm(base.index)
             other_id = rng_norm(other.index)
         else: 
+            base = base.sort_values(usecol)
+            other = other.sort_values(usecol)
             base_id = base[usecol]
             other_id = other[usecol]
         dat_parts.append(other.iloc[np.digitize(base_id,other_id)-1].reset_index().drop(
-                                                    columns = (other_id.name if usecol is 'index' else usecol)))
+                                                    columns = (other_id.name if usecol == 'index' else usecol)))
     return(pd.concat(dat_parts,axis = 1))
 
 def dat_loc(file_name,home,dtype = ''):
