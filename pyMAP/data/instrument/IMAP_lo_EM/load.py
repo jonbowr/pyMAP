@@ -24,10 +24,10 @@ def load_IFB_v1(loc):
 
 def load_CNT_v1(loc):
     # cnt rate and tof files both have TOF0 keys, may want to rename the rates
-    from pyMAP.pyMAP.tof import calc_eff
+    from pyMAP.pyMAP.tof import get_eff
     df = pd.read_csv(loc,header = 0)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
-    return(calc_eff(df).drop_duplicates())
+    return(get_eff(df).drop_duplicates())
 
 def load_RAW_DE_v1(loc):
     #import data from csv, drop corrupt lines
