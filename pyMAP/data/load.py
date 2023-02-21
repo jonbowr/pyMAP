@@ -86,6 +86,37 @@ def get_all_dat(dirName = './',
                                  dtype:lambda x: pd.concat(list(x),axis = 0).sort_index()})
         return(dats.set_index('name'))
 
+def get_all_dfils(dirName = './',
+                    dtype = '',
+                    load_dt = lambda x: np.nan,
+                    load_params = {},
+                    run_tag = ''):
+    # Function to search directory and load in all data of a given type
+    import os
+    import pandas as pd
+    fils = getListOfFiles(dirName)
+    
+
+    ds = {}
+    ds['name'] = []
+    ds[dtype+'_file'] = []
+    
+    for fil in fils:
+        f = os.path.basename(fil)#.split('.')[0]
+        if dtype in f and run_tag in f:
+            # try:
+                nam = f.replace(dtype,'').lower()
+
+                # add name as a tag, remove last 4 characters to give files with same tag,
+                # generated within same 100s the same name
+                ds['name'].append(nam)
+                ds[dtype+'_file'].append(fil)
+            # except: 
+            #     print('LOAD FAILED ON FILE: %s'%f)
+    dats = pd.DataFrame(ds)
+    dats.groupby('name').agg({dtype+'_file':list})
+    return(dats.set_index('name'))
+
 
 def combiner(base,other_in, usecol = 'index'):
     # use np.in1d to combine values between data frames

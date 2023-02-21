@@ -12,22 +12,39 @@ def load_DE_v1(loc):
 
 def load_HK_v1(loc):
     df = pd.read_csv(loc,header = 0)
-    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
+    len1 = len(df)
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).drop_duplicates(subset = 'SHCOARSE').set_index('SHCOARSE')
+    len2 = len(df)
+    if (len1-len2)/len1>.1:
+        from warnings import warn
+        warn('Data corruption:Large Ammount of Dropped Measurements')
     return(df.drop_duplicates())
 
 def load_IFB_v1(loc):
     df = pd.read_csv(loc,header = 0)
+    len1 = len(df)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
-    df = df.astype(dtype = EM_dtypes['ILO_IFB']).set_index('SHCOARSE')
+    df = df.astype(dtype = EM_dtypes['ILO_IFB']).drop_duplicates(subset = 'SHCOARSE').set_index('SHCOARSE')
+    len2 = len(df)
+    if (len1-len2)/len1>.1:
+        from warnings import warn
+        warn('Data corruption:Large Ammount of Dropped Measurements')
     df['PAC_VM_volt'] = df['PAC_VM']*7500 #Use Brians voltage calculation to transform mon value to volts
-    return(df.drop_duplicates())
+    return(df)
 
 def load_CNT_v1(loc):
     # cnt rate and tof files both have TOF0 keys, may want to rename the rates
     from pyMAP.pyMAP.tof import get_eff
     df = pd.read_csv(loc,header = 0)
-    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).set_index('SHCOARSE')
-    return(get_eff(df).drop_duplicates())
+
+    len1 = len(df)
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0).drop_duplicates(subset = 'SHCOARSE').set_index('SHCOARSE')
+    
+    len2 = len(df)
+    if (len1-len2)/len1>.1:
+        from warnings import warn
+        warn('Data corruption:Large Ammount of Dropped Measurements')
+    return(get_eff(df))
 
 def load_RAW_DE_v1(loc):
     # check the headder for names and assign datatypes
