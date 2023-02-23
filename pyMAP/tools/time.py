@@ -43,3 +43,16 @@ def shcoarse_to_datetime(timestanp):
     date_time= dt.fromtimestamp(now)
 
     return date_time
+
+
+def localize_to_tz(naive,zone):
+    # Set zone information
+    if zone =='est':
+        local=pytz.timezone('US/Eastern').localize(naive)
+        print('eastern')
+    elif zone=='bern':
+        local=pytz.timezone('Europe/Zurich').localize(naive)
+    else:
+        raise Exception("""Please choose a valid time zone : 'est', 'bern'""")
+    #return date with zone information added
+    return localized
