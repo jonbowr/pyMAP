@@ -100,7 +100,8 @@ def get_all_dfils(dirName = './',
     ds = {}
     ds['name'] = []
     ds[dtype+'_file'] = []
-    
+    ds['file_size'] = []
+
     for fil in fils:
         f = os.path.basename(fil)#.split('.')[0]
         if dtype in f and run_tag in f:
@@ -111,6 +112,7 @@ def get_all_dfils(dirName = './',
                 # generated within same 100s the same name
                 ds['name'].append(nam)
                 ds[dtype+'_file'].append(fil)
+                ds['file_size'].append(os.path.getsize(fil)*10**-6)
             # except: 
             #     print('LOAD FAILED ON FILE: %s'%f)
     dats = pd.DataFrame(ds)
