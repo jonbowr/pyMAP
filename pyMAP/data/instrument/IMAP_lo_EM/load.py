@@ -94,6 +94,8 @@ def load_RAW_DE_v1(loc):
     #Drop empty trailing data
     df = df.iloc[pd.to_numeric(df['order'],errors = 'coerce').values<
                     pd.to_numeric(df['DIRECT_EVENT_COUNT'],errors = 'coerce').values]
+    #Drop data without any valid tofs
+    df = df.iloc[np.logical_or.reduce(df[['VALIDTOF%d'%i for i in range(4)]].values.T)]
 
     # Define dataframe as numeric and assign data types to the columns
     dtypes = {l.strip():raw_DE_type_getter(l.strip()) for l in df.keys()}
@@ -124,7 +126,7 @@ loadlib = {
                             }
             }
 
-def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001'):
+def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',timeZone = 'est'):
     
     print('Loading %s'%as_runloc)
     df = loadlib[dtype][version](as_runloc)
@@ -132,6 +134,7 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001'):
     # attempt to assign datetime index if index fails, resort to default SHCOARSE
     try:
         df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
+        df['dateTime'] = time_set.localize_to_tz(df['dateTime'],zone = timeZone)
         return(df.reset_index().set_index('dateTime'))
     except: 
         import warnings
