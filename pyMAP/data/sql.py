@@ -20,6 +20,7 @@ def drop_table(table_name, engine):
             Base.metadata.drop_all(engine, [table], checkfirst=True)
 
 def purgeDB(engine):
+    # totally wipes data base lean of all tables
     Base = declarative_base()
     metadata = MetaData()
     metadata.reflect(bind=engine)
@@ -30,8 +31,8 @@ def purgeDB(engine):
             if table is not None:
                 Base.metadata.drop_all(engine, [table], checkfirst=True)
 
-
 def get_table(table_name, engine):
+    # returns sqlalchemy table struct taken from engine
     Base = declarative_base()
     metadata = MetaData()
     metadata.reflect(bind=engine)
