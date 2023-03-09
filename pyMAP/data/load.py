@@ -94,29 +94,36 @@ def get_all_dfils(dirName = './',
     # Function to search directory and load in all data of a given type
     import os
     import pandas as pd
+    import pyMAP.pyMAP.tools.time as time_set
     fils = getListOfFiles(dirName)
     
-
     ds = {}
     ds['name'] = []
-    ds[dtype+'_file'] = []
+    ds['file_path'] = []
     ds['file_size'] = []
+    ds['dtype'] = []
+    ds['created'] = []
+    ds['last_modified'] = [] 
 
     for fil in fils:
         f = os.path.basename(fil)#.split('.')[0]
         if dtype in f and run_tag in f:
             # try:
                 nam = f.replace(dtype,'').lower()
-
                 # add name as a tag, remove last 4 characters to give files with same tag,
                 # generated within same 100s the same name
-                ds['name'].append(nam)
-                ds[dtype+'_file'].append(fil)
+                ds['name'].append(f)
+                ds['file_path'].append(fil)
                 ds['file_size'].append(os.path.getsize(fil)*10**-6)
+                ds['dtype'].append(dtype)
+                file_times = time_set.get_file_times(fil)
+                ds['created'].append(file_times[0])
+                ds['last_modified'].append(file_times[1])
+
             # except: 
             #     print('LOAD FAILED ON FILE: %s'%f)
     dats = pd.DataFrame(ds)
-    dats.groupby('name').agg({dtype+'_file':list})
+    dats.groupby('name').agg({'file_path':list})
     return(dats.set_index('name'))
 
 

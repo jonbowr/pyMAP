@@ -134,11 +134,16 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',timeZone = 'est'):
     # attempt to assign datetime index if index fails, resort to default SHCOARSE
     try:
         df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
-        df['dateTime'] = time_set.localize_to_tz(df['dateTime'],zone = timeZone)
-        return(df.reset_index().set_index('dateTime'))
+        try:
+            df['dateTime'] = df['dateTime'].apply(time_set.localize_to_tz,zone = timeZone)
+        except:
+            import warnings
+            warnings.warn('Time Stamp Localization Failed')
+        
     except: 
         import warnings
         from datetime import datetime as dt
         warnings.warn('Time Indexing Failed, Use SHCOARSE instead')
         df['dateTime'] = dt(2010, 1, 1, 0, 0, 0)
-        return(df.reset_index().set_index('dateTime'))
+
+    return(df.reset_index().set_index('dateTime'))

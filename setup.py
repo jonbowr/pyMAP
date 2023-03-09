@@ -15,5 +15,7 @@ setup(name='pyMAP',
           'matplotlib',
           'mpl_toolkits',
           'periodictable',
+          'cStringIO',
+          'sqlalchemy'
       ],
       zip_safe=False)
