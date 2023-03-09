@@ -1,6 +1,23 @@
 from sqlalchemy import create_engine,insert
 from sqlalchemy import MetaData,event
 from sqlalchemy.ext.declarative import declarative_base
+import pandas as pd
+
+class jill:
+
+    def __init__(self):
+        self.engine = initEngine()
+        self.connection = self.engine.connect()
+        self.metadata = MetaData()
+        self.metadata.reflect(bind = self.engine)
+        self.tables = self.metadata.tables
+
+    def queryDF(self, sql_query):
+        from sqlalchemy import text
+        # Credentials to database connection
+        df = pd.read_sql(text(sql_query),self.connection)
+        return(df)
+
 
 def initEngine(hostname="127.0.0.1:3306",
                 dbname="IMAPlo",
