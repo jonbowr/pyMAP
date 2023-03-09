@@ -55,15 +55,18 @@ def sqlCMD(query):
     df = pd.read_sql(text(query),conn)#.set_index('dateTime')
     engine.dispose()
 
-
 def ingest_data(dataloc,dtype = 'ILO_IFB',to_table = 'test',
                         replace = False,bulk_combine = True,
                         admin_pwd = '',tag = ''):
-    # Function to load raw data from 
+    # Function to load raw data of a provided type and ingest it to a given table on jill
+
+
     from datetime import datetime as dt
     from .load import get_all_dfils,load
     import time
     from sqlalchemy import text
+    import pandas as pd
+    import numpy as np
 
     def uploader(dat,engine,to_table):
         print(dat.name)
@@ -74,6 +77,8 @@ def ingest_data(dataloc,dtype = 'ILO_IFB',to_table = 'test',
                                                                      t_end,
                                                                      len(dat)/t_end,
                                                                       len(dat)*dat.shape[1]/t_end))
+
+    print('Processing %s data from %s to add to %s'%(dtype,dataloc,to_table))
     if admin_pwd =='':
         admin_pwd = input('Input admin password')
 
@@ -85,20 +90,15 @@ def ingest_data(dataloc,dtype = 'ILO_IFB',to_table = 'test',
     conn = engine.connect()
 
     # load data file locations from rawdatabase
-    dfils = get_all_dfils(dataloc,dtype)
+    dfils = get_all_dfils(dataloc,dtype).reset_index()
     dfils['to_table'] = to_table
     # import ingestion log from server
-    df_ingest = pd.read_sql(text('select * from ingest_log;'),conn)
 
-    # if replace: 
-    #     drop_table(to_table,engine)
-    #     if 'ingest_log' in metadata.tables:
-    #         table = metadata.tables['ingest_log']
-    #         conn.execute(table.delete().where(table.c.to_table == to_table))
-    #         con.commit()
     if ~replace:
-        # drop files from ingest list if we are not replacing them 
-        dfils = dfils.iloc[~np.in1d(dfils['name'].values,df_ingest['name'].values)]
+        if 'ingest_log' in metadata.tables:
+            # drop files from ingest list if we are not replacing them 
+            df_ingest = pd.read_sql(text('select * from ingest_log;'),conn)
+            dfils = dfils.iloc[~np.in1d(dfils['name'].values,df_ingest['name'].values)]
 
     if bulk_combine:
         # bulk load and combine all data, should consider changing this to not load 
@@ -145,6 +145,6 @@ def ingest_data(dataloc,dtype = 'ILO_IFB',to_table = 'test',
             uploader(df,engine,to_table)
         dfils['file_path'].apply(load_up)
     dfils['ingest_time'] = dt.now() 
-    dfils.to_sql('ingest_log', engine, index=True,if_exists = 'append')
+    dfils.to_sql('ingest_log', engine, index=False,if_exists = 'append')
     engine.dispose()
 
