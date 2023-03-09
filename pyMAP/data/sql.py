@@ -10,8 +10,6 @@ def initEngine(hostname="127.0.0.1:3306",
                             .format(host=hostname, db=dbname, user=uname, pw=pwd))
     return(engine)
 
-
-
 def drop_table(table_name, engine):
     Base = declarative_base()
     metadata = MetaData()
@@ -20,6 +18,17 @@ def drop_table(table_name, engine):
         table = metadata.tables[table_name]
         if table is not None:
             Base.metadata.drop_all(engine, [table], checkfirst=True)
+
+def purgeDB(engine):
+    Base = declarative_base()
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+    checker = input('Are you sure you want to purge the whole DB? [y/n]')
+    if checker.lower() == 'y':
+        for table_name in metadata.tables.keys():
+            table = metadata.tables[table_name]
+            if table is not None:
+                Base.metadata.drop_all(engine, [table], checkfirst=True)
 
 
 def get_table(table_name, engine):
@@ -47,17 +56,14 @@ def sqlCMD(query):
     engine.dispose()
 
 
-def ingest_data(dataloc,
-                    dtype = 'ILO_IFB',
-                    to_table = 'test',
-                    replace = False,
-                    bulk_combine = True,
-                    admin_pwd = '',
-                    tag = ''
-                                    ):
+def ingest_data(dataloc,dtype = 'ILO_IFB',to_table = 'test',
+                        replace = False,bulk_combine = True,
+                        admin_pwd = '',tag = ''):
+    # Function to load raw data from 
     from datetime import datetime as dt
     from .load import get_all_dfils,load
     import time
+    from sqlalchemy import text
 
     def uploader(dat,engine,to_table):
         print(dat.name)
@@ -71,133 +77,74 @@ def ingest_data(dataloc,
     if admin_pwd =='':
         admin_pwd = input('Input admin password')
 
-
+    # connect to engine
     engine = initEngine(uname = 'loDB_admin',pwd = admin_pwd)
+    # initialize connection
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+    conn = engine.connect()
 
-    if replace: 
-        drop_table(to_table,engine)
-        metadata = MetaData()
-        metadata.reflect(bind=engine)
-        if 'ingest_log' in metadata.tables:
-            table = metadata.tables['ingest_log']
-            conn = engine.connet()
-            conn.execute(table.delete().where(table.c.dtype == dtype))
-            con.commit()
-    
+    # load data file locations from rawdatabase
     dfils = get_all_dfils(dataloc,dtype)
     dfils['to_table'] = to_table
-    dfils['ingest_time'] = dt.now() 
-    dfils.to_sql('ingest_log', engine, index=True,if_exists = 'append')
+    # import ingestion log from server
+    df_ingest = pd.read_sql(text('select * from ingest_log;'),conn)
+
+    # if replace: 
+    #     drop_table(to_table,engine)
+    #     if 'ingest_log' in metadata.tables:
+    #         table = metadata.tables['ingest_log']
+    #         conn.execute(table.delete().where(table.c.to_table == to_table))
+    #         con.commit()
+    if ~replace:
+        # drop files from ingest list if we are not replacing them 
+        dfils = dfils.iloc[~np.in1d(dfils['name'].values,df_ingest['name'].values)]
 
     if bulk_combine:
-        df = load(dataloc,
-                          dtype = dtype,
+        # bulk load and combine all data, should consider changing this to not load 
+        #   files we arent ingesting 
+        df = load(dataloc,dtype = dtype,
                           load_params = {'reduce':True})
         df['tag'] = tag
+
+        #Drop all data from DB associated with the files being uploaded
+        #       if we are replacing datt,
+        if replace:
+            if to_table in metadata.tables:
+                table = metadata.tables[to_table]
+                table_log = metadata.tables['ingest_log']
+                for fRAW in np.unique(df['fRAW'].values):
+                    conn.execute(table.delete().where(table.c.fRAW == fRAW))
+                    con.commit()
+                    conn.execute(table_log.delete().where(table.c.name == fRAW))
+                    con.commit()
+        else:
+            # if replace is false, drop values to upload if the file has already been uploaded
+            df = df.iloc[~np.in1d(df['fRAW'].values,df_ingest['name'].values)]
         print('=====================================')
-        print('uploading data to server')
+        print('Bulk uploading %s data to table %s on Jill'%(dtype,to_table))
         df.name = tag
-        uploader(df,engine)    
+        uploader(df,engine,to_table)
     else:
         def load_up(lab):
+            if replace:
+                if to_table in metadata.tables:
+                    table = metadata.tables[to_table]
+                    table_log = metadata.tables['ingest_log']
+                    conn.execute(table.delete().where(table.c.fRAW == lab))
+                    con.commit()
+                    conn.execute(table_log.delete().where(table.c.name == lab))
+                    con.commit()
+                    print('Scrubbing %s data from %s on Jill'%(fil,to_table))
             df = load(lab,dtype = dtype)
-            df[tag] = tag
+            df['tag'] = tag
             print('=====================================')
-            print('uploading data to server')
+            print('Uploading %s data to table %s on Jill'%(dtype,to_table))
             t = time.time()
             df.name = tag
             uploader(df,engine,to_table)
         dfils['file_path'].apply(load_up)
+    dfils['ingest_time'] = dt.now() 
+    dfils.to_sql('ingest_log', engine, index=True,if_exists = 'append')
     engine.dispose()
 
-
-def bulkInsert(dat,engine,useTable= 'ILO_RAW_DE',replace = True):
-        # currently raw  code from stack exchange
-        #load python script that batch loads pandas df to sql
-        # from io import StringIO
-        # connection = engine.connect()
-        # cursor = connection.cursor()
-
-        #df is the dataframe containing an index and the columns "Event" and "Day"
-        #create Index column to use as primary key
-        df = dat.reset_index()
-        #create the table but first drop if we want
-        if replace:
-                drop_table(useTable,engine)
-                #create new table 
-                df.head(0).to_sql(useTable, engine,index = False)
-        df.to_sql(useTable,engine,index = False,if_exists = 'append',
-                                chunksize = 50000,
-                                method = 'multi'
-                                )
-        return()
-
-        #stream the data using 'to_csv' and StringIO(); then use sql's 'copy_from' function
-        # output = StringIO()
-        #ignore the index
-        # df.to_csv(output, sep=',', header=False, index=False)
-        #jump to start of stream
-        # return(output)
-        # output.seek(0)
-        # contents = output.getvalue()
-        # print(contents)
-
-        metadata = MetaData()
-        metadata.reflect(bind=engine)
-        table = metadata.tables[useTable]
-        # return(table)
-
-        # stmt = insert(table, values = dat.reset_index().values.T)
-        # engine.executemany(stmt)
-        connection.execute(table.insert(),[tuple(r) for r in df.to_numpy().tolist()])
-        connection.close()
-        # engine.commit()
-
-
-
-
-
-        # cur = connection.cursor()
-        # cur.copy_from(output,useTable)    
-        # connection.commit()
-        # cur.close()
-
-        # def bulkInsert():
-        # from sqlalchemy import create_engine
-        # import psycopg2 as pg
-        # #load python script that batch loads pandas df to sql
-        # import cStringIO
-
-        # address = 'postgresql://<username>:<pswd>@<host>:<port>/<database>'
-        # engine = create_engine(address)
-        # connection = engine.raw_connection()
-        # cursor = connection.cursor()
-
-        # #df is the dataframe containing an index and the columns "Event" and "Day"
-        # #create Index column to use as primary key
-        # df.reset_index(inplace=True)
-        # df.rename(columns={'index':'Index'}, inplace =True)
-
-        # #create the table but first drop if it already exists
-        # command = '''DROP TABLE IF EXISTS localytics_app2;
-        # CREATE TABLE localytics_app2
-        # (
-        # "Index" serial primary key,
-        # "Event" text,
-        # "Day" timestamp without time zone,
-        # );'''
-        # cursor.execute(command)
-        # connection.commit()
-
-        # #stream the data using 'to_csv' and StringIO(); then use sql's 'copy_from' function
-        # output = cStringIO.StringIO()
-        # #ignore the index
-        # df.to_csv(output, sep='\t', header=False, index=False)
-        # #jump to start of stream
-        # output.seek(0)
-        # contents = output.getvalue()
-        # cur = connection.cursor()
-        # #null values become ''
-        # cur.copy_from(output, 'localytics_app2', null="")    
-        # connection.commit()
-        # cur.close()

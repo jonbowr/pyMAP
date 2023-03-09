@@ -53,8 +53,8 @@ def get_all_dat(dirName = './',
                 try:
                     ds = load_dt(fil,dtype = dtype,**load_params)
                     # ds['name'] = f.replace(dtype,'')
-                    # ds['file'] = f
-                    ds[dtype+'_fil'] = f
+                    ds['fRAW'] = f
+                    # ds[dtype+'_fil'] = f
                     dats.append(ds)
                 except: 
                     import warnings
@@ -71,13 +71,13 @@ def get_all_dat(dirName = './',
             if dtype in f and run_tag in f:
                 # try:
                     nam = f.replace(dtype,'').lower()
-
                     # ds['name'].append('_'.join(nam.split('_')[:-2]))
-
-                    ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))
+                    df = load_dt(fil,dtype = dtype,**load_params)
+                    df['fRAW'] = f
+                    ds[dtype].append(df)
                     # add name as a tag, remove last 4 characters to give files with same tag,
                     # generated within same 100s the same name
-                    ds['name'].append(nam[:-4])
+                    ds['name'].append(nam)
                     ds[dtype+'_file'].append(fil)
                 # except: 
                 #     print('LOAD FAILED ON FILE: %s'%f)
@@ -91,7 +91,7 @@ def get_all_dfils(dirName = './',
                     load_dt = lambda x: np.nan,
                     load_params = {},
                     run_tag = ''):
-    # Function to search directory and load in all data of a given type
+    # Function to search directory and find all data files of a given type and grab some metadata
     import os
     import pandas as pd
     import pyMAP.pyMAP.tools.time as time_set
