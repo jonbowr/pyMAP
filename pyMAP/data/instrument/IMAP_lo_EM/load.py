@@ -144,6 +144,6 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',timeZone = 'est'):
         import warnings
         from datetime import datetime as dt
         warnings.warn('Time Indexing Failed, Use SHCOARSE instead')
-        df['dateTime'] = dt(2010, 1, 1, 0, 0, 0)
+        df['dateTime'] = time_set.localize_to_tz(dt(2010, 1, 1, 0, 0, 0))
 
     return(df.reset_index().set_index('dateTime'))
