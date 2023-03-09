@@ -83,8 +83,6 @@ def ingest_data(dataloc,
             conn = engine.connet()
             conn.execute(table.delete().where(table.c.dtype == dtype))
             con.commit()
-            conn.detach()
-
     
     dfils = get_all_dfils(dataloc,dtype)
     dfils['to_table'] = to_table
@@ -96,11 +94,9 @@ def ingest_data(dataloc,
                           dtype = dtype,
                           load_params = {'reduce':True})
         df['tag'] = tag
-
         print('=====================================')
         print('uploading data to server')
         df.name = tag
-
         uploader(df,engine)    
     else:
         def load_up(lab):
@@ -108,7 +104,6 @@ def ingest_data(dataloc,
             df[tag] = tag
             print('=====================================')
             print('uploading data to server')
-            
             t = time.time()
             df.name = tag
             uploader(df,engine,to_table)
