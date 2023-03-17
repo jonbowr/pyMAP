@@ -3,24 +3,8 @@ from sqlalchemy import MetaData,event
 from sqlalchemy.ext.declarative import declarative_base
 import pandas as pd
 
-class jill:
-
-    def __init__(self):
-
-        self.server = ssh_bind()
-        self.engine = initEngine()
-        self.connection = self.engine.connect()
-        self.metadata = MetaData()
-        self.metadata.reflect(bind = self.engine)
-        self.tables = self.metadata.tables
-
-    def queryDF(self, sql_query):
-        from sqlalchemy import text
-        # Credentials to database connection
-        df = pd.read_sql(text(sql_query),self.connection)
-        return(df)
-
 def ssh_bind(ssh_host = "jill.sr.unh.edu"):
+    # Function to initialize and setup ssh tunnel with port forwarding
     from sshtunnel import SSHTunnelForwarder
     from getpass import getpass
     server = SSHTunnelForwarder(
