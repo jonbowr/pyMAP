@@ -6,6 +6,8 @@ import pandas as pd
 class jill:
 
     def __init__(self):
+
+        self.server = ssh_bind()
         self.engine = initEngine()
         self.connection = self.engine.connect()
         self.metadata = MetaData()
@@ -18,6 +20,18 @@ class jill:
         df = pd.read_sql(text(sql_query),self.connection)
         return(df)
 
+def ssh_bind(ssh_host = "jill.sr.unh.edu"):
+    from sshtunnel import SSHTunnelForwarder
+    from getpass import getpass
+    server = SSHTunnelForwarder(
+        ssh_host, 
+        ssh_username=input('Jill Username: '),
+        ssh_password = getpass(),
+        remote_bind_address=('127.0.0.1',3306),
+        local_bind_address=('127.0.0.1',3306)
+        )
+    server.start()
+    return(server)
 
 def initEngine(hostname="127.0.0.1:3306",
                 dbname="IMAPlo",
