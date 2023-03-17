@@ -1,4 +1,4 @@
-from tools.sql import *
+from .tools.sql import *
 
 class jill:
 
