@@ -20,4 +20,13 @@ class jill:
         from sqlalchemy import text
         # Credentials to database connection
         df = pd.read_sql(text(sql_query),self.connection)
+        if 'dateTime' in df:
+            from .tools import time
+            df['dateTime'] = df['dateTime'].apply(time.localize_to_tz)
+            df.set_index('dateTime',inplace = True)
+
         return(df)
+
+    def queryWhen(self,table= '',after = '', before = '',cols = '*'):
+        return(self.query('select %s from %s where dateTime between "%s" and "%s"'%(cols,table,after,before)))
+

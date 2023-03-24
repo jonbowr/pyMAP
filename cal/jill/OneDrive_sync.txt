@@ -1,0 +1,1 @@
+onedrive --confdir="~/.config/IMAPlo_cal_box" --download-only --single-directory "IMAP-Lo-box (1)/Science/Testing/IMAPlo_Cal" --synchronize
