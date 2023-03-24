@@ -62,7 +62,7 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
         itter = dats
 
     for lab,thing in itter:
-        
+
         slabel = str(lab)
 
         labs = {}
@@ -117,7 +117,8 @@ def tofs_2d(thing,pltx,plty,binnum = 75,
                         logbins = False,
                         logcol =True,
                         units ='[nS]',
-                        tof_ref_lines = {}):
+                        tof_ref_lines = {},
+                        tof_mass_line = None):
     from pyMAP import bowPy as bp
     if hist_bins == {}:
         bins = {}
@@ -157,6 +158,11 @@ def tofs_2d(thing,pltx,plty,binnum = 75,
         ref_tofs.apply(lambda x: ax.axhline(x[plty]),axis = 1)
         
         bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
+
+    if tof_mass_line !=None:
+        from .tof import mass_line
+        mline = mass_line(tof_mass_line)
+        ax.plot(mline[pltx],mline[plty],label = 'mass line')
 
     return(fig,ax)
     
