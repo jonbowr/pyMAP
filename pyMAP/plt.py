@@ -45,7 +45,6 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
         fig,ax = plt.subplots()
         axs = np.array([ax])
     fig.set_size_inches(9,4*len(axs))
-    
 
     # Setup itter
     if type(dats) is dict or type(dats) is pd.Series:
@@ -78,24 +77,23 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
                 ax.hist(thing[nam],bins = hist_bins[nam],density = logbin_check,alpha = .8,
                         histtype = 'step',color = 'k')
     
-    if tof_ref_lines !={}:
-        from .tof import tof_expected
-        ref_tofs = tof_expected(**tof_ref_lines)
-    else: ref_tofs = []
-
     for nam,ax in zip(hist_plt,axs.reshape(-1,1).flatten()):
         ax.set_xlabel(' '.join([nam,units]))
         ax.set_xlim(min(hist_bins[nam]),max(hist_bins[nam]))
         ax.set_ylabel('counts')
         if tof_ref_lines !={}:
+            from .tof import tof_expected,tof3_peaks_EM,tof3_lables
+            ref_tofs = tof_expected(**tof_ref_lines)
             if nam != 'TOF3':
                 ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[nam],'%.2d, %d'%(x['ke'],x['m']),ax = ax),axis = 1)
                 bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
+            else:
+                for tof,lab in zip(tof3_peaks_EM,tof3_lables):
+                    bp.plotJon.annot.vline(tof,lab,ax = ax)
+                bp.plotJon.annot.vline(ax.get_xlim()[0],'loEM',ax = ax)
         if legend and legend_loc.lower() == 'inside':
             ax.legend()
-
     fig.tight_layout()
-
     return(fig,axs)
 
 def tofs_2d(thing,pltx,plty,bins = 75,

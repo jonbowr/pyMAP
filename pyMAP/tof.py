@@ -1,21 +1,15 @@
 import numpy as np
 import pandas as pd
 import periodictable as perd
-
-# IBEX-lo Tof3 quadrant values, determined through flight data analysis
-tof_3_peaks = [0.6900568049562702, 4.018218774092078, 7.277728085556459, 11.991842880356202]
-# IMAP-lo em quadrant values, determined through spectra analysis 
-tof3_peaks_EM = [ 1.92932145,  4.81973704,  7.84855093, 12.6265124 ]
-# electron flight time determined through simulation
-t_elec = {1:4.375828,2:4.097131}
-tof_dims = {'TOF0':50,'TOF1':22.5,'TOF2':27.7}
-m_elec = .00055 #AMU
-
+from tof_const import *
 
 def tof_expected(ke=16000,
-                 species = 'H',
-                 mass = None,
-                quadrant = 0,include_delay = False,q = 1,e_loss = 0):
+                    species = 'H',
+                    mass = None,
+                    quadrant = 0,
+                    include_delay = False,
+                    q = 1,
+                    e_loss = 0):
 
     ke = np.array(ke).reshape(-1)
     if type(species) is str:
@@ -24,7 +18,7 @@ def tof_expected(ke=16000,
         species = np.array(species).reshape(-1)
 
     if mass == None:
-        mass = np.array([(perd.elements.symbol(spec if spec != 'H2' else 'D').mass if spec != 'e' else m_elec) for spec in species]).reshape(-1)
+        mass = np.array([(perd.elements.symbol(spec if spec != 'H2' else 'D').mass if spec != 'e' else m_elec_amu) for spec in species]).reshape(-1)
     else: 
         mass = np.array(mass).reshape(-1)
         species = ['NaN']*len(mass)
@@ -34,7 +28,7 @@ def tof_expected(ke=16000,
     dfs = []
     for spec,m in zip(species,mass):
         tof3_expected = quadrant*4
-        d_out = {thing:[] for thing in ['species','m','ke','v0','delay']+list(tof_dims.keys())+['TOF3']}
+        d_out = {thing:[] for thing in ['species','m','ke','v0','delay']+list(tof_dims_cm.keys())+['TOF3']}
 
         v0 = v_00(m,ke*(1-e_loss),q)
         v1 = v0*(1-e_loss)**(1/2)
@@ -44,7 +38,7 @@ def tof_expected(ke=16000,
         d_out['ke']=ke
         d_out['v0']=v0
         d_out['delay']=np.array([include_delay]*len(ke))
-        for lab,val in tof_dims.items():
+        for lab,val in tof_dims_cm.items():
             tof_offset = 0
             if include_delay == True:
                 if lab == 'TOF0':
@@ -63,21 +57,17 @@ def mass_line(ke):
 
 def v_00(m,Vinc=7000,q = 1):
     # For a given mass and voltage drop, calculates the resulting velocity in cm/nS
-    amu_c = 1.66*10**-27
-    cm_c = 10**6
-    qVinc = Vinc*1.6*10**-19*q
+
+    qVinc = Vinc*qv*q
     return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
 
 def tof_to_ke(tof,m,leg = 'TOF0',q = 1):
     # For a given tof,mass and leg, calculates the incident energy in eV
-    amu_c = 1.66*10**-27
-    cm_c = 10**6
-    qv = 1.6*10**-19
-    return((tof_dims[leg]/tof*cm_c)**2*amu_c*m/(2*qv*q))
+    return((tof_dims_cm[leg]/tof*cm_c)**2*amu_c*m/(2*qv*q))
     # return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
 
 
-def delay_line_offset(tof3=tof_3_peaks):
+def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
 
     A = np.array([ [ 1, 1, 1, 1],
                    [-1, 1, 1, 1],
@@ -99,7 +89,7 @@ def tof_speeds(df):
     # calculates the tof speeds from the ToF dimensions in cm/ns
     # assumes a straight line trajectory
     mindt = 0
-    di = tof_dims
+    di = tof_dims_cm
     vs = {}
     for lab in di:
         vs[lab] = di[lab]/df[lab]
@@ -125,20 +115,20 @@ def remove_delay_line(df_in):
     # define the newly calculated tof values
     delay = delay_interp(tof3,delay_line_offset(tof3_peaks_EM))
 
-    df['TOF0'] = tof0-delay['b0'].values + t_elec[1]
-    df['TOF1'] = tof1-delay['b3'].values + t_elec[2]
-    df['TOF2'] = tof2+t_elec[1] - t_elec[2]
+    df['TOF0'] = tof0-delay['b0'].values + t_elec_ns[1]
+    df['TOF1'] = tof1-delay['b3'].values + t_elec_ns[2]
+    df['TOF2'] = tof2+t_elec_ns[1] - t_elec_ns[2]
 
     return(df)
-
-def get_checksum(df):
-    return(calc_checksum(*[df['TOF%d'%i] for i in range(4)]))
 
 # def remove_delay_line(df):
 #     df_nd = df.copy()
 #     df_nd['TOF0'] =df_nd['TOF0']+df_nd['TOF3']/2 
 #     df_nd['TOF1'] =df_nd['TOF1']-df_nd['TOF3']/2 
 #     return(df_nd)
+
+def get_checksum(df):
+    return(calc_checksum(*[df['TOF%d'%i] for i in range(4)]))
 
 def log_checksum(df,check_max = 1):
     return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
