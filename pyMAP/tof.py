@@ -59,7 +59,7 @@ def tof_expected(ke=16000,
     return(dfs)
     
 def mass_line(ke):
-    return(pd.concat([tof_expected(ke,mass = m*perd.mass.neutron_mass) for m in range(32)]))
+    return(pd.concat([tof_expected(ke,mass = m) for m in range(86)]))
 
 def v_00(m,Vinc=7000,q = 1):
     # For a given mass and voltage drop, calculates the resulting velocity in cm/nS
