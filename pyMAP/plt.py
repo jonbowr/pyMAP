@@ -82,15 +82,15 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
         ax.set_xlim(min(hist_bins[nam]),max(hist_bins[nam]))
         ax.set_ylabel('counts')
         if tof_ref_lines !={}:
-            from .tof import tof_expected,tof3_peaks_EM,tof3_lables
+            from .tof import tof_expected,tof3_peaks_ns
             ref_tofs = tof_expected(**tof_ref_lines)
             if nam != 'TOF3':
                 ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[nam],'%.2d, %d'%(x['ke'],x['m']),ax = ax),axis = 1)
                 bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
-            else:
-                for tof,lab in zip(tof3_peaks_EM,tof3_lables):
-                    bp.plotJon.annot.vline(tof,lab,ax = ax)
-                bp.plotJon.annot.vline(ax.get_xlim()[0],'loEM',ax = ax)
+            # else:
+            #     for tof,lab in zip(tof3_peaks_EM,tof3_lables):
+            #         bp.plotJon.annot.vline(tof,lab,ax = ax)
+            #     bp.plotJon.annot.vline(ax.get_xlim()[0],'loEM',ax = ax)
         if legend and legend_loc.lower() == 'inside':
             ax.legend()
     fig.tight_layout()

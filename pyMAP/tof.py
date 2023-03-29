@@ -47,7 +47,7 @@ def mass_line(ke):
     return(pd.concat([tof_expected(ke,mass = m) for m in range(86)]))
 
 def v_00(m,Vinc=7000,q = 1):
-    # For a given mass and voltage drop, calculates the resulting velocity in cm/nS
+    # For a given mass and voltage, calculates the resulting velocity in cm/nS
 
     qVinc = Vinc*qv*q
     return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
@@ -180,8 +180,6 @@ def clean(df_in,
               min_tof = 0,
               min_apply = ['TOF0','TOF1','TOF2','TOF3']):
     df = df_in.copy()
-
-
 
     log_good = [np.ones(len(df)).astype(bool)]
 
