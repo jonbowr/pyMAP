@@ -1,4 +1,4 @@
-from .tools.sql import *
+from .sql import *
 
 class jill:
 
@@ -21,7 +21,7 @@ class jill:
         # Credentials to database connection
         df = pd.read_sql(text(sql_query),self.connection)
         if 'dateTime' in df:
-            from .tools import time
+            from pyMAP.pyMAP.tools import time
             df['dateTime'] = df['dateTime'].apply(time.localize_to_tz)
             df.set_index('dateTime',inplace = True)
 
