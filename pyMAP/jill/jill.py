@@ -28,7 +28,7 @@ class jill:
         return(df)
 
     def queryWhen(self,table= '',after = '',
-                        before = '',cols = ['*']):
+                        before = '',cols = '*'):
         # Query database in time
         #       if table is given as a list of table names, the tables are combined,
         #       and the measurement times not shared are interpolated
