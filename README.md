@@ -34,7 +34,7 @@ set of plotting tools tailored to visualizing IMAPlo calibration data. Currently
 library of load functions to take raw calibration data and import to pandas dataframe. Specifically see pyMAP.data.load. 
 
 ## Jill: IMAPlo SQL Calibration Database
-Jill is a server housed in Morse Hall at UNH, containing the IMAPlo instrument calibration data. The server is 20TB of Raid 5 storage, with daily state backup. Raw data is ingested from the IMAPlo calibration sharepoint server science/testing/IMAPlo_Cal.
+Jill is a server housed in Morse Hall at UNH, containing the IMAPlo instrument calibration data. The server is 20TB of Raid 5 storage, with daily state backup. Raw data is back up, using the Onedrive Linux API, and ingested from the IMAPlo calibration sharepoint server science/testing/IMAPlo_Cal.
 
 ### DB access
 - see examples/jill access example.ipynb

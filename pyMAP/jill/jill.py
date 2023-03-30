@@ -27,19 +27,32 @@ class jill:
 
         return(df)
 
-    def queryWhen(self,table= '',after = '', before = '',cols = '*'):
+    def queryWhen(self,table= '',after = '',
+                        before = '',cols = ['*']):
         # Query database in time
         #       if table is given as a list of table names, the tables are combined,
         #       and the measurement times not shared are interpolated
+        from .data_groups import data_groups
         if type(table) == list:
             tabs = []
             for t in table:
                 tabs.append(self.query(\
                     'select %s from %s where dateTime between "%s" and "%s"'%(\
-                                            cols,t,after,before)))
+                                            ','.join(cols),t,after,before)))
+            return(pd.concat(tabs).sort_index().interpolate('time').drop_duplicates())
+        elif table in data_groups:
+            tab_dict = data_groups[table]
+            tabs = []
+            for t,keys in tab_dict.items():
+                tabs.append(self.query(\
+                    'select %s from %s where dateTime between "%s" and "%s"'%(\
+                                            ','.join(keys),t,after,before)))
+            # return(tabs)
             return(pd.concat(tabs).sort_index().interpolate('time').drop_duplicates())
         elif type(table)==str:
             return(self.query(\
             'select %s from %s where dateTime between "%s" and "%s"'%(\
                                             cols,table,after,before)))
+
+
 
