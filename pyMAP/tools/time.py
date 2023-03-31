@@ -3,7 +3,7 @@ from datetime import timedelta
 import time
 import numpy as np
 import pandas as pd
-
+import pytz
 
 def gps_to_datetime(gps_time):
 
@@ -44,15 +44,25 @@ def shcoarse_to_datetime(timestanp):
 
     return date_time
 
-
-def localize_to_tz(naive,zone):
+def localize_to_tz(naive,zone = 'est'):
     # Set zone information
     if zone =='est':
         local=pytz.timezone('US/Eastern').localize(naive)
-        print('eastern')
     elif zone=='bern':
         local=pytz.timezone('Europe/Zurich').localize(naive)
     else:
         raise Exception("""Please choose a valid time zone : 'est', 'bern'""")
     #return date with zone information added
-    return localized
+    return local
+
+def get_file_times(path):
+    import os
+    ti_c = os.path.getctime(path)
+    ti_m = os.path.getmtime(path)
+     
+    # Converting the time in seconds to a timestamp
+    # c_ti = time.ctime(ti_c)
+    # m_ti = time.ctime(ti_m)
+    c_ti = dt.fromtimestamp(ti_c)
+    m_ti = dt.fromtimestamp(ti_m)
+    return(c_ti,m_ti)

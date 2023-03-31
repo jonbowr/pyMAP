@@ -53,8 +53,8 @@ def get_all_dat(dirName = './',
                 try:
                     ds = load_dt(fil,dtype = dtype,**load_params)
                     # ds['name'] = f.replace(dtype,'')
-                    # ds['file'] = f
-                    ds[dtype+'_fil'] = f
+                    ds['fRAW'] = f
+                    # ds[dtype+'_fil'] = f
                     dats.append(ds)
                 except: 
                     import warnings
@@ -71,13 +71,13 @@ def get_all_dat(dirName = './',
             if dtype in f and run_tag in f:
                 # try:
                     nam = f.replace(dtype,'').lower()
-
                     # ds['name'].append('_'.join(nam.split('_')[:-2]))
-
-                    ds[dtype].append(load_dt(fil,dtype = dtype,**load_params))
+                    df = load_dt(fil,dtype = dtype,**load_params)
+                    df['fRAW'] = f
+                    ds[dtype].append(df)
                     # add name as a tag, remove last 4 characters to give files with same tag,
                     # generated within same 100s the same name
-                    ds['name'].append(nam[:-4])
+                    ds['name'].append(nam)
                     ds[dtype+'_file'].append(fil)
                 # except: 
                 #     print('LOAD FAILED ON FILE: %s'%f)
@@ -85,6 +85,46 @@ def get_all_dat(dirName = './',
         dats.groupby('name').agg({dtype+'_file':list,
                                  dtype:lambda x: pd.concat(list(x),axis = 0).sort_index()})
         return(dats.set_index('name'))
+
+def get_all_dfils(dirName = './',
+                    dtype = '',
+                    load_dt = lambda x: np.nan,
+                    load_params = {},
+                    run_tag = ''):
+    # Function to search directory and find all data files of a given type and grab some metadata
+    import os
+    import pandas as pd
+    import pyMAP.pyMAP.tools.time as time_set
+    fils = getListOfFiles(dirName)
+    
+    ds = {}
+    ds['name'] = []
+    ds['file_path'] = []
+    ds['file_size'] = []
+    ds['dtype'] = []
+    ds['created'] = []
+    ds['last_modified'] = [] 
+
+    for fil in fils:
+        f = os.path.basename(fil)#.split('.')[0]
+        if dtype in f and run_tag in f:
+            # try:
+                nam = f.replace(dtype,'').lower()
+                # add name as a tag, remove last 4 characters to give files with same tag,
+                # generated within same 100s the same name
+                ds['name'].append(f)
+                ds['file_path'].append(fil)
+                ds['file_size'].append(os.path.getsize(fil)*10**-6)
+                ds['dtype'].append(dtype)
+                file_times = time_set.get_file_times(fil)
+                ds['created'].append(file_times[0])
+                ds['last_modified'].append(file_times[1])
+
+            # except: 
+            #     print('LOAD FAILED ON FILE: %s'%f)
+    dats = pd.DataFrame(ds)
+    dats.groupby('name').agg({'file_path':list})
+    return(dats.set_index('name'))
 
 
 def combiner(base,other_in, usecol = 'index'):
@@ -106,10 +146,12 @@ def combiner(base,other_in, usecol = 'index'):
             base_id = rng_norm(base.index)
             other_id = rng_norm(other.index)
         else: 
+            base = base.sort_values(usecol)
+            other = other.sort_values(usecol)
             base_id = base[usecol]
             other_id = other[usecol]
         dat_parts.append(other.iloc[np.digitize(base_id,other_id)-1].reset_index().drop(
-                                                    columns = (other_id.name if usecol is 'index' else usecol)))
+                                                    columns = (other_id.name if usecol == 'index' else usecol)))
     return(pd.concat(dat_parts,axis = 1))
 
 def dat_loc(file_name,home,dtype = ''):

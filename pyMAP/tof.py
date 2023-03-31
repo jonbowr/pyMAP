@@ -1,26 +1,24 @@
 import numpy as np
 import pandas as pd
 import periodictable as perd
+from .tof_const import *
 
-# IBEX-lo Tof3 quadrant values, determined through calibration
-tof_3_peaks = [0.6900568049562702, 4.018218774092078, 7.277728085556459, 11.991842880356202]
-# electron flight time determined through simulation
-t_elec = {1:4.375828,2:4.097131}
-tof_dims = {'TOF0':50,'TOF1':22.5,'TOF2':27.7}
+def tof_expected(ke=16000,
+                    species = 'H',
+                    mass = None,
+                    delay = 0,
+                    q = 1,
+                    e_loss = 0,
+                    instrument = 'nominal'):
 
-def tof_expected(ke_in=16000,
-                 species = 'H',
-                 mass = None,
-                quadrant = 0,include_delay = False,q = 1,e_loss = 0):
-
-    ke = np.array(ke_in).reshape(-1)
+    ke = np.array(ke).reshape(-1)
     if type(species) is str:
         species = np.array(species.split(',')).reshape(-1)
     else:
         species = np.array(species).reshape(-1)
 
-    if mass is None:
-        mass = np.array([perd.elements.symbol(spec if spec != 'H2' else 'D').mass for spec in species]).reshape(-1)
+    if mass == None:
+        mass = np.array([(perd.elements.symbol(spec if spec != 'H2' else 'D').mass if spec != 'e' else m_elec_amu) for spec in species]).reshape(-1)
     else: 
         mass = np.array(mass).reshape(-1)
         species = ['NaN']*len(mass)
@@ -29,39 +27,55 @@ def tof_expected(ke_in=16000,
         
     dfs = []
     for spec,m in zip(species,mass):
-        tof3_expected = quadrant*4
-        d_out = {thing:[] for thing in ['species','m','ke','v0','delay']+list(tof_dims.keys())+['TOF3']}
-
-        v0 = v_00(m,ke*(1-e_loss),q)
-        v1 = v0*(1-e_loss)**(1/2)
-        v_t = {'TOF0':(v0+v1)/2,'TOF1':v1,'TOF2':v0}
-        d_out['species'] = np.array([spec]*len(ke))
-        d_out['m']=np.array([m]*len(ke))
-        d_out['ke']=ke
-        d_out['v0']=v0
-        d_out['delay']=np.array([include_delay]*len(ke))
-        for lab,val in tof_dims.items():
-            tof_offset = 0
-            if include_delay == True:
-                if lab == 'TOF0':
-                    tof_offset = -tof3_expected/2
-                elif lab == 'TOF1':
-                    tof_offset = tof3_expected/2
-            d_out[lab]=val/v_t[lab]+tof_offset
-        d_out['TOF3']=np.array([tof3_expected]*len(ke))
-        dfs.append(pd.DataFrame(d_out))
-    dfs = pd.concat(dfs, ignore_index = True)
-    # dfs.columns = pd.MultiIndex.from_arrays([list(dfs.keys().values),units],names  =['','Units']) 
+        for quad in [delay] if type(delay)!= list else delay: 
+            d_out = {thing:[] for thing in ['species','m','ke','v0']+list(tof_dims_cm.keys())+['TOF3']}
+            v0 = v_00(m,ke*(1-e_loss),q)
+            v1 = v0*(1-e_loss)**(1/2)
+            v_t = {'TOF0':(v0+v1)/2,'TOF1':v1,'TOF2':v0}
+            d_out['species'] = np.array([spec]*len(ke))
+            d_out['m']=np.array([m]*len(ke))
+            d_out['ke']=ke
+            d_out['v0']=v0
+            for lab,val in tof_dims_cm.items():
+                d_out[lab]=val/v_t[lab]
+            d_out['TOF3']=np.array([tof3_peaks_ns[instrument][quad]]*len(ke))
+            dfs.append(pd.DataFrame(d_out))
+    dfs = add_delay_line(pd.concat(dfs, ignore_index = True),instrument)
     return(dfs)
     
+def mass_line(ke):
+    return(pd.concat([tof_expected(ke,mass = m) for m in range(86)]))
+
 def v_00(m,Vinc=7000,q = 1):
-    # For a given mass and voltage drop, calculates the resulting velocity in cm/nS
-    amu_c = 1.66*10**-27
-    cm_c = 10**6
-    qVinc = Vinc*1.6*10**-19*q
+    # For a given mass and voltage, calculates the resulting velocity in cm/nS
+
+    qVinc = Vinc*qv*q
     return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
 
-def delay_line_offset(tof3=tof_3_peaks):
+def tof_to_ke(tof,m,leg = 'TOF0',q = 1):
+    # For a given tof,mass and leg, calculates the incident energy in eV
+    return((tof_dims_cm[leg]/tof*cm_c)**2*amu_c*m/(2*qv*q))
+    # return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
+
+def calc_checksum(tof0,tof1,tof2,tof3):
+    return((tof0+tof3-tof2-tof1))
+
+def tof_speeds(df):
+    # calculates the tof speeds from the ToF dimensions in cm/ns
+    # assumes a straight line trajectory
+    mindt = 0
+    di = tof_dims_cm
+    vs = {}
+    for lab in di:
+        vs[lab] = di[lab]/df[lab]
+    return(vs)
+
+def calc_eLoss(df):
+    vs = tof_speeds(df)
+    return(vs['TOF1']**2/vs['TOF2']**2)
+
+
+def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
 
     A = np.array([ [ 1, 1, 1, 1],
                    [-1, 1, 1, 1],
@@ -76,53 +90,68 @@ def delay_line_offset(tof3=tof_3_peaks):
     ft3 = (lambda x,y: abs(x-y))
     return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,columns = ['Q','tof3','b0','b3']))
 
-def calc_checksum(tof0,tof1,tof2,tof3):
-    return((tof0+tof3-tof2-tof1))
+def delay_shift(tof0,tof1,tof2,tof3,instrument,technique):
+    print(technique)
 
-def tof_speeds(df):
-    # calculates the tof speeds from the ToF dimensions in cm/ns
-    # assumes a straight line trajectory
-    mindt = 0
-    di = tof_dims
-    vs = {}
-    for lab in di:
-        vs[lab] = di[lab]/df[lab]
-    return(vs)
+    if technique == 'signal':
+        from scipy.interpolate import interp1d
+        def delay_interp(tof3,d_effects):
+            f_rn = interp1d(d_effects['tof3'],d_effects['Q'],kind = 'nearest',
+                                bounds_error = False,fill_value="extrapolate")
+            return(d_effects[['b0','b3']].iloc[f_rn(tof3).astype(int)]) 
 
-def calc_eLoss(df):
-    vs = tof_speeds(df)
-    return(vs['TOF1']**2/vs['TOF2']**2)
+        # define the newly calculated tof values
+        delay = delay_interp(tof3,delay_line_offset(tof3_peaks_ns[instrument]))
 
-# def remove_delay_line(df_in):
-#     df = df_in.copy()      
-#     tof0 = df['TOF0']
-#     tof1 = df['TOF1']
-#     tof2 = df['TOF2']
-#     tof3 = df['TOF3']
-    
-#     from scipy.interpolate import interp1d
-#     def delay_interp(tof3,d_effects):
-#         f_rn = interp1d(d_effects['tof3'],d_effects['Q'],kind = 'nearest',
-#                             bounds_error = False,fill_value="extrapolate")
-#         return(d_effects[['b0','b3']].iloc[f_rn(tof3).astype(int)]) 
+        dtof0 = -delay['b0'].values + t_elec_ns[1]
+        dtof1 = -delay['b3'].values + t_elec_ns[2]
+        dtof2 = t_elec_ns[1] - t_elec_ns[2]
+    elif technique == 'average':
+        dtof0 = tof3/2
+        dtof1 = -tof3/2
+        dtof2 = np.zeros(len(tof3))
+    return(dtof0,dtof1,dtof2)
 
-#     # define the newly calculated tof values
-#     delay = delay_interp(tof3,delay_line_offset())
+def remove_delay_line(df_in,
+                        instrument = 'imap_lo_em',
+                      technique = 'signal'):
+    # Function to input standard DE data and output copied dataframe with new
+    #   tof0,1,2 values associated with delay line removal
+    # technique [str]: keyword to remove the delay effects [signal,average]
+    #       signal: use calibration of delay line offset values
+    #       average: standard tof3/2 techique
 
-#     df['TOF0'] = tof0-delay['b0'].values +t_elec[1]
-#     df['TOF1'] = tof1-delay['b3'].values + t_elec[1]
-#     df['TOF2'] = tof2+t_elec[2] - t_elec[2]
+    df = df_in.copy()      
+    tof0 = df['TOF0']
+    tof1 = df['TOF1']
+    tof2 = df['TOF2']
+    tof3 = df['TOF3']
+    # get_delay line shifts
+    dtof0,dtof1,dtof2 = delay_shift(*df[['TOF%d'%q for q in range(4)]].T.values,
+                                        instrument = instrument,technique=technique)
+    df['TOF0'] = tof0+dtof0
+    df['TOF1'] = tof1+dtof1
+    df['TOF2'] = tof2+dtof2
+    return(df)
 
-#     return(df)
+def add_delay_line(df_in,
+                        instrument = 'imap_lo_em',
+                      technique = 'signal',):
+    df = df_in.copy()      
+    tof0 = df['TOF0']
+    tof1 = df['TOF1']
+    tof2 = df['TOF2']
+    tof3 = df['TOF3']
+    # get_delay line shifts
+    dtof0,dtof1,dtof2 = delay_shift(*df[['TOF%d'%q for q in range(4)]].T.values,
+                                        instrument = instrument,technique=technique)
+    df['TOF0'] = tof0-dtof0
+    df['TOF1'] = tof1-dtof1
+    df['TOF2'] = tof2-dtof2
+    return(df)
 
 def get_checksum(df):
     return(calc_checksum(*[df['TOF%d'%i] for i in range(4)]))
-
-def remove_delay_line(df):
-    df_nd = df.copy()
-    df_nd['TOF0'] =df_nd['TOF0']+df_nd['TOF3']/2 
-    df_nd['TOF1'] =df_nd['TOF1']-df_nd['TOF3']/2 
-    return(df_nd)
 
 def log_checksum(df,check_max = 1):
     return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
@@ -151,8 +180,6 @@ def clean(df_in,
               min_tof = 0,
               min_apply = ['TOF0','TOF1','TOF2','TOF3']):
     df = df_in.copy()
-
-
 
     log_good = [np.ones(len(df)).astype(bool)]
 
