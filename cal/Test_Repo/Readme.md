@@ -4,7 +4,7 @@ TEST_CONDUCTOR
 TEST_CONDUCTOR_CONTACT_INFO   
 MM/DD/YYYY
 
-This test repo was auto generated through simPyon
+This test repo was auto generated using pyMAP
 ---
 
 ## Test Outline
