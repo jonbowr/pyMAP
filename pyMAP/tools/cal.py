@@ -2,33 +2,37 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 
-def cal_headder(fil):
-    stuff = ''
-    for t in open(fil).readlines():
-        if '#' in t:
-            stuff+=t
-    head = []
-    for s in stuff.split('Group')[1].split('\n'):
-        sml = s.strip().strip('#').strip()
-        if '.' in sml:
-            try:
-                hnam = sml.split('.')[1].strip(')').strip('"')
-                if hnam not in head:
-                    head.append(hnam)
-                else:
-                    head.append(hnam+'2')
-            except:
-                print('dat import failed: %s'%fil)
-                return
-    return(head)
+def db_init(loc = './',
+                    instrument_version = '',
+                    test_name = '',
+                    test_index = '',
+                    test_facility = '',
+                    ):
+    # Basic tool to copy and populate the standard test repository to the desired location
+    
 
-
-def db_init(loc = './',test_name = ''):
-    [
-    'AsPlanned.xlxs',
-    'AsRun.xlxs',
-    'Test_Procedure.docx',
-    'Test_Plan.docx',
-    ]
-
+    # Define test label based on imput
+    test_label = '%s_%s-%s_%s'%(instrument_version,
+                                    test_name,
+                                    test_index,
+                                    test_facility)
     import os
+    from shutil import copytree
+
+    # Copy test DB filestructure over
+    lpath = os.path.dirname(__file__)
+    for up in range(2):
+        lpath = os.path.dirname(lpath+'..')
+    copytree("%s/cal/Test_Repo"%lpath,loc+test_label)
+
+    # Rename subdocuments
+    default_docs = [
+                    'AsPlanned.xlsx', 
+                    'AsRun.xlsx', 
+                    'IMAP_lo_TestProcedure.doc', 
+                    'TestPlan.docx', 
+                    'TestReport.docx'
+                    ]
+    for docnam in default_docs:
+        os.rename(os.path.join(loc+test_label,docnam),
+                  os.path.join(loc+test_label,test_label+'_'+docnam))
