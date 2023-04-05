@@ -5,9 +5,9 @@ loadlib = {
             'imap_lo_em':instrument.IMAP_lo_EM.load
             }
 
-def load(loc,instrument = 'imap_lo_em',
-                            dtype = 'TOF_DE_sample',
-                            load_params = {}):
+def load(loc,dtype = 'TOF_DE_sample',
+            instrument = 'imap_lo_em',
+                        load_params = {}):
     import os
     if os.path.isfile(loc):
         return(loadlib[instrument](loc,dtype,**load_params))

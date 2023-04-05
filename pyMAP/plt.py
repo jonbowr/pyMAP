@@ -176,17 +176,34 @@ def tofs_2d(thing,pltx,plty,bins = 75,
     ax.set_ylim(yrng)
 
     return(fig,ax)
-    
-def plot_data(df,plt_groups,smooth = 10):
-    axss = []
+
+
+# define dict with same keys as data_groups to setup plot groups of data
+#   might want to move this to a different locaiton or combine somehow with data_groups
+standard_groups = {
+        'ILO_EM_status':
+            {
+            'single_rates [cts/s]':['START_A', 'START_C', 'STOP_B0', 'STOP_B3'],                 
+            'tof_rate[cts/s]':['TOF0','TOF1','TOF2','TOF3','SILVER'],             
+            'Efficiency':['Eff_A','Eff_B','Eff_C','Eff_TRIP'],      
+           'Monitors':['MCP_VM','MCP_CM','MCP_VSET','PAC_VSET','PAC_VM','PAC_CM'],          
+           'volts[V]':['TOF_MCP_VM','PAC_VM_volt'],  
+           'Board Temp':['TEMP1','TEMP0','LV_TEMP','MCP_TEMP','PAC_TEMP'],        
+           'Threshold register':['AN_A_THR_REG','AN_B0_THR_REG','AN_B3_THR_REG','AN_C_THR_REG'],                    
+           } 
+        }
+
+def df_plot_groups(df,plt_grps={}):
+    # plots columns of datframe df defined by selector plt_groups 
+    if type(plt_grps) == str:
+        plt_grps = standard_groups[plt_grps]
     fig,axs = plt.subplots(len(plt_grps.keys()),sharex = True)
     fig.set_size_inches(10,len(axs)*4)
     for lab,vals,ax in zip(plt_grps.keys(),plt_grps.values(),axs):
-        for y in plt_grps[lab]['yplt']:
-            ax.plot(dat[y].rolling(smooth).median(),label = y)
+        for y in plt_grps[lab]:
+            ax.plot(df[y],label = y)
         ax.set_ylabel(lab)
         ax.legend()
-
-    axs[-1].set_xlabel(['dateTime'])
-    return(axss)
+    axs[-1].set_xlabel(df.index.name)
+    return(fig,axs)
     

@@ -65,3 +65,26 @@ def db_analysis_generator(loc = './'):
     inter = interactive(file_cop,{'manual':True})
     return(inter)
     
+def raw_mcp_gain(f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT,
+                 home = '../Test Data/Sensor/csv',
+                 rolling = 'min',
+                 plt_groups = {'tof_rate[cts/s]':['TOF0','TOF1','TOF2','TOF3','SILVER'],
+                                'single_rates [cts/s]':['START_A', 'START_C', 'STOP_B0', 'STOP_B3'],
+                                'Efficiency':['Eff_A','Eff_B','Eff_C','Eff_TRIP']},
+                use_x = 'MCP_VM'):
+    from pyMAP.pyMAP.data.load import load
+    from pyMAP.pyMAP.tools import tools
+    import os
+    from pyMAP.pyMAP.plt import df_plot_groups
+    dtypes = ['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT']
+    fils = [f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT]
+    dats =[load(os.path.join(home,fil),dtype=dt)\
+                                 for fil,dt in zip(fils,dtypes)]
+    data = tools.concat_combine(dats,'time').rolling(rolling).median()
+    # data = tools.combiner(dats[0],dats[1:],'SHCOARSE')
+    fig,axs = df_plot_groups(data.reset_index().set_index(use_x).sort_index(),
+                             plt_groups)
+
+    axs[0].set_title('MCP Gain',fontsize=20)
+
+    return(fig,axs,data)
