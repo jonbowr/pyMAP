@@ -177,4 +177,16 @@ def tofs_2d(thing,pltx,plty,bins = 75,
 
     return(fig,ax)
     
+def plot_data(df,plt_groups,smooth = 10):
+    axss = []
+    fig,axs = plt.subplots(len(plt_grps.keys()),sharex = True)
+    fig.set_size_inches(10,len(axs)*4)
+    for lab,vals,ax in zip(plt_grps.keys(),plt_grps.values(),axs):
+        for y in plt_grps[lab]['yplt']:
+            ax.plot(dat[y].rolling(smooth).median(),label = y)
+        ax.set_ylabel(lab)
+        ax.legend()
+
+    axs[-1].set_xlabel(['dateTime'])
+    return(axss)
     
