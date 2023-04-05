@@ -28,3 +28,6 @@ def gauss_filt_nan(arr, sigma,mode = 'constant'):
     gauss += loss * arr
 
     return gauss
+
+def concat_combine(list_df,interper = 'time'):
+    return(pd.concat(tabs).sort_index().interpolate(interper).drop_duplicates())
