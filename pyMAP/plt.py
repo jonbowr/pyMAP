@@ -177,6 +177,29 @@ def tofs_2d(thing,pltx,plty,bins = 75,
 
     return(fig,ax)
 
+def tofs_comprehensive(dats,
+                        bins = 75,
+                        bin_range = {
+                                'TOF0': [.1,350],
+                               'TOF1':[.1,250],
+                               'TOF2':[.1,150],
+                               'TOF3':[.1,50]},  
+                        logbins = False,
+                        tof_ref_lines = {},
+                        units ='[nS]'
+                        ):
+    fig,axs = tofs_1d(dats,bins = bins,
+                           bin_range = bin_range,
+                           tof_ref_lines = tof_ref_lines,
+                           logbins= logbins)
+    tofx = ['TOF0','TOF2','TOF0']
+    tofy = ['TOF1','TOF1','TOF2']
+    for xpl,ypl in zip(tofx,tofy):
+        tofs_2d(dats,xpl,ypl,
+                bins = bins,
+                bin_range = bin_range,
+                tof_ref_lines = tof_ref_lines,
+                logbins= logbins)
 
 # define dict with same keys as data_groups to setup plot groups of data
 #   might want to move this to a different locaiton or combine somehow with data_groups

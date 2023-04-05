@@ -88,3 +88,11 @@ def raw_mcp_gain(f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT,
     axs[0].set_title('MCP Gain',fontsize=20)
 
     return(fig,axs,data)
+
+def raw_DE_import(f_ILO_RAW_DE,
+                   home = '../Test Data/Sensor/csv',
+                   dtype = 'ILO_RAW_DE'):
+    import os
+    from pyMAP.pyMAP.data.load import load
+    return(load(os.path.join(home,f_ILO_RAW_DE),
+                     dtype = dtype))
