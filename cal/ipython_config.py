@@ -7,7 +7,7 @@
 # turn on Auto reload
 c.InteractiveShellApp.exec_lines = []
 c.InteractiveShellApp.exec_lines.append('import sys')
-c.InteractiveShellApp.exec_lines.append(r'sys.path.append(r"C:\Users\Jonny Woof\Google Drive\Python_packages_woof")')
+c.InteractiveShellApp.exec_lines.append(r'sys.path.append(r"INPUT/PATH/LOCATION/TO/GITSPOT")')
 
 c.InteractiveShellApp.exec_lines.append('%load_ext autoreload')
 c.InteractiveShellApp.exec_lines.append('%autoreload 2')
