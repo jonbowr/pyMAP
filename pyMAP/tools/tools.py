@@ -28,3 +28,33 @@ def gauss_filt_nan(arr, sigma,mode = 'constant'):
     gauss += loss * arr
 
     return gauss
+
+def concat_combine(list_df,interper = 'time'):
+    return(pd.concat(list_df).sort_index().interpolate(interper).drop_duplicates())
+
+def combiner(base,other_in, usecol = 'index'):
+    # use np.in1d to combine values between data frames
+    def rng_norm(arr):
+        return((arr-min(arr))/(max(arr)-min(arr)))
+    
+    if type(other_in) != list:
+        other_IT = [other_in]
+    else: 
+        other_IT = other_in
+        
+    dat_parts = [base.reset_index()]
+    for other in other_IT: 
+        if usecol == 'index':
+            base_id = base.index
+            other_id = other.index
+        elif usecol == 'index_norm':
+            base_id = rng_norm(base.index)
+            other_id = rng_norm(other.index)
+        else: 
+            base = base.sort_values(usecol)
+            other = other.sort_values(usecol)
+            base_id = base[usecol]
+            other_id = other[usecol]
+        dat_parts.append(other.iloc[np.digitize(base_id,other_id)-1].reset_index().drop(
+                                                    columns = (other_id.name if usecol == 'index' else usecol)))
+    return(pd.concat(dat_parts,axis = 1))

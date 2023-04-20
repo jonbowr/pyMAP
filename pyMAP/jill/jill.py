@@ -24,7 +24,6 @@ class jill:
             from pyMAP.pyMAP.tools import time
             df['dateTime'] = df['dateTime'].apply(time.localize_to_tz)
             df.set_index('dateTime',inplace = True)
-
         return(df)
 
     def queryWhen(self,table= '',after = '',

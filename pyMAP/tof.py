@@ -6,19 +6,24 @@ from .tof_const import *
 def tof_expected(ke=16000,
                     species = 'H',
                     mass = None,
-                    delay = 0,
                     q = 1,
                     e_loss = 0,
+                    delay_quad = None,
                     instrument = 'nominal'):
 
     ke = np.array(ke).reshape(-1)
+    # Setup species array, parse input type
     if type(species) is str:
         species = np.array(species.split(',')).reshape(-1)
     else:
         species = np.array(species).reshape(-1)
 
+    # setup mass arrays, parse input types
     if mass == None:
-        mass = np.array([(perd.elements.symbol(spec if spec != 'H2' else 'D').mass if spec != 'e' else m_elec_amu) for spec in species]).reshape(-1)
+        mass = np.array([(perd.elements.symbol(spec\
+                         if spec != 'H2' else 'D').mass\
+                             if spec != 'e' else m_elec_amu)\
+                                 for spec in species]).reshape(-1)
     else: 
         mass = np.array(mass).reshape(-1)
         species = ['NaN']*len(mass)
@@ -26,9 +31,11 @@ def tof_expected(ke=16000,
     units = ['','[amu]','[eV]','[cm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
         
     dfs = []
+    # Loop through mass and species arrays to calculate the dataframe of ref values
     for spec,m in zip(species,mass):
-        for quad in [delay] if type(delay)!= list else delay: 
-            d_out = {thing:[] for thing in ['species','m','ke','v0']+list(tof_dims_cm.keys())+['TOF3']}
+        for quad in [delay_quad] if type(delay_quad)!= list else delay_quad: 
+            d_out = {thing:[] for thing in ['species','m','ke','v0']+\
+                                    list(tof_dims_cm.keys())+['TOF3']}
             v0 = v_00(m,ke*(1-e_loss),q)
             v1 = v0*(1-e_loss)**(1/2)
             v_t = {'TOF0':(v0+v1)/2,'TOF1':v1,'TOF2':v0}
@@ -38,7 +45,8 @@ def tof_expected(ke=16000,
             d_out['v0']=v0
             for lab,val in tof_dims_cm.items():
                 d_out[lab]=val/v_t[lab]
-            d_out['TOF3']=np.array([tof3_peaks_ns[instrument][quad]]*len(ke))
+            d_out['TOF3']=np.array([tof3_peaks_ns[instrument][quad]\
+                             if quad != None else np.nan]*len(ke))
             dfs.append(pd.DataFrame(d_out))
     dfs = add_delay_line(pd.concat(dfs, ignore_index = True),instrument)
     return(dfs)
@@ -48,7 +56,6 @@ def mass_line(ke):
 
 def v_00(m,Vinc=7000,q = 1):
     # For a given mass and voltage, calculates the resulting velocity in cm/nS
-
     qVinc = Vinc*qv*q
     return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
 
@@ -74,7 +81,6 @@ def calc_eLoss(df):
     vs = tof_speeds(df)
     return(vs['TOF1']**2/vs['TOF2']**2)
 
-
 def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
 
     A = np.array([ [ 1, 1, 1, 1],
@@ -88,11 +94,12 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
     b3 = np.array([d0+d1+d2+d3,d1+d2+d3,d2+d3,d3])
 
     ft3 = (lambda x,y: abs(x-y))
-    return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,columns = ['Q','tof3','b0','b3']))
+    return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,
+                            columns = ['Q','tof3','b0','b3']))
 
-def delay_shift(tof0,tof1,tof2,tof3,instrument,technique):
-    print(technique)
-
+def delay_shift(tof0,tof1,tof2,tof3,
+                            instrument,
+                            technique='signal'):
     if technique == 'signal':
         from scipy.interpolate import interp1d
         def delay_interp(tof3,d_effects):
@@ -102,7 +109,6 @@ def delay_shift(tof0,tof1,tof2,tof3,instrument,technique):
 
         # define the newly calculated tof values
         delay = delay_interp(tof3,delay_line_offset(tof3_peaks_ns[instrument]))
-
         dtof0 = -delay['b0'].values + t_elec_ns[1]
         dtof1 = -delay['b3'].values + t_elec_ns[2]
         dtof2 = t_elec_ns[1] - t_elec_ns[2]
@@ -110,11 +116,13 @@ def delay_shift(tof0,tof1,tof2,tof3,instrument,technique):
         dtof0 = tof3/2
         dtof1 = -tof3/2
         dtof2 = np.zeros(len(tof3))
-    return(dtof0,dtof1,dtof2)
+    return(np.nan_to_num(dtof0)*~np.isnan(tof3),
+            np.nan_to_num(dtof1)*~np.isnan(tof3),
+            np.nan_to_num(dtof2)*~np.isnan(tof3))
 
 def remove_delay_line(df_in,
                         instrument = 'imap_lo_em',
-                      technique = 'signal'):
+                        technique = 'signal'):
     # Function to input standard DE data and output copied dataframe with new
     #   tof0,1,2 values associated with delay line removal
     # technique [str]: keyword to remove the delay effects [signal,average]
@@ -135,8 +143,8 @@ def remove_delay_line(df_in,
     return(df)
 
 def add_delay_line(df_in,
-                        instrument = 'imap_lo_em',
-                      technique = 'signal',):
+                    instrument = 'imap_lo_em',
+                    technique = 'signal',):
     df = df_in.copy()      
     tof0 = df['TOF0']
     tof1 = df['TOF1']
