@@ -11,10 +11,10 @@ def db_init(loc = './',
     # Basic tool to copy and populate the standard test repository to the desired location
 
     # Define test label based on imput
-    test_label = '%s_%s-%s_%s'%(instrument_version,
-                                    test_name,
+    test_label = '%s_%s_%s_%s'%(instrument_version,
                                     test_index,
-                                    test_facility)
+                                    test_facility,
+                                    test_name)
     import os
     from shutil import copytree
 
