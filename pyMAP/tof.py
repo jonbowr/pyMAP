@@ -252,7 +252,17 @@ def get_eff(dat):
     
     return(df.replace([np.inf, -np.inf], np.nan))
 
-
+def de_effic(rawDE):
+    val_keys = rawDE.keys().to_series()
+    dt = max(rawDE['SHCOARSE'])-min(rawDE['SHCOARSE'])
+    df = rawDE[val_keys.loc[val_keys.str.contains('VALID')]].apply('sum')/dt
+    df['SILVER'] = np.sum(log_trips(rawDE))/dt
+    df['Eff_A'] = df['SILVER']/df['VALIDTOF1']
+    df['Eff_C'] = df['SILVER']/df['VALIDTOF0']
+    df['Eff_B'] = df['SILVER']/df['VALIDTOF2']
+    df['Eff_Total'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
+    return(df)
+    
 def fit_tofs(df,
              tof_ranges = {'TOF0':[0,255],
                              'TOF1':[0,255],

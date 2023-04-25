@@ -186,6 +186,7 @@ def tofs_comprehensive(dats,
                                'TOF3':[.1,50]},  
                         logbins = False,
                         tof_ref_lines = {},
+                        tof_mass_line = None,
                         units ='[nS]'
                         ):
     fig,axs = tofs_1d(dats,bins = bins,
@@ -199,7 +200,8 @@ def tofs_comprehensive(dats,
                 bins = bins,
                 bin_range = bin_range,
                 tof_ref_lines = tof_ref_lines,
-                logbins= logbins)
+                logbins= logbins,
+                tof_mass_line = tof_mass_line)
 
 # define dict with same keys as data_groups to setup plot groups of data
 #   might want to move this to a different locaiton or combine somehow with data_groups

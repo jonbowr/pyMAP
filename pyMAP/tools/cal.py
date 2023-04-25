@@ -80,8 +80,8 @@ def raw_mcp_gain(f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT,
     fils = [f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT]
     dats =[load(os.path.join(home,fil),dtype=dt)\
                                  for fil,dt in zip(fils,dtypes)]
-    data = tools.concat_combine(dats,'time').rolling(rolling).median()
-    # data = tools.combiner(dats[0],dats[1:],'SHCOARSE')
+    # data = tools.concat_combine(dats,'time').rolling(rolling).median()
+    data = tools.combiner(dats[0],dats[1:],'SHCOARSE')
     fig,axs = df_plot_groups(data.reset_index().set_index(use_x).sort_index(),
                              plt_groups)
 
