@@ -100,6 +100,7 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
                             technique='signal'):
+    # t_elec_ns = {1:8,2:4.097131}
     if technique == 'signal':
         from scipy.interpolate import interp1d
         def delay_interp(tof3,d_effects):

@@ -187,12 +187,17 @@ def tofs_comprehensive(dats,
                         logbins = False,
                         tof_ref_lines = {},
                         tof_mass_line = None,
-                        units ='[nS]'
+                        units ='[nS]',
+                        logy = False,
                         ):
     fig,axs = tofs_1d(dats,bins = bins,
                            bin_range = bin_range,
                            tof_ref_lines = tof_ref_lines,
                            logbins= logbins)
+    if logy:
+        for ax in axs:
+            ax.semilogy()
+
     tofx = ['TOF0','TOF2','TOF0']
     tofy = ['TOF1','TOF1','TOF2']
     for xpl,ypl in zip(tofx,tofy):

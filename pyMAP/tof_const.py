@@ -11,6 +11,8 @@ tof3_peaks_ns = DataFrame({
                           'imap_lo_em': [ 1.92932145,  4.81973704,  7.84855093, 12.6265124 ],
                         })
 
+
+tof3_bins = [ -2, 1.92932145,  4.81973704,  7.84855093, 12.6265124 ]
 # electron flight time [nS] determined through simulation
 t_elec_ns = {1:4.375828,2:4.097131}
 
