@@ -1,9 +1,10 @@
-from . import instrument
+from . import instrument,asrun
 import numpy as np
 import pandas as pd
 loadlib = {
             'imap_lo_em':instrument.IMAP_lo_EM.load,
             'EMstrSen':instrument.IMAP_lo_EMStrSen.load
+            # 'asrun':asrun.load
             }
 
 def load(loc,
