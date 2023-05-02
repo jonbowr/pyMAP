@@ -40,7 +40,7 @@ def plot_2d_data(dat, tofij=[0,2], xlims=[.1,350],ylims=[.1,350], runname='Uname
         ybinN = bins[1]
         
    
-    tof0,tof1,tof2,tof3,checksum = dat[:,3], dat[:,7], dat[:,11], dat[:,15], dat[:,16]
+    f
     
     
     # Check if caller asked for tofi vs tofj but i=j and raise exception if true.

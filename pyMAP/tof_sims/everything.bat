@@ -1,0 +1,2 @@
+set  infile-name=.\example\EMv2-PSPL-PAC16K-H-step7-20230121_ILO_RAW_DE_20230122T024946_.csv
+python command_line_tool.py -f %message% -o .\example\out_test\PAC16K-H-step7-20230121_ILO_RAW_DE_20230122T024946_with_spttle -st PAC_16kV_E-Step7_H_EMV2
