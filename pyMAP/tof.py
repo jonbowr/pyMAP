@@ -99,7 +99,10 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
 
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
-                            technique='signal'):
+                            technique='signal',
+                            mcp_v = 3000):
+    from .tof_const import f_elec_t
+    t_elec = f_elec_t(mcp_v)
     # t_elec_ns = {1:8,2:4.097131}
     if technique == 'signal':
         from scipy.interpolate import interp1d
@@ -110,9 +113,9 @@ def delay_shift(tof0,tof1,tof2,tof3,
 
         # define the newly calculated tof values
         delay = delay_interp(tof3,delay_line_offset(tof3_peaks_ns[instrument]))
-        dtof0 = -delay['b0'].values + t_elec_ns[1]
-        dtof1 = -delay['b3'].values + t_elec_ns[2]
-        dtof2 = t_elec_ns[1] - t_elec_ns[2]
+        dtof0 = -delay['b0'].values + t_elec[0]
+        dtof1 = -delay['b3'].values + t_elec[1]
+        dtof2 = t_elec[0] - t_elec[1]
     elif technique == 'average':
         dtof0 = tof3/2
         dtof1 = -tof3/2
@@ -123,7 +126,8 @@ def delay_shift(tof0,tof1,tof2,tof3,
 
 def remove_delay_line(df_in,
                         instrument = 'imap_lo_em',
-                        technique = 'signal'):
+                        technique = 'signal',
+                        mcp_v = 3000):
     # Function to input standard DE data and output copied dataframe with new
     #   tof0,1,2 values associated with delay line removal
     # technique [str]: keyword to remove the delay effects [signal,average]
@@ -137,7 +141,7 @@ def remove_delay_line(df_in,
     tof3 = df['TOF3']
     # get_delay line shifts
     dtof0,dtof1,dtof2 = delay_shift(*df[['TOF%d'%q for q in range(4)]].T.values,
-                                        instrument = instrument,technique=technique)
+                                        instrument = instrument,technique=technique,mcp_v)
     df['TOF0'] = tof0+dtof0
     df['TOF1'] = tof1+dtof1
     df['TOF2'] = tof2+dtof2
@@ -187,7 +191,8 @@ def clean(df_in,
               filt_speed = False,
               tof3_picker = None,
               min_tof = 0,
-              min_apply = ['TOF0','TOF1','TOF2','TOF3']):
+              min_apply = ['TOF0','TOF1','TOF2','TOF3'],
+              remove_delay_input = {}):
     df = df_in.copy()
 
     log_good = [np.ones(len(df)).astype(bool)]
@@ -202,7 +207,7 @@ def clean(df_in,
 
     # Remove the delay line offset and electron flight time
     if remove_delay:
-        df = remove_delay_line(df)
+        df = remove_delay_line(df,*remove_delay_input)
     
     # Filter for only logical ToF combinations according to ion speed
     if filt_speed:

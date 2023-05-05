@@ -16,6 +16,11 @@ tof3_bins = [ -2, 1.92932145,  4.81973704,  7.84855093, 12.6265124 ]
 # electron flight time [nS] determined through simulation
 t_elec_ns = {1:4.375828,2:4.097131}
 
+def f_elec_t(mcp_v):
+    # taken from AA sims 5_5_2023
+    return(-.0006*mcp_v+5.94,
+           -.0005*mcp_v+5.44)
+
 # Dimension of TOF in cm
 tof_dims_cm = {'TOF0':50,'TOF1':22.5,'TOF2':27.7}
 
