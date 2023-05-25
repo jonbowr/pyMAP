@@ -11,10 +11,10 @@ def db_init(loc = './',
     # Basic tool to copy and populate the standard test repository to the desired location
 
     # Define test label based on imput
-    test_label = '%s_%s-%s_%s'%(instrument_version,
-                                    test_name,
+    test_label = '%s_%s_%s_%s'%(instrument_version,
                                     test_index,
-                                    test_facility)
+                                    test_facility,
+                                    test_name)
     import os
     from shutil import copytree
 
@@ -80,8 +80,8 @@ def raw_mcp_gain(f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT,
     fils = [f_ILO_IFB,f_ILO_TOF_BD,f_ILO_RAW_CNT]
     dats =[load(os.path.join(home,fil),dtype=dt)\
                                  for fil,dt in zip(fils,dtypes)]
-    data = tools.concat_combine(dats,'time').rolling(rolling).median()
-    # data = tools.combiner(dats[0],dats[1:],'SHCOARSE')
+    # data = tools.concat_combine(dats,'time').rolling(rolling).median()
+    data = tools.combiner(dats[0],dats[1:],'SHCOARSE')
     fig,axs = df_plot_groups(data.reset_index().set_index(use_x).sort_index(),
                              plt_groups)
 

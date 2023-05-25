@@ -99,7 +99,11 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
 
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
-                            technique='signal'):
+                            technique='signal',
+                            mcp_v = 3000):
+    from .tof_const import f_elec_t
+    t_elec = f_elec_t(mcp_v)
+    # t_elec_ns = {1:8,2:4.097131}
     if technique == 'signal':
         from scipy.interpolate import interp1d
         def delay_interp(tof3,d_effects):
@@ -109,9 +113,9 @@ def delay_shift(tof0,tof1,tof2,tof3,
 
         # define the newly calculated tof values
         delay = delay_interp(tof3,delay_line_offset(tof3_peaks_ns[instrument]))
-        dtof0 = -delay['b0'].values + t_elec_ns[1]
-        dtof1 = -delay['b3'].values + t_elec_ns[2]
-        dtof2 = t_elec_ns[1] - t_elec_ns[2]
+        dtof0 = -delay['b0'].values + t_elec[0]
+        dtof1 = -delay['b3'].values + t_elec[1]
+        dtof2 = t_elec[0] - t_elec[1]
     elif technique == 'average':
         dtof0 = tof3/2
         dtof1 = -tof3/2
@@ -122,7 +126,8 @@ def delay_shift(tof0,tof1,tof2,tof3,
 
 def remove_delay_line(df_in,
                         instrument = 'imap_lo_em',
-                        technique = 'signal'):
+                        technique = 'signal',
+                        mcp_v = 3000):
     # Function to input standard DE data and output copied dataframe with new
     #   tof0,1,2 values associated with delay line removal
     # technique [str]: keyword to remove the delay effects [signal,average]
@@ -136,7 +141,7 @@ def remove_delay_line(df_in,
     tof3 = df['TOF3']
     # get_delay line shifts
     dtof0,dtof1,dtof2 = delay_shift(*df[['TOF%d'%q for q in range(4)]].T.values,
-                                        instrument = instrument,technique=technique)
+                                        instrument = instrument,technique=technique,mcp_v=mcp_v)
     df['TOF0'] = tof0+dtof0
     df['TOF1'] = tof1+dtof1
     df['TOF2'] = tof2+dtof2
@@ -185,8 +190,9 @@ def clean(df_in,
               checksum = np.inf,
               filt_speed = False,
               tof3_picker = None,
-              min_tof = 0,
-              min_apply = ['TOF0','TOF1','TOF2','TOF3']):
+              min_tof = np.nan,
+              min_apply = ['TOF0','TOF1','TOF2','TOF3'],
+              remove_delay_input = {}):
     df = df_in.copy()
 
     log_good = [np.ones(len(df)).astype(bool)]
@@ -196,12 +202,13 @@ def clean(df_in,
         log_good.append(log_trips(df))
     
     # Filter for checksum max value
-    log_good.append(log_checksum(df,checksum))
+    if checksum < 999999:
+        log_good.append(log_checksum(df,checksum))
 
 
     # Remove the delay line offset and electron flight time
     if remove_delay:
-        df = remove_delay_line(df)
+        df = remove_delay_line(df,**remove_delay_input)
     
     # Filter for only logical ToF combinations according to ion speed
     if filt_speed:
@@ -223,8 +230,9 @@ def clean(df_in,
 
 
     # Select ToFs above a min ToF
-    for stuff in min_apply:
-        log_good.append(df[stuff]>min_tof)
+    if min_tof>0:
+        for stuff in min_apply:
+            log_good.append(df[stuff]>min_tof)
     
     return(df.iloc[np.logical_and.reduce(log_good)])
 
@@ -250,8 +258,35 @@ def get_eff(dat):
     df['Eff_TRIP2'] = df['Eff_A2']*df['Eff_C2']*df['Eff_B0']
     df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
     
-    return(df.replace([np.inf, -np.inf], np.nan))
+    return(df.replace([np.inf, -np.inf,np.nan], 0))
 
+def de_effic(rawDE):
+    val_keys = rawDE.keys().to_series()
+    dt = max(rawDE['SHCOARSE'])-min(rawDE['SHCOARSE'])
+    df = rawDE[val_keys.loc[val_keys.str.contains('VALID')]].apply('sum')/dt
+    
+    df['SILVER'] = np.sum(log_trips(rawDE))/dt
+    df['Eff_A'] = df['SILVER']/df['VALIDTOF1']
+    df['Eff_C'] = df['SILVER']/df['VALIDTOF0']
+    df['Eff_B'] = df['SILVER']/df['VALIDTOF2']
+    df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
+    return(df)
+    
+def de_effic_filt(df_in,elec_ns = 15):
+    rawDE = df_in.copy()
+    val_keys = rawDE.keys().to_series()
+    dt = max(rawDE['SHCOARSE'])-min(rawDE['SHCOARSE'])
+    for n in range(3):
+        rawDE['VALIDTOF%d'%n] = np.logical_and(rawDE['VALIDTOF%d'%n],
+                                               rawDE['TOF%d'%n]>elec_ns) 
+    df = rawDE[val_keys.loc[val_keys.str.contains('VALID')]].apply('sum')/dt
+    
+    df['SILVER'] = np.sum(log_trips(rawDE))/dt
+    df['Eff_A'] = df['SILVER']/df['VALIDTOF1']
+    df['Eff_C'] = df['SILVER']/df['VALIDTOF0']
+    df['Eff_B'] = df['SILVER']/df['VALIDTOF2']
+    df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
+    return(df)
 
 def fit_tofs(df,
              tof_ranges = {'TOF0':[0,255],
@@ -262,7 +297,7 @@ def fit_tofs(df,
                 ):
     import bowPy as bp
     fits = {}
-    for tf in ['TOF0','TOF1','TOF2']:
+    for tf in tof_ranges.keys():
         bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
         fits[tf] = bp.Jonda(data = df[tf],bins = bins)
         fits[tf].bin_data()
