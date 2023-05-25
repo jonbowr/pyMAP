@@ -36,7 +36,7 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
                 hist_bins[pl] = np.geomspace(*bin_range[pl],bi)
             else:
                 hist_bins[pl] = np.linspace(*bin_range[pl],bi)
-    else: hist_bins = bins
+    else: hist_bins = {n:bins for n in hist_plt}
     
     # Define subplots structure
     if len(hist_plt)>1:
@@ -220,8 +220,9 @@ standard_groups = {
            'volts[V]':['TOF_MCP_VM','PAC_VM_volt'],  
            'Board Temp':['TEMP1','TEMP0','LV_TEMP','MCP_TEMP','PAC_TEMP'],        
            'Threshold register':['AN_A_THR_REG','AN_B0_THR_REG','AN_B3_THR_REG','AN_C_THR_REG'],                    
-           } 
-       'EM_status_comprehensive':{
+           } ,
+       'EM_status_comp':
+        {
              'Currnent Monitor [mA]': ['MCP_CM','TOF_MCP_CM'],
              'MCP volts [V]': ['MCP_VM','TOF_MCP_VM', ],
                 'MCP Monitors':['MCP_VSET_MON','MCP_OCP_MON'],
@@ -232,20 +233,30 @@ standard_groups = {
                                         'MCP_ENB[1]','MCP_ENB_1','PAC_ENB_2','MCP_ENB_2'],
              'LV [v]':['V12P0_VM','V12N0_VM'],
             'single_rates [cts/s]':['START_A', 'START_C', 'STOP_B0', 'STOP_B3'],                 
-            'tof_rate[cts/s]':['TOF0','TOF1','TOF2','TOF3','SILVER'],}
+            'tof_rate[cts/s]':['TOF0','TOF1','TOF2','TOF3','SILVER'],
+            },
+        'ILO_EM_rates':
+            {
+            'single_rates [cts/s]':['START_A', 'START_C', 'STOP_B0', 'STOP_B3','TOF3'],                 
+            'tof_rate[cts/s]':['TOF0','TOF1','TOF2','SILVER'],             
+            'Efficiency':['Eff_A','Eff_B','Eff_C','Eff_TRIP']
+            }      
         }
 
-def df_plot_groups(df,plt_grps={},fmt = None,plt_input = {}):
+def df_plot_groups(df,plt_grps={},fmt = '',plt_input = {},
+                                fig = None,axs = None,legend = True):
     # plots columns of datframe df defined by selector plt_groups 
     if type(plt_grps) == str:
         plt_grps = standard_groups[plt_grps]
-    fig,axs = plt.subplots(len(plt_grps.keys()),sharex = True)
+
+    if axs is None:
+        fig,axs = plt.subplots(len(plt_grps.keys()),sharex = True)
     fig.set_size_inches(10,len(axs)*4)
     for lab,vals,ax in zip(plt_grps.keys(),plt_grps.values(),axs):
         for y in plt_grps[lab]:
             ax.plot(df[y],fmt,label = y,**plt_input)
         ax.set_ylabel(lab)
-        ax.legend()
+        if legend:ax.legend()
     axs[-1].set_xlabel(df.index.name)
     return(fig,axs)
     
