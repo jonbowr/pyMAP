@@ -36,10 +36,14 @@ def get_dat(s_run_loc,
     return(dats)
 
 
-def import_em_data(df,dloc):
-    df['dat_de'] = get_dat(df,home = dloc,load_dt = loader,dtype = 'ILO_RAW_DE').values()
-    df['dat_tof'] = get_dat(df,home = dloc,load_dt = loader,dtype = 'ILO_TOF_BD').values()
-    df['dat_ifb'] = get_dat(df,home = dloc,load_dt = loader,dtype = 'ILO_IFB').values()
-    # df['dat_de'] = get_dat(df,home = dloc,load_dt = loader,dtype = 'TOF_DE_sample').values()
+def import_em_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],combine = False):
+    
+    for tp in dtypes:
+        df[tp] = get_dat(df,home = home,load_dt = loader,dtype = tp).values()
+    if combine:
+        from pyMAP.pyMAP.tools.tools import concat_combine
+        df['EM_data'] =df.apply(lambda x: concat_combine([x[l].set_index('SHCOARSE') for l in dtypes],'index'),axis = 1) 
+        for l in dtypes:
+            df.drop(l,inplace = True)
     
     return(df)
