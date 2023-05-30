@@ -101,10 +101,9 @@ def setup_fit_funcs_ke(use_dat,cent_eng,e_loss):
     fits = fits.stack()
     return(fits)
 
-def get_vperp(spec,ke,ang):
+def get_vperp(m_amu,ke,ang):
     from pyMAP.pyMAP.tof import v_00
     # Calculate the perpendicular velocity component from the 
-    m_amu = perd.elements.symbol(spec).mass
     v = v_00(m_amu,ke)/10**-9/10**6
     return(np.sin(ang*np.pi/180)*v)
 
@@ -119,7 +118,8 @@ def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
     sml_cal = sml_cal.reset_index()
     # calculate the v_perp value from mass, energy and incident angle
     sml_cal['v_perp'] = sml_cal.apply(\
-                    lambda x: get_vperp(x['species'],x['energy'],x['incident_angle']),axis = 1)
+                    lambda x: get_vperp(perd.elements.symbol(x['species']).mass,
+                                                x['energy'],x['incident_angle']),axis = 1)
     
     # define mass groups and v_groups to allow for selective averaging of the sample data
     sml_cal['m'] = sml_cal['species'].apply(lambda x: perd.elements.symbol(x).mass)
