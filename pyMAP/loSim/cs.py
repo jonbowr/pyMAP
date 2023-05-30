@@ -1,8 +1,18 @@
 import pandas as pd
 import numpy as np
 import os
+import periodictable as perd
 
-def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 20):
+def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 27):
+    # Load and perform some preprocessing on elena cal data. Automatically uses package cal results
+    # from pyMAP/cal/cal_results/cs_Ilena_scattering_results.xlsx if no file provided
+    # Input:
+    #   dloc (str): location of cal data file
+    #   index_cols (int): range of columns to use for indexing (not the energy dependent dist values)
+    #   data_cols (int): total range of columns to load containing data
+    # Output: 
+    #   cal (pandas.Dataframe): Illena calibration distribution results
+
     # locate the scattering data
     if dloc == 'auto':
         lpath = os.path.dirname(__file__)
@@ -19,7 +29,7 @@ def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 20):
     hframe.values[:,1] = hframe.values[:,1]/2
     head = pd.MultiIndex.from_frame(hframe,names = ['fit','energy'])
 
-    cal = pd.read_excel(f_cs_data,usecols = np.arange(data_cols),header = 5).dropna(thresh = 3)
+    cal = pd.read_excel(f_cs_data,usecols = np.arange(data_cols),header = 5)
     nams = ['geo','sample','coating','roughness','location','incident_angle','species','recoil_props']
     cal[nams] = cal[nams].fillna(method = 'ffill')
     cal.set_index(nams,inplace = True)
@@ -30,16 +40,18 @@ def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 20):
     
     # average the cal data for two FWHM finding routines (automatic and contour)
     #   and over all tested CS locations
-    cal = cal.stack('energy').unstack('location').mean(axis =1).unstack()
+    cal = cal.stack().mean(axis = 1).unstack('location').mean(axis =1).unstack('energy')
+    # cal = cal.stack('energy').unstack('location').median(axis =1).unstack()
     # drop unneded columns
     cal = cal.reset_index(['roughness','coating'],drop = True)
     return(cal)
 
-def setup_cal_data(cal,
+def setup_cal_data_ke(cal,
                     use_species=['H','O'], 
                          ibex_samples=['xxx','L109'], 
                          imap_samples = ['036b',39] ):
-    #Perform some pre-processing to get the cal data in a format we want
+    #Perform some pre-processing to execute a linear energy-based extrapolation to get
+    #to get 15 deg scattering distribution functions
     #   cal: cs scattering data to setup
     #   use_species: the species we will be analyzing
     #   ibex_samples: Ibex sample effic and scattering distributions to use
@@ -72,7 +84,7 @@ def setup_cal_data(cal,
     return(use_dat.stack().unstack('species')[use_species].stack().unstack('energy'))
 
 # Setup the fit functions
-def setup_fit_funcs(use_dat,cent_eng,e_loss):
+def setup_fit_funcs_ke(use_dat,cent_eng,e_loss):
     def thing(xx):
         x = xx.dropna()
         fde = bp.Jonda(xy_data = np.stack([x.keys(),x.values]),func = 'linear')
@@ -88,3 +100,51 @@ def setup_fit_funcs(use_dat,cent_eng,e_loss):
     fits['e_loss'] = [fde]*len(fits)
     fits = fits.stack()
     return(fits)
+
+def get_vperp(spec,ke,ang):
+    from pyMAP.pyMAP.tof import v_00
+    # Calculate the perpendicular velocity component from the 
+    m_amu = perd.elements.symbol(spec).mass
+    v = v_00(m_amu,ke)/10**-9/10**6
+    return(np.sin(ang*np.pi/180)*v)
+
+def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
+                                   mass_split = 10,v_bins = np.linspace(0,90,45)):
+    # use cal data and desired samples to express scattering fwhm distributions using v_perp
+    # rather than ke. scattering distributions should be linear in this form
+
+    # select sample data to be used in determination of cs scattering effects
+    sml_cal = cal.stack().unstack(['sample','geo'])[samples].mean(axis = 1)
+    sml_cal.name = 'val'
+    sml_cal = sml_cal.reset_index()
+    # calculate the v_perp value from mass, energy and incident angle
+    sml_cal['v_perp'] = sml_cal.apply(\
+                    lambda x: get_vperp(x['species'],x['energy'],x['incident_angle']),axis = 1)
+    
+    # define mass groups and v_groups to allow for selective averaging of the sample data
+    sml_cal['m'] = sml_cal['species'].apply(lambda x: perd.elements.symbol(x).mass)
+    sml_cal['m_group'] = ((sml_cal['m'].values/mass_split).astype(int)>=1).astype(int)
+    sml_cal['v_group'] = np.digitize(sml_cal['v_perp'],v_bins)
+    
+    # average sample data and transform to a shape to allow for simple linear fitting
+    sml_cal.set_index(['recoil_props','v_perp','species','v_group'],inplace = True)
+    sml_cal = sml_cal['val']
+    sml_cal = sml_cal.reset_index('v_perp').groupby(['v_group','species','recoil_props']).mean()
+    return(sml_cal.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
+
+def get_cal_fits(load_data_input = {},data_av_input = {}):
+    # function to load elena scattering data, linearize the desired data in v_perp
+    # and perform linear fit functions
+    from pyMAP import bowPy as bp
+
+    vdat = vperp_av_data(load_cal_data(**load_data_input),**data_av_input)
+    def thing(xx):
+        x = xx['v_perp']
+        y = xx['val']
+        fde = bp.Jonda(xy_data = np.stack([x,y]),func = 'linear')
+        fde.fit_xy(use_err = False)
+        fde.name = xx.name
+        return(fde)    
+    fits = vdat.groupby(['species','recoil_props']).apply(thing).unstack('recoil_props')
+    return(fits)
+
