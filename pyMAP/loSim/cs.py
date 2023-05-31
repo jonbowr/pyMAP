@@ -107,6 +107,7 @@ def get_vperp(m_amu,ke,ang):
     v = v_00(m_amu,ke)/10**-9/10**6
     return(np.sin(ang*np.pi/180)*v)
 
+
 def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
                                    mass_split = 10,v_bins = np.linspace(0,90,45)):
     # use cal data and desired samples to express scattering fwhm distributions using v_perp
@@ -148,3 +149,56 @@ def get_cal_fits(load_data_input = {},data_av_input = {}):
     fits = vdat.groupby(['species','recoil_props']).apply(thing).unstack('recoil_props')
     return(fits)
 
+
+class cs_scatterer:
+    # Control structure for cs scattering montecarlo simulations
+    
+    def __init__(self,cs_elevation = 165,
+                    samples= ['036b',39,'100P','40P','xxx','L109'],
+                        species = 'H'):
+        import simPyon as sim
+        self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
+        self.cs_el = cs_elevation
+        self.m = perd.elements.symbol(species).mass
+        self.species = species
+        self.ke = {
+                   'pdf': sim.particles.pdf('poisson',{'c':0,'b':.155,'k':1}),
+                    'pdf2':sim.particles.pdf('sputtered'),
+                   'modulator_f': self.cal_fits['e_loss'][self.species],
+                    }
+        self.theta = {
+                       'pdf': sim.particles.pdf('poisson',{'c':0,'b':.405,'k':1}),
+                       'modulator_f': self.cal_fits['theta'][self.species],
+                    }
+        self.phi = {
+                       'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':2}),
+                       'modulator_f': self.cal_fits['phi'][self.species],
+                    }
+    
+    def get_vperp(self,ke,el,azm):
+        return(get_vperp(self.m,ke,el - self.cs_el))
+    
+    def ke_mean(self,ke,el,phi):
+        v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
+        return(self.ke['modulator_f'](v_perp)*ke)
+    
+    def ke_scatter(self,ke,el,phi):
+        v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
+        mean = self.ke['modulator_f'](v_perp)*ke
+        fwhm = (ke-mean)*2
+        direction = -1
+        new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.ke['pdf']['b'])*fwhm*direction+mean
+        new_ke[new_ke<0] = self.ke['pdf2'].sample(np.sum(new_ke<0),0,.67)*ke[new_ke<0]
+        return(new_ke)
+    
+    def phi_scatter(self,ke,el,phi):
+        v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
+        return(self.phi['pdf'](len(phi))*self.phi['modulator_f'](v_perp)+phi)
+
+    def theta_scatter(self,ke,el,phi):
+        el_ang = abs(el - self.cs_el)
+        v_perp = get_vperp(self.m,ke,el_ang)
+        mean = self.cs_el-el_ang
+        direction = -1
+        fwhm = self.theta['modulator_f'](v_perp)
+        return((self.theta['pdf'].sample(len(el),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean)
