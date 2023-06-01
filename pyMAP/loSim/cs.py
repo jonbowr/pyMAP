@@ -56,8 +56,8 @@ def setup_cal_data_ke(cal,
     #   use_species: the species we will be analyzing
     #   ibex_samples: Ibex sample effic and scattering distributions to use
     #   imap_samples: Ibex sample effic and scattering distributions to use
-
     #calculate angular scale factors to convert 8 deg to 15 deg
+    # function made laregly obselete by vperp_av_data
     angs = (cal.stack().unstack(level = 'incident_angle')[15]/cal.stack().unstack(level = 'incident_angle')[8]).unstack()
     angs_15 = angs.groupby(['recoil_props','species']).mean().drop('effic')
     angs_convert = angs_15.mean(axis = 1).unstack(level = 'recoil_props')
@@ -83,8 +83,8 @@ def setup_cal_data_ke(cal,
     #pick out species to use in simulation
     return(use_dat.stack().unstack('species')[use_species].stack().unstack('energy'))
 
-# Setup the fit functions
 def setup_fit_funcs_ke(use_dat,cent_eng,e_loss):
+
     def thing(xx):
         x = xx.dropna()
         fde = bp.Jonda(xy_data = np.stack([x.keys(),x.values]),func = 'linear')
@@ -161,6 +161,8 @@ class cs_scatterer:
         self.cs_el = cs_elevation
         self.m = perd.elements.symbol(species).mass
         self.species = species
+
+        # assign distribution functions and cs scattering modulator functions
         self.ke = {
                    'pdf': sim.particles.pdf('poisson',{'c':0,'b':.155,'k':1}),
                     'pdf2':sim.particles.pdf('sputtered'),
@@ -175,8 +177,6 @@ class cs_scatterer:
                        'modulator_f': self.cal_fits['phi'][self.species],
                     }
     
-    def get_vperp(self,ke,el,azm):
-        return(get_vperp(self.m,ke,el - self.cs_el))
     
     def ke_mean(self,ke,el,phi):
         v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
@@ -202,3 +202,8 @@ class cs_scatterer:
         direction = -1
         fwhm = self.theta['modulator_f'](v_perp)
         return((self.theta['pdf'].sample(len(el),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean)
+
+    def scatter(self,ke,el,phi):
+        return(self.ke_scatter(ke,el,phi),
+               self.theta_scatter(ke,el,phi),
+               self.phi_scatter(ke,el,phi))
