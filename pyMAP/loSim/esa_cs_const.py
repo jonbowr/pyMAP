@@ -22,7 +22,7 @@ sim_input = {
                                  'TOF_PAC_VOLTAGE': 16000,
                                  'TOF_PAC_+1kV_VOLTAGE': 16000,
                                  'MCP Plane': 16000},
-                    'home':'../../../IBEX/',
+                    'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IBEX',
                     'gemfil':'IBEX-Lo_CR3_CE6_TOF3_HK3.GEM',
                 },
         'imap1':
@@ -37,7 +37,7 @@ sim_input = {
                                 'Inner ESA': 1235.3,
                                 'P10 Electrode': 1782.4,
                                 'TOF PAC': 16000.0},
-                    'home':'../../../IMAP/',
+                    'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
                             # 'gem/splitup/IMAP-Lo_MAG1_HK6.GEM',
                                 # 'gem/splitup/IMAP-Lo_CR7_HK6.GEM',
@@ -53,7 +53,7 @@ sim_input = {
                                  'Inner ESA': 804.11,
                                  'P10 Electrode': 1160.24,
                                  'TOF PAC': 16000.0},
-                    'home':'../../../IMAP/',
+                    'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
                                 # 'gem/splitup/IMAP-Lo_MAG1_HK6.GEM',
                                 # 'gem/splitup/IMAP-Lo_CR7_HK6.GEM',
