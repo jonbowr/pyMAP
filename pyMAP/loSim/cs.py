@@ -149,18 +149,26 @@ def get_cal_fits(load_data_input = {},data_av_input = {}):
     fits = vdat.groupby(['species','recoil_props']).apply(thing).unstack('recoil_props')
     return(fits)
 
+def rel_angle(theta1,phi1,theta2,phi2):
+    t1 = theta1/90*np.pi/2
+    t2 = theta2/90*np.pi/2
+    p1 = phi1/90*np.pi/2
+    p2 = phi2/90*np.pi/2
+    return(90/np.pi*2*np.arccos(np.sin(t1)*np.sin(t2)+np.cos(t1)*np.cos(t2)*np.cos(p1-p2)))
 
 class cs_scatterer:
     # Control structure for cs scattering montecarlo simulations
     
     def __init__(self,cs_elevation = 165,
                     samples= ['036b',39,'100P','40P','xxx','L109'],
-                        species = 'H'):
+                        species = 'H',
+                        charge = -1):
         import simPyon as sim
         self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
         self.cs_el = cs_elevation
         self.m = perd.elements.symbol(species).mass
         self.species = species
+        self.charge = charge
 
         # assign distribution functions and cs scattering modulator functions
         self.ke = {
@@ -178,32 +186,59 @@ class cs_scatterer:
                     }
     
     
-    def ke_mean(self,ke,el,phi):
-        v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
+    def ke_mean(self,ke,theta,phi):
+        v_perp = get_vperp(self.m,ke,abs(theta - self.cs_el))
         return(self.ke['modulator_f'](v_perp)*ke)
     
-    def ke_scatter(self,ke,el,phi):
-        v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
+    def ke_scatter(self,ke,theta,phi):
+        rel_ang = rel_angle(theta,phi,self.cs_el,0)
+        v_perp = get_vperp(self.m,ke,rel_ang)
         mean = self.ke['modulator_f'](v_perp)*ke
         fwhm = (ke-mean)*2
         direction = -1
         new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.ke['pdf']['b'])*fwhm*direction+mean
-        new_ke[new_ke<0] = self.ke['pdf2'].sample(np.sum(new_ke<0),0,.67)*ke[new_ke<0]
+        try:
+            new_ke[new_ke<0] = self.ke['pdf2'].sample(np.sum(new_ke<0),0,.67)*ke[new_ke<0]
+        except:
+            new_ke = abs(new_ke)
         return(new_ke)
     
-    def phi_scatter(self,ke,el,phi):
-        v_perp = get_vperp(self.m,ke,abs(el - self.cs_el))
+    def phi_scatter(self,ke,theta,phi):
+        rel_ang = rel_angle(theta,phi,self.cs_el,0)
+        v_perp = get_vperp(self.m,ke,rel_ang)
         return(self.phi['pdf'](len(phi))*self.phi['modulator_f'](v_perp)+phi)
 
-    def theta_scatter(self,ke,el,phi):
-        el_ang = abs(el - self.cs_el)
-        v_perp = get_vperp(self.m,ke,el_ang)
-        mean = self.cs_el-el_ang
-        direction = -1
+    def theta_scatter(self,ke,theta,phi):
+        rel_ang = rel_angle(theta,phi,self.cs_el,0)
+        v_perp = get_vperp(self.m,ke,rel_ang)
+        mean = 180-(self.cs_el-rel_ang)
+        mean[mean>360] = 360-mean[mean>360]
+        direction = 1
         fwhm = self.theta['modulator_f'](v_perp)
-        return((self.theta['pdf'].sample(len(el),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean)
+        return((self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean)
 
-    def scatter(self,ke,el,phi):
-        return(self.ke_scatter(ke,el,phi),
-               self.theta_scatter(ke,el,phi),
-               self.phi_scatter(ke,el,phi))
+    def conv_effic(self,ke,theta,phi):
+        rel_ang = rel_angle(theta,phi,self.cs_el,0)
+        v_perp = get_vperp(self.m,ke,rel_ang)
+        return(self.cal_fits['effic'][self.species](v_perp))
+
+    def scatter(self,ke,theta,phi):
+        return(self.ke_scatter(ke,theta,phi),
+               self.theta_scatter(ke,theta,phi),
+               self.phi_scatter(ke,theta,phi))
+
+    def fly(self,source_df):
+        ke = source_df['ke']
+        theta = source_df['theta']
+        phi = source_df['phi']
+        data = source_df.copy()
+        data['ke'] = self.ke_scatter(ke,theta,phi)
+        data['theta'] = self.theta_scatter(ke,theta,phi)
+        data['phi'] = self.phi_scatter(ke,theta,phi)
+        data['effic'] = self.conv_effic(ke,theta,phi)
+        return(data)
+
+    def fly_trajectory(self,source_df,fig,ax):
+        dat = self.fly(source_df)
+        ax.plot(dat['x'],dat['r'],'.')
+        return(dat)
