@@ -67,3 +67,15 @@ cs_locs = {
                 'imap7':{'first':np.array([100.5,134.6,0]),'last':np.array([160,118.4,0])}
             }
 
+obs_regions = {
+                'TOF':{'X_MAX': 81,
+                        'X_MIN':72,
+                        'R_MAX':45.1,
+                        'R_MIN':35.4,
+                        'TOF_MEASURE':True},
+                'CS':{'X_MAX': 160,
+                        'X_MIN':105,
+                        'R_MAX':134.6,
+                        'R_MIN':118.4,
+                        'TOF_MEASURE':False}
+                }
