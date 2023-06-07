@@ -169,6 +169,8 @@ class cs_scatterer:
         self.m = perd.elements.symbol(species).mass
         self.species = species
         self.charge = charge
+        self.data = None
+        self.type = 'modulator'
 
         # assign distribution functions and cs scattering modulator functions
         self.ke = {
@@ -181,7 +183,7 @@ class cs_scatterer:
                        'modulator_f': self.cal_fits['theta'][self.species],
                     }
         self.phi = {
-                       'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':2}),
+                       'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':1}),
                        'modulator_f': self.cal_fits['phi'][self.species],
                     }
     
@@ -206,13 +208,16 @@ class cs_scatterer:
     def phi_scatter(self,ke,theta,phi):
         rel_ang = rel_angle(theta,phi,self.cs_el,0)
         v_perp = get_vperp(self.m,ke,rel_ang)
-        return(self.phi['pdf'](len(phi))*self.phi['modulator_f'](v_perp)+phi)
+        phi_new =self.phi['pdf'](len(phi))*self.phi['modulator_f'](v_perp)+phi
+        phi_new[phi_new>180] = phi_new[phi_new>180]-360
+        phi_new[phi_new<-180] = phi_new[phi_new<-180]+360
+        return(phi_new)
 
     def theta_scatter(self,ke,theta,phi):
         rel_ang = rel_angle(theta,phi,self.cs_el,0)
         v_perp = get_vperp(self.m,ke,rel_ang)
         mean = 180-(self.cs_el-rel_ang)
-        mean[mean>360] = 360-mean[mean>360]
+        # mean[mean>360] = 360-mean[mean>360]
         direction = 1
         fwhm = self.theta['modulator_f'](v_perp)
         return((self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean)
@@ -227,18 +232,36 @@ class cs_scatterer:
                self.theta_scatter(ke,theta,phi),
                self.phi_scatter(ke,theta,phi))
 
-    def fly(self,source_df):
+    def fly(self,source_df,
+                good_cols = ['ion n','tof','x','y','z','r',
+                                'ke','theta','phi','counts'],
+                                quiet = True):
+        from simPyon.simPyon.data import sim_data
         ke = source_df['ke']
         theta = source_df['theta']
         phi = source_df['phi']
         data = source_df.copy()
-        data['ke'] = self.ke_scatter(ke,theta,phi)
-        data['theta'] = self.theta_scatter(ke,theta,phi)
-        data['phi'] = self.phi_scatter(ke,theta,phi)
-        data['effic'] = self.conv_effic(ke,theta,phi)
-        return(data)
+
+        if type(data) != sim_data:
+            data['ke'] = self.ke_scatter(ke,theta,phi)
+            data['theta'] = self.theta_scatter(ke,theta,phi)
+            data['phi'] = self.phi_scatter(ke,theta,phi)
+            data['effic'] = self.conv_effic(ke,theta,phi)
+            self.data = data[good_cols]
+            return(self.data)
+        else: 
+            splat = data.df.copy()[good_cols]
+            splat['ke'] = self.ke_scatter(ke,theta,phi)
+            splat['theta'] = self.theta_scatter(ke,theta,phi)
+            splat['phi'] = self.phi_scatter(ke,theta,phi)
+            splat['effic'] = self.conv_effic(ke,theta,phi)/100
+            data.df = pd.concat([data.df[good_cols],splat],
+                            axis = 0).set_index('ion n',
+                            append = True).sort_index().reset_index(level = 'ion n')
+            self.data = data
+            return(self.data)
 
     def fly_trajectory(self,source_df,fig,ax):
-        dat = self.fly(source_df)
-        ax.plot(dat['x'],dat['r'],'.')
+        # dat = self.fly(source_df)
+        # ax.plot(dat['x'],dat['r'],'.')
         return(dat)

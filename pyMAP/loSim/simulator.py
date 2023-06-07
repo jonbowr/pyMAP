@@ -54,7 +54,7 @@ class simulator:
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
         self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
                                     'last': np.array([210.1,133.2,   0. ])}
-        self[0].source = self.source
+        # self[0].source = self.source
         # for sm in self.sims:
         #     for l,v in cs_locs[geo].items():
         #         if self.sims[sm]['kind'] =='simion':
@@ -64,33 +64,29 @@ class simulator:
         return(self.sims[item])
 
     def show(self):
-        return()
+        return(self[0].show())
 
-    def fly(self,n = 1000):
+    def sim_fix_stops(self,data,pixl_offset=.5):
+        mm_offset = self[0].pa_info[0]['pxls_mm']*pixl_offset
+        for dim in ['x']:
+            data[dim] = data[dim]-data['v'+dim]/abs(data['v'+dim])*mm_offset
+        return(data)
+
+    def fly(self,n = 1000,quiet = True):
         self.source['n'] = n
-        self.dat = {}
-        for lab,vals in self.sims.items():
-            if vals['kind'] == 'simion':
-                if vals['order']==1:
-                    vals['sim'].source = self.source
-                else:
-                    vals['sim'].source.splat_to_source(dat_buffer)  
-                vals['sim'].fly()
-                dat_buffer = vals['sim'].data.stop()
-                self.dat[lab] = vals['sim'].data
-            elif vals['kind']=='modulator':
-                dat_buffer = vals['sim'].fly(dat_buffer)
-                self.dat[lab] = dat_buffer
+        dat_buffer = self.source.copy()
+        for sim_in in self.sims:
+            dat = sim_in.fly(dat_buffer,quiet = quiet).good().stop()
+            if sim_in.type == 'simion':
+                dat_buffer = self.sim_fix_stops(dat.copy())
+            else:
+                dat_buffer = dat.copy()
 
     def fly_trajectory(self,n = 100):
         from matplotlib import pyplot as plt
         self.source['n'] = n
         self.fly(n)
-        for lab,vals in self.sims.items():
-            if vals['kind'] == 'simion':
-                if vals['order']==1:
-                    fig,ax = vals['sim'].show()
-                vals['sim'].source.splat_to_source(vals['sim'].data.start())                    
-                try:
-                    vals['sim'].fly_trajectory(cores = 1,fig = fig,ax = ax,show_cbar = False)
-                except: Pass
+        fig,ax = self.show()
+        for sim_in in self.sims:
+            if sim_in.type == 'simion':
+                sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax)
