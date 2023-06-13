@@ -72,10 +72,12 @@ obs_regions = {
                         'X_MIN':72,
                         'R_MAX':45.1,
                         'R_MIN':35.4,
-                        'TOF_MEASURE':True},
+                        'TOF_MEASURE':True,
+                        'R_WEIGHT':False},
                 'CS':{'X_MAX': 160,
                         'X_MIN':98,
                         'R_MAX':134.6,
                         'R_MIN':118.4,
-                        'TOF_MEASURE':False}
+                        'TOF_MEASURE':False,
+                        'R_WEIGHT':True}
                 }

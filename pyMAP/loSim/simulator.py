@@ -2,7 +2,7 @@ import simPyon as sim
 from .esa_cs_const import *
 from .cs import cs_scatterer
 import os
-
+import pandas as pd
 
 class simulator:
     '''
@@ -31,21 +31,7 @@ class simulator:
                                 obs_region = obs_regions['TOF']),
                                 }
                     ]).set_index(['name','kind'])['sim']
-        # self.sims = {'inc_N':{'sim':sim.simion(**inp,
-        #                             obs_region = obs_regions['CS']),
-        #                         'kind':'simion',
-        #                         'order':1,
-        #                         },
-        #             'cs_scatter':{'sim':cs_scatterer(),
-        #                             'kind':'modulator',
-        #                             'order':2,
-        #                         },
-        #             'rec_ion':{'sim':sim.simion(**inp,
-        #                             obs_region = obs_regions['TOF']),
-        #                         'kind':'simion',
-        #                         'order':3,
-        #                         }
-        #             }
+
         self.source = sim.particles.auto_parts()
         self.source['charge'] = 0
         self.source['ke'] = sim.particles.source('gaussian')
@@ -54,11 +40,6 @@ class simulator:
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
         self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
                                     'last': np.array([210.1,133.2,   0. ])}
-        # self[0].source = self.source
-        # for sm in self.sims:
-        #     for l,v in cs_locs[geo].items():
-        #         if self.sims[sm]['kind'] =='simion':
-        #             self.sims[sm]['sim'].source['pos'][l] = v
             
     def __getitem__(self,item):
         return(self.sims[item])
@@ -66,17 +47,36 @@ class simulator:
     def show(self):
         return(self[0].show())
 
-    def sim_fix_stops(self,data,pixl_offset=.5):
-        mm_offset = self[0].pa_info[0]['pxls_mm']*pixl_offset
-        for dim in ['x']:
-            data[dim] = data[dim]-data['v'+dim]/abs(data['v'+dim])*mm_offset
+    def sim_fix_stops(self,data,v_extrap = True):
+        # uses the shapely instrument geometry to set points on surface of polygon
+        #   to prevent pixlization collisions on reinitialization 
+        from shapely.geometry import MultiPoint
+        from shapely.ops import nearest_points
+        pol = self[0].geo.get_single_poly().boundary
+
+        pts = MultiPoint(data[['x','r']])
+        verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts]])
+        if v_extrap:
+            #calc offset distance of point from surface
+            mm_offset = np.sqrt((data['x'] -verts[:,0])**2+(data['r'] - verts[:,1])**2)
+            # step the particles backward according to offset distance
+            #    in trajectory based on their velocity
+            for dim in ['x','r']:
+                data[dim] = data[dim]-data['v'+dim]/abs(data['v'+dim])*mm_offset
+            pts = MultiPoint(data[['x','r']])
+            verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts]])
+        data['x'] = verts[:,0]
+        data['r'] = verts[:,1]
         return(data)
 
     def fly(self,n = 1000,quiet = True):
         self.source['n'] = n
         dat_buffer = self.source.copy()
-        for sim_in in self.sims:
+        for lab,sim_in in self.sims.items():
+            print(lab)
             dat = sim_in.fly(dat_buffer,quiet = quiet).good().stop()
+            if 'counts' in dat_buffer.df:
+                sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
             if sim_in.type == 'simion':
                 dat_buffer = self.sim_fix_stops(dat.copy())
             else:

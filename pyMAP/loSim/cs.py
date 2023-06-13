@@ -234,19 +234,20 @@ class cs_scatterer:
 
     def fly(self,source_df,
                 good_cols = ['ion n','tof','x','y','z','r',
-                                'ke','theta','phi','counts'],
+                                'ke','theta','phi','counts','is_start'],
                                 quiet = True):
         from simPyon.simPyon.data import sim_data
         ke = source_df['ke']
         theta = source_df['theta']
         phi = source_df['phi']
         data = source_df.copy()
+        data['is_start'] = True
 
         if type(data) != sim_data:
             data['ke'] = self.ke_scatter(ke,theta,phi)
             data['theta'] = self.theta_scatter(ke,theta,phi)
             data['phi'] = self.phi_scatter(ke,theta,phi)
-            data['effic'] = self.conv_effic(ke,theta,phi)
+            data['counts'] = self.conv_effic(ke,theta,phi)/100
             self.data = data[good_cols]
             return(self.data)
         else: 
@@ -254,7 +255,8 @@ class cs_scatterer:
             splat['ke'] = self.ke_scatter(ke,theta,phi)
             splat['theta'] = self.theta_scatter(ke,theta,phi)
             splat['phi'] = self.phi_scatter(ke,theta,phi)
-            splat['effic'] = self.conv_effic(ke,theta,phi)/100
+            splat['counts'] = self.conv_effic(ke,theta,phi)/100
+            splat['is_start'] = False
             data.df = pd.concat([data.df[good_cols],splat],
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
