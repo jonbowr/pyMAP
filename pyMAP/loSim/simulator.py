@@ -11,7 +11,7 @@ class simulator:
     - fly(): function which executes particle propagation
     '''
 
-    def __init__(self,geo = 'imap1'):
+    def __init__(self,geo = 'imap1',scattering_input = {}):
         inp = sim_input[geo].copy()
         inp['home'] = os.path.relpath(sim_input[geo]['home'])
         from pandas import DataFrame
@@ -23,7 +23,7 @@ class simulator:
                                 },
                     {'name':'cs_scatter',
                         'kind':'modulator',
-                        'sim':cs_scatterer(),
+                        'sim':cs_scatterer(**scattering_input),
                                 },
                     {'name':'rec_ion',
                         'kind':'simion',
@@ -76,7 +76,10 @@ class simulator:
             print(lab)
             dat = sim_in.fly(dat_buffer,quiet = quiet).good().stop()
             if 'counts' in dat_buffer.df:
-                sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
+                try:
+                    sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
+                except:
+                    Warning('Count Propagation failed: Most likely incorrect Ion initialization')
             if sim_in.type == 'simion':
                 dat_buffer = self.sim_fix_stops(dat.copy())
             else:

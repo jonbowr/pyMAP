@@ -267,3 +267,28 @@ class cs_scatterer:
         # dat = self.fly(source_df)
         # ax.plot(dat['x'],dat['r'],'.')
         return(dat)
+
+    def show_cal_fits(self,fig = None,axs = None):
+        from matplotlib import pyplot as plt
+        n = 0
+        def fit_pltr(fits,ax):
+            def fit_pltr(x):
+                xx = np.linspace(min(x.xy[0]),max(x.xy[0]),1000)
+                lin = ax.plot(*x.xy,'.-',label = x.name)[0]
+                ax.plot(xx,x(xx),'--',color = lin.get_color())
+            print(fits)
+            fits.apply(fit_pltr)
+            ax.set_ylabel(fits.name)
+            ax.set_xlabel('v_perp')
+            ax.legend()
+        grouper = self.cal_fits.stack().groupby('recoil_props')
+        if fig == None:
+            fig,axs = plt.subplots(len(grouper),sharex = True)
+        fig.set_size_inches(6,12)
+        n = 0
+        for nam,group in grouper:
+            group.name = nam
+            fit_pltr(group,axs[n])
+            n+=1
+        return(fig,axs)
+
