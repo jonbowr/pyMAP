@@ -50,6 +50,8 @@ def setup_cal_data_ke(cal,
                     use_species=['H','O'], 
                          ibex_samples=['xxx','L109'], 
                          imap_samples = ['036b',39] ):
+
+    # Unused Codes
     #Perform some pre-processing to execute a linear energy-based extrapolation to get
     #to get 15 deg scattering distribution functions
     #   cal: cs scattering data to setup
@@ -84,7 +86,7 @@ def setup_cal_data_ke(cal,
     return(use_dat.stack().unstack('species')[use_species].stack().unstack('energy'))
 
 def setup_fit_funcs_ke(use_dat,cent_eng,e_loss):
-
+    # Unused Codes
     def thing(xx):
         x = xx.dropna()
         fde = bp.Jonda(xy_data = np.stack([x.keys(),x.values]),func = 'linear')
@@ -162,7 +164,8 @@ class cs_scatterer:
     def __init__(self,cs_elevation = 165,
                     samples= ['036b',39,'100P','40P','xxx','L109'],
                         species = 'H',
-                        charge = -1):
+                        charge = -1,
+                        frac_sputtered = 0):
         import simPyon as sim
         self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
         self.cs_el = cs_elevation
@@ -171,6 +174,8 @@ class cs_scatterer:
         self.charge = charge
         self.data = None
         self.type = 'modulator'
+        self.sputtering = frac_sputtered
+        self.is_sputtered = None
 
         # assign distribution functions and cs scattering modulator functions
         self.ke = {
@@ -180,68 +185,110 @@ class cs_scatterer:
                     }
         self.theta = {
                        'pdf': sim.particles.pdf('poisson',{'c':0,'b':.405,'k':1}),
+                       'pdf2':sim.particles.source('cos',
+                                    dist_vals = {'mean':cs_elevation -90,'range':180,'a':0,'b':180,'x_min':0}),
                        'modulator_f': self.cal_fits['theta'][self.species],
                     }
         self.phi = {
                        'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':1}),
+                       'pdf2':sim.particles.source('cos',
+                                    dist_vals = {'mean':0,'range':180,'a':0,'b':180,'x_min':0}),
                        'modulator_f': self.cal_fits['phi'][self.species],
                     }
-    
     
     def ke_mean(self,ke,theta,phi):
         v_perp = get_vperp(self.m,ke,abs(theta - self.cs_el))
         return(self.ke['modulator_f'](v_perp)*ke)
     
     def ke_scatter(self,ke,theta,phi):
+        # Function to take ion velocity vector apply statistical sampling to determine 
+        #   recoil ion ke
+
         rel_ang = rel_angle(theta,phi,self.cs_el,0)
         v_perp = get_vperp(self.m,ke,rel_ang)
         mean = self.ke['modulator_f'](v_perp)*ke
         fwhm = (ke-mean)*2
         direction = -1
+        
         new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.ke['pdf']['b'])*fwhm*direction+mean
-        try:
-            new_ke[new_ke<0] = self.ke['pdf2'].sample(np.sum(new_ke<0),0,.67)*ke[new_ke<0]
-        except:
-            new_ke = abs(new_ke)
+        # take the values that show up below 0 and make them sputtered
+        # try:
+        #     new_ke[new_ke<0] = self.ke['pdf2'].sample(np.sum(new_ke<0),0,.67)*ke[new_ke<0]
+        # except:
+        #     new_ke = abs(new_ke)
+
+        # take the stat determined sputtered stuff and sample the sputtered distribution
+        # new_ke = abs(new_ke)
+        neg_log = new_ke<0
+        self.is_sputtered[neg_log] = True
+        if any(self.is_sputtered):
+            new_ke[self.is_sputtered] = self.ke['pdf2'].sample(np.sum(self.is_sputtered),0,.67)*ke[self.is_sputtered]
         return(new_ke)
     
     def phi_scatter(self,ke,theta,phi):
+        # Function to take ion velocity vector apply statistical sampling to determine 
+        #   recoil phi direction
+        
         rel_ang = rel_angle(theta,phi,self.cs_el,0)
         v_perp = get_vperp(self.m,ke,rel_ang)
         phi_new =self.phi['pdf'](len(phi))*self.phi['modulator_f'](v_perp)+phi
+
+        #correct for the angular ranges so simion can accept
         phi_new[phi_new>180] = phi_new[phi_new>180]-360
         phi_new[phi_new<-180] = phi_new[phi_new<-180]+360
+
+        # take the stat determined sputtered stuff and sample the sputtered distribution
+        if any(self.is_sputtered):
+            phi_new[self.is_sputtered] = self.phi['pdf2'](np.sum(self.is_sputtered))
         return(phi_new)
 
     def theta_scatter(self,ke,theta,phi):
+        # Function to take ion velocity vector apply statistical sampling to determine 
+        #   recoil ion theta direction
+
         rel_ang = rel_angle(theta,phi,self.cs_el,0)
         v_perp = get_vperp(self.m,ke,rel_ang)
         mean = 180-(self.cs_el-rel_ang)
         # mean[mean>360] = 360-mean[mean>360]
         direction = 1
         fwhm = self.theta['modulator_f'](v_perp)
-        return((self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean)
+        theta_new = (self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean
+        # take the stat determined sputtered stuff and sample the sputtered distribution
+        if any(self.is_sputtered):
+            theta_new[self.is_sputtered] = self.theta['pdf2'](np.sum(self.is_sputtered))
+        return(theta_new)
 
     def conv_effic(self,ke,theta,phi):
+        # Function to take ion velocity vector apply statistical sampling to determine 
+        #   recoil conversion efficiency weight factor
         rel_ang = rel_angle(theta,phi,self.cs_el,0)
         v_perp = get_vperp(self.m,ke,rel_ang)
         return(self.cal_fits['effic'][self.species](v_perp))
-
-    def scatter(self,ke,theta,phi):
-        return(self.ke_scatter(ke,theta,phi),
-               self.theta_scatter(ke,theta,phi),
-               self.phi_scatter(ke,theta,phi))
 
     def fly(self,source_df,
                 good_cols = ['ion n','tof','x','y','z','r',
                                 'ke','theta','phi','counts','is_start'],
                                 quiet = True):
+        '''
+        Function which takes source distribution and applies conversion surface
+          scattering processes to determine an associated recoil ion distribution
+          of the same size
+        source_df: DataFrame/simPyon.sim_data, length n
+              Source data frame containing the incident particle velocity vector 
+              v(ke,theta,phi)  containing columns [good_cols]
+        good_cols: array of columns of source_df to propagate in the fly command
+              columns not declared here will may be affected by scattering 
+              but their values are not computed so they are dropped 
+        '''
         from simPyon.simPyon.data import sim_data
         ke = source_df['ke']
         theta = source_df['theta']
         phi = source_df['phi']
         data = source_df.copy()
         data['is_start'] = True
+
+        # determine if ion is sputtered or not
+        self.is_sputtered = np.random.rand(len(source_df))<self.sputtering
 
         if type(data) != sim_data:
             data['ke'] = self.ke_scatter(ke,theta,phi)
@@ -269,6 +316,7 @@ class cs_scatterer:
         return(dat)
 
     def show_cal_fits(self,fig = None,axs = None):
+        # Function to quick visualize the modulator cal fits
         from matplotlib import pyplot as plt
         n = 0
         def fit_pltr(fits,ax):
