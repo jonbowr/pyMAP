@@ -49,7 +49,7 @@ class simulator:
 
     def sim_fix_stops(self,data,v_extrap = True):
         # uses the shapely instrument geometry to set points on surface of polygon
-        #   to prevent pixlization collisions on reinitialization 
+        #   to prevent pixlization collisions on reinitialization using collision locs
         from shapely.geometry import MultiPoint
         from shapely.ops import nearest_points
         pol = self[0].geo.get_single_poly().boundary
@@ -73,7 +73,6 @@ class simulator:
         self.source['n'] = n
         dat_buffer = self.source.copy()
         for lab,sim_in in self.sims.items():
-            print(lab)
             dat = sim_in.fly(dat_buffer,quiet = quiet).good().stop()
             if 'counts' in dat_buffer.df:
                 try:
@@ -85,11 +84,12 @@ class simulator:
             else:
                 dat_buffer = dat.copy()
 
-    def fly_trajectory(self,n = 100):
+    def fly_trajectory(self,fig = None,ax = None,n = 100):
         from matplotlib import pyplot as plt
         self.source['n'] = n
         self.fly(n)
-        fig,ax = self.show()
+        if ax == None:
+            fig,ax = self.show()
         for sim_in in self.sims:
             if sim_in.type == 'simion':
                 sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax)
