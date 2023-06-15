@@ -80,11 +80,12 @@ class simulator:
                 except:
                     Warning('Count Propagation failed: Most likely incorrect Ion initialization')
             if sim_in.type == 'simion':
-                dat_buffer = self.sim_fix_stops(dat.copy())
+                if len(dat)>0:
+                    dat_buffer = self.sim_fix_stops(dat.copy())
             else:
                 dat_buffer = dat.copy()
 
-    def fly_trajectory(self,fig = None,ax = None,n = 100):
+    def fly_trajectory(self,n = 100,fig = None,ax = None):
         from matplotlib import pyplot as plt
         self.source['n'] = n
         self.fly(n)
