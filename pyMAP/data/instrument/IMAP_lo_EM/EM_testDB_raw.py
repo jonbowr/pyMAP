@@ -57,5 +57,20 @@ test_db = {
                     'eboxDB':r'\Test Data\Sensor',
                     'instrument': 'EMv2'
                     },
-    
+            'T011':{
+                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv2\EMv2c_T011_PSPL_FirstLight_20230424',
+                    'asrun':'EMv2c_T011_PSPL_FirstLight_20230424_AsRun.xlsx',
+                    'asrun_pages':['Global','EM_optics','EM_tof','Princeton_PSPL'],
+                    'snifferDB':r'\Test Data\Sensor\csv',
+                    'eboxDB':r'',
+                    'instrument': 'EMv2c'
+                    },
+            'T012':{
+                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv2\EMv2c_T012_PSPL_20230516',
+                    'asrun':'EMv2c_T012_PSPL_20230515_AsRun.xlsx',
+                    'asrun_pages':['Global','EM_optics','EM_tof','Princeton_PSPL'],
+                    'snifferDB':r'\Test Data\Sensor\csv',
+                    'eboxDB':r'',
+                    'instrument': 'EMv2c'
+                    },
             }
