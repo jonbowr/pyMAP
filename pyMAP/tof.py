@@ -81,7 +81,7 @@ def calc_eLoss(df):
     vs = tof_speeds(df)
     return(vs['TOF1']**2/vs['TOF2']**2)
 
-def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
+def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em'],times_out = False):
 
     A = np.array([ [ 1, 1, 1, 1],
                    [-1, 1, 1, 1],
