@@ -94,8 +94,10 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
     b3 = np.array([d0+d1+d2+d3,d1+d2+d3,d2+d3,d3])
 
     ft3 = (lambda x,y: abs(x-y))
-    return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,
-                            columns = ['Q','tof3','b0','b3']))
+    offsets = pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,
+                            columns = ['Q','tof3','b0','b3'])
+    delay_times  = pd.Series([d0,d1,d2,d3],index = ['d0','d1','d2','d3'])
+    return(offsets,delay_times)
 
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
