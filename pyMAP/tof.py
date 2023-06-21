@@ -81,7 +81,8 @@ def calc_eLoss(df):
     vs = tof_speeds(df)
     return(vs['TOF1']**2/vs['TOF2']**2)
 
-def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em'],times_out = False):
+def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em'],
+                        times_out = False):
 
     A = np.array([ [ 1, 1, 1, 1],
                    [-1, 1, 1, 1],
@@ -97,8 +98,9 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em'],times_out = False):
     offsets = pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,
                             columns = ['Q','tof3','b0','b3'])
     delay_times  = pd.Series([d0,d1,d2,d3],index = ['d0','d1','d2','d3'])
-    return(offsets,delay_times)
-
+    if times_out:
+        return(offsets,delay_times)
+    else: return(offsets)
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
                             technique='signal',
@@ -170,6 +172,14 @@ def get_checksum(df):
 
 def log_checksum(df,check_max = 1):
     return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
+
+def log_valid_tof(athing,valid_num = 2):
+    nams = []
+    for stuff in athing:
+        if 'validtof' in stuff.lower():
+            # print(stuff)
+            nams.append(stuff)
+    return(athing[nams].sum(axis = 1)==valid_num)
 
 def log_trips(athing):
     log_good = []
@@ -295,7 +305,8 @@ def fit_tofs(df,
                              'TOF1':[0,255],
                              'TOF2':[0,255]
                           },
-                 bin_ns = 2
+                 bin_ns = 2,
+                 find_val = None
                 ):
     import bowPy as bp
     fits = {}
@@ -304,4 +315,6 @@ def fit_tofs(df,
         fits[tf] = bp.Jonda(data = df[tf],bins = bins)
         fits[tf].bin_data()
         fits[tf].interp_xy(kind = 'cubic')
+        if find_val != None:
+            fits[tf] = fits[tf].find_xy(find_val)
     return(pd.Series(fits))
