@@ -44,6 +44,12 @@ class simulator:
     def __getitem__(self,item):
         return(self.sims[item])
 
+    
+    def __setitem__(self,item,val):
+        self.sims[item]=val
+        return(self)
+    
+
     def show(self):
         return(self[0].show())
 
@@ -93,4 +99,4 @@ class simulator:
             fig,ax = self.show()
         for sim_in in self.sims:
             if sim_in.type == 'simion':
-                sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax)
+                sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax,show_cbar = False)
