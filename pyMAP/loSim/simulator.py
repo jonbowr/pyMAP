@@ -15,23 +15,25 @@ class simulator:
         inp = sim_input[geo].copy()
         inp['home'] = os.path.relpath(sim_input[geo]['home'])
         from pandas import DataFrame
+        # setup the simulator architecture
         self.sims = DataFrame([\
                     {'name':'inc_N',
-                        'kind':'simion',
+                        # 'kind':'simion',
                         'sim':sim.simion(**inp,
                                 obs_region = obs_regions['CS']),
                                 },
                     {'name':'cs_scatter',
-                        'kind':'modulator',
+                        # 'kind':'modulator',
                         'sim':cs_scatterer(**scattering_input),
                                 },
                     {'name':'rec_ion',
-                        'kind':'simion',
+                        # 'kind':'simion',
                         'sim':sim.simion(**inp,
                                 obs_region = obs_regions['TOF']),
                                 }
-                    ]).set_index(['name','kind'])['sim']
+                    ]).set_index(['name'])['sim']
 
+        # setup the default source distribution
         self.source = sim.particles.auto_parts()
         self.source['charge'] = 0
         self.source['ke'] = sim.particles.source('gaussian')
@@ -40,11 +42,23 @@ class simulator:
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
         self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
                                     'last': np.array([210.1,133.2,   0. ])}
+
+        # setup param control structure for easy access to sub simulation adjustable params
+        self.params = {}
+        # self.params['source'] = self.source.params
+        self.params['cs_scatter'] = self['cs_scatter'].params
+
+    def __repr__(self):
+        return(
+               'Simulator Nodes:\n'+
+               'Source:%s'%str(self.source)+
+               '====================================\n'+
+                '====================================\n'.join(\
+                ['%s:%s'%(lab[0],str(val))for lab,val in self.sims.items()]))
             
     def __getitem__(self,item):
         return(self.sims[item])
 
-    
     def __setitem__(self,item,val):
         self.sims[item]=val
         return(self)
@@ -90,6 +104,7 @@ class simulator:
                     dat_buffer = self.sim_fix_stops(dat.copy())
             else:
                 dat_buffer = dat.copy()
+        return(self)
 
     def fly_trajectory(self,n = 100,fig = None,ax = None):
         from matplotlib import pyplot as plt
