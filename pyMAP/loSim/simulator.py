@@ -61,7 +61,7 @@ class simulator:
         pol = self[0].geo.get_single_poly().boundary
 
         pts = MultiPoint(data[['x','r']])
-        verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts]])
+        verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts.geoms]])
         if v_extrap:
             #calc offset distance of point from surface
             mm_offset = np.sqrt((data['x'] -verts[:,0])**2+(data['r'] - verts[:,1])**2)
@@ -70,7 +70,7 @@ class simulator:
             for dim in ['x','r']:
                 data[dim] = data[dim]-data['v'+dim]/abs(data['v'+dim])*mm_offset
             pts = MultiPoint(data[['x','r']])
-            verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts]])
+            verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts.geoms]])
         data['x'] = verts[:,0]
         data['r'] = verts[:,1]
         return(data)
