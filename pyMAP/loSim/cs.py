@@ -87,6 +87,7 @@ class cs_scatterer:
         self.charge = charge
         self.data = None
         self.type = 'modulator'
+
         self.sputtering = frac_sputtered
         self.is_sputtered = None
         self.sputtered_m= 1
@@ -94,8 +95,9 @@ class cs_scatterer:
         # assign distribution functions and cs scattering modulator functions
         self.ke = {
                    'pdf': sim.particles.pdf('poisson',{'c':0,'b':.105,'k':1}),
-                    'pdf_sputter':sim.particles.pdf('sputtered'),
+                   'pdf_sputter':sim.particles.pdf('sputtered'),
                    'modulator_f': self.cal_fits['e_loss'][self.species],
+
                     }
         self.theta = {
                        'pdf': sim.particles.pdf('poisson',{'c':0,'b':.405,'k':1}),
@@ -111,7 +113,20 @@ class cs_scatterer:
                                     dist_vals = {'mean':0,'range':180,'a':0,'b':180,'x_min':0}),
                        'modulator_f': self.cal_fits['phi'][self.species],
                     }
+
+    def __str__(self):
+        return('%s\n'%str(type(self))+
+               'Incident M:\t%.2f[AMU]\n'%self.m+
+               'Sputtered M:\t%.2f[AMU]\n'%self.sputtered_m+
+               'Sputtering:\t%.2f[%%]\n'%self.sputtering+
+               'Ke Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.ke.items()])+
+               'Theta Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])+
+               'Phi Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])
+               )
     
+    def __repr__(self):
+        return(str(self))
+
     def ke_mean(self,ke,theta,phi):
         v_perp = get_vperp(self.m,ke,abs(theta - self.cs_el))
         return(self.ke['modulator_f'](v_perp)*ke)
