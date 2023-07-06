@@ -127,7 +127,7 @@ class cs_scatterer:
                'Sputtering:\t%.2f[%%]\n'%self.part['sputtering']+
                'Ke Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.ke.items()])+
                'Theta Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])+
-               'Phi Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])
+               'Phi Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.phi.items()])
                )
     
     def __repr__(self):
