@@ -104,9 +104,14 @@ def setup_fit_funcs_ke(use_dat,cent_eng,e_loss):
     return(fits)
 
 def get_vperp(m_amu,ke,ang):
+    '''
+    function to Calculate the perpendicular velocity component from particle energy mass and inc angle
+    returns:
+        perpendicular speed component in m/s
+    '''
+
     from pyMAP.pyMAP.tof import v_00
-    # Calculate the perpendicular velocity component from the 
-    v = v_00(m_amu,ke)/10**-9/10**6
+    v = v_00(m_amu,ke)/10**-9/10**5
     return(np.sin(ang*np.pi/180)*v)
 
 
