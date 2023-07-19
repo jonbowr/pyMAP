@@ -28,7 +28,7 @@ def tof_expected(ke=16000,
         mass = np.array(mass).reshape(-1)
         species = ['NaN']*len(mass)
     
-    units = ['','[amu]','[eV]','[cm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
+    units = ['','[amu]','[eV]','[mm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
         
     dfs = []
     # Loop through mass and species arrays to calculate the dataframe of ref values
@@ -57,12 +57,12 @@ def mass_line(ke):
 def v_00(m,Vinc=7000,q = 1):
     # For a given mass and voltage, calculates the resulting velocity in cm/nS
     qVinc = Vinc*qv*q
-    return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
+    return(np.sqrt(qVinc/m*2/amu_c)/mmNs_ms)
 
 def tof_to_ke(tof,m,leg = 'TOF0',q = 1):
     # For a given tof,mass and leg, calculates the incident energy in eV
-    return((tof_dims_cm[leg]/tof*cm_c)**2*amu_c*m/(2*qv*q))
-    # return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
+    return((tof_dims_cm[leg]/tof*mmNs_ms)**2*amu_c*m/(2*qv*q))
+    # return(np.sqrt(qVinc/m*2/amu_c)/mmNs_ms)
 
 def calc_checksum(tof0,tof1,tof2,tof3):
     return((tof0+tof3-tof2-tof1))

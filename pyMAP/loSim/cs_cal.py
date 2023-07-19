@@ -107,11 +107,11 @@ def get_vperp(m_amu,ke,ang):
     '''
     function to Calculate the perpendicular velocity component from particle energy mass and inc angle
     returns:
-        perpendicular speed component in m/s
+        perpendicular speed component in km/s
     '''
 
-    from pyMAP.pyMAP.tof import v_00
-    v = v_00(m_amu,ke)/10**-9/10**5
+    from pyMAP.pyMAP.tof import v_00,mmNs_ms
+    v = v_00(m_amu,ke)*mmNs_ms*10**-3 # speed converted from mm/ns to km/s
     return(np.sin(ang*np.pi/180)*v)
 
 
