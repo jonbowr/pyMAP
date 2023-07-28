@@ -179,7 +179,9 @@ def log_valid_tof(athing,valid_num = 2):
         if 'validtof' in stuff.lower():
             # print(stuff)
             nams.append(stuff)
-    return(athing[nams].sum(axis = 1)==valid_num)
+    valid = athing[nams].sum(axis = 1)==valid_num
+    valid.name = 'is_valid_%d'%valid_num
+    return(valid)
 
 def log_trips(athing):
     log_good = []
@@ -318,3 +320,6 @@ def fit_tofs(df,
         if find_val != None:
             fits[tf] = fits[tf].find_xy(find_val)
     return(pd.Series(fits))
+
+def get_quad_groups(dat,instrument = 'imap_lo_em'):
+    return(np.digitize(dat['TOF3'],tof3_peaks_ns[instrument]-2))
