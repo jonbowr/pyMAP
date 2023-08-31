@@ -37,7 +37,7 @@ class simulator:
         self.source = sim.particles.auto_parts()
         self.source['charge'] = 0
         self.source['ke'] = sim.particles.source('gaussian')
-        self.source['ke'].dist_vals = {'mean': 930, 'fwhm': 50}
+        self.source['ke'].dist_vals = {'mean': 480, 'fwhm': 50}
         self.source['az'].dist_vals = {'mean': 180, 'fwhm': 2}
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
         self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
@@ -66,6 +66,9 @@ class simulator:
 
     def show(self):
         return(self[0].show())
+
+    def show_dist(self):
+        self.sims.apply(lambda x: x.data.start().show())
 
     def sim_fix_stops(self,data,v_extrap = True):
         # uses the shapely instrument geometry to set points on surface of polygon
