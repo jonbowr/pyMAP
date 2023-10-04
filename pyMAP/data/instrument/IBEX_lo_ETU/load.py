@@ -21,17 +21,18 @@ def cal_headder(fil):
                 return
     return(head)
 
-def load(fil,
+def load(fil,dtype = None,
             use_filt = ['TOF0','TOF1','TOF2','TOF3'],
             filt_triples = False,
             apply_checksum = False,
             tof3_picker = None,
-            min_tof = None,tof_ac = True):
+            min_tof = None,
+            tof_ac = False):
 
     head = cal_headder(fil)
     # print(head)
     athing = pd.read_csv(fil,comment = '#',delim_whitespace= True,header = None,names = head)
-    # return(athing)
+    return(athing)
     athing['tof0_sh'] = athing['TOF0']+athing['TOF3']/2
     athing['tof1_sh'] = athing['TOF1']-athing['TOF3']/2
     if tof_ac:

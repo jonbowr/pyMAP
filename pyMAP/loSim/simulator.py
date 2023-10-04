@@ -15,37 +15,60 @@ class simulator:
         inp = sim_input[geo].copy()
         inp['home'] = os.path.relpath(sim_input[geo]['home'])
         from pandas import DataFrame
+        # setup the simulator architecture
         self.sims = DataFrame([\
                     {'name':'inc_N',
-                        'kind':'simion',
+                        # 'kind':'simion',
                         'sim':sim.simion(**inp,
                                 obs_region = obs_regions['CS']),
                                 },
                     {'name':'cs_scatter',
-                        'kind':'modulator',
+                        # 'kind':'modulator',
                         'sim':cs_scatterer(**scattering_input),
                                 },
                     {'name':'rec_ion',
-                        'kind':'simion',
+                        # 'kind':'simion',
                         'sim':sim.simion(**inp,
                                 obs_region = obs_regions['TOF']),
                                 }
-                    ]).set_index(['name','kind'])['sim']
+                    ]).set_index(['name'])['sim']
 
+        # setup the default source distribution
         self.source = sim.particles.auto_parts()
         self.source['charge'] = 0
         self.source['ke'] = sim.particles.source('gaussian')
-        self.source['ke'].dist_vals = {'mean': 930, 'fwhm': 50}
+        self.source['ke'].dist_vals = {'mean': 480, 'fwhm': 50}
         self.source['az'].dist_vals = {'mean': 180, 'fwhm': 2}
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
         self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
                                     'last': np.array([210.1,133.2,   0. ])}
+
+        # setup param control structure for easy access to sub simulation adjustable params
+        self.params = {}
+        # self.params['source'] = self.source.params
+        self.params['cs_scatter'] = self['cs_scatter'].params
+
+    def __repr__(self):
+        return(
+               'Simulator Nodes:\n'+
+               'Source:%s'%str(self.source)+
+               '====================================\n'+
+                '====================================\n'.join(\
+                ['%s:%s'%(lab[0],str(val))for lab,val in self.sims.items()]))
             
     def __getitem__(self,item):
         return(self.sims[item])
 
+    def __setitem__(self,item,val):
+        self.sims[item]=val
+        return(self)
+    
+
     def show(self):
         return(self[0].show())
+
+    def show_dist(self):
+        self.sims.apply(lambda x: x.data.start().show())
 
     def sim_fix_stops(self,data,v_extrap = True):
         # uses the shapely instrument geometry to set points on surface of polygon
@@ -55,7 +78,7 @@ class simulator:
         pol = self[0].geo.get_single_poly().boundary
 
         pts = MultiPoint(data[['x','r']])
-        verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts]])
+        verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts.geoms]])
         if v_extrap:
             #calc offset distance of point from surface
             mm_offset = np.sqrt((data['x'] -verts[:,0])**2+(data['r'] - verts[:,1])**2)
@@ -64,7 +87,7 @@ class simulator:
             for dim in ['x','r']:
                 data[dim] = data[dim]-data['v'+dim]/abs(data['v'+dim])*mm_offset
             pts = MultiPoint(data[['x','r']])
-            verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts]])
+            verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts.geoms]])
         data['x'] = verts[:,0]
         data['r'] = verts[:,1]
         return(data)
@@ -84,6 +107,7 @@ class simulator:
                     dat_buffer = self.sim_fix_stops(dat.copy())
             else:
                 dat_buffer = dat.copy()
+        return(self)
 
     def fly_trajectory(self,n = 100,fig = None,ax = None):
         from matplotlib import pyplot as plt
@@ -93,4 +117,4 @@ class simulator:
             fig,ax = self.show()
         for sim_in in self.sims:
             if sim_in.type == 'simion':
-                sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax)
+                sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax,show_cbar = False)

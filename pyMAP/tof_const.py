@@ -21,7 +21,7 @@ def f_elec_t(mcp_v):
     return(-.0006*mcp_v+5.94,
            -.0005*mcp_v+5.44)
 
-# Dimension of TOF in cm
+# Dimension of TOF in mm
 tof_dims_cm = {'TOF0':50,'TOF1':22.5,'TOF2':27.7}
 
 # electron mass
@@ -30,7 +30,7 @@ m_elec_amu = .00055 #AMU
 # Conversion factors used in tof calculations
 # AMU to kG
 amu_c = 1.660539*10**-27#Kg/AMU
-# cm/ns to m/s
-cm_c = 10**6 #ns/cm*m/s
+# mm/ns to m/s
+mmNs_ms = 10**6 #(ns/mm)*(m/s)
 #convert V[V]*q
 qv = 1.6*10**-19#kg*m^2/s^2/e

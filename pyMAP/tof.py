@@ -28,7 +28,7 @@ def tof_expected(ke=16000,
         mass = np.array(mass).reshape(-1)
         species = ['NaN']*len(mass)
     
-    units = ['','[amu]','[eV]','[cm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
+    units = ['','[amu]','[eV]','[mm/ns]','bool','[ns]','[ns]','[ns]','[ns]']
         
     dfs = []
     # Loop through mass and species arrays to calculate the dataframe of ref values
@@ -57,12 +57,12 @@ def mass_line(ke):
 def v_00(m,Vinc=7000,q = 1):
     # For a given mass and voltage, calculates the resulting velocity in cm/nS
     qVinc = Vinc*qv*q
-    return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
+    return(np.sqrt(qVinc/m*2/amu_c)/mmNs_ms)
 
 def tof_to_ke(tof,m,leg = 'TOF0',q = 1):
     # For a given tof,mass and leg, calculates the incident energy in eV
-    return((tof_dims_cm[leg]/tof*cm_c)**2*amu_c*m/(2*qv*q))
-    # return(np.sqrt(qVinc/m*2/amu_c)/cm_c)
+    return((tof_dims_cm[leg]/tof*mmNs_ms)**2*amu_c*m/(2*qv*q))
+    # return(np.sqrt(qVinc/m*2/amu_c)/mmNs_ms)
 
 def calc_checksum(tof0,tof1,tof2,tof3):
     return((tof0+tof3-tof2-tof1))
@@ -81,7 +81,8 @@ def calc_eLoss(df):
     vs = tof_speeds(df)
     return(vs['TOF1']**2/vs['TOF2']**2)
 
-def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
+def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em'],
+                        times_out = False):
 
     A = np.array([ [ 1, 1, 1, 1],
                    [-1, 1, 1, 1],
@@ -94,9 +95,12 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em']):
     b3 = np.array([d0+d1+d2+d3,d1+d2+d3,d2+d3,d3])
 
     ft3 = (lambda x,y: abs(x-y))
-    return(pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,
-                            columns = ['Q','tof3','b0','b3']))
-
+    offsets = pd.DataFrame(np.stack([np.arange(4),ft3(b0,b3),b0,b3]).T,
+                            columns = ['Q','tof3','b0','b3'])
+    delay_times  = pd.Series([d0,d1,d2,d3],index = ['d0','d1','d2','d3'])
+    if times_out:
+        return(offsets,delay_times)
+    else: return(offsets)
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
                             technique='signal',
@@ -168,6 +172,19 @@ def get_checksum(df):
 
 def log_checksum(df,check_max = 1):
     return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
+
+def log_valid_tof(athing,valid_num = 2,select_type = 'inclusive'):
+    nams = []
+    for stuff in athing:
+        if 'validtof' in stuff.lower():
+            # print(stuff)
+            nams.append(stuff)
+    if select_type == 'inclusive':
+        valid = athing[nams].sum(axis = 1)>=valid_num
+    elif select_type == 'exclusive':
+        valid = athing[nams].sum(axis = 1)==valid_num
+    valid.name = 'is_valid_%d'%valid_num
+    return(valid)
 
 def log_trips(athing):
     log_good = []
@@ -293,13 +310,24 @@ def fit_tofs(df,
                              'TOF1':[0,255],
                              'TOF2':[0,255]
                           },
-                 bin_ns = 2
+                 bin_ns = 2,
+                 find_val = None
                 ):
     import bowPy as bp
     fits = {}
     for tf in tof_ranges.keys():
-        bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
-        fits[tf] = bp.Jonda(data = df[tf],bins = bins)
-        fits[tf].bin_data()
-        fits[tf].interp_xy(kind = 'cubic')
+        try:
+            bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
+            fits[tf] = bp.Jonda(data = df[tf],bins = bins)
+            fits[tf].bin_data()
+            fits[tf].interp_xy(kind = 'cubic')
+            if find_val != None:
+                    fits[tf] = fits[tf].find_xy(find_val)
+        except:
+            fits[tf] = np.nan
     return(pd.Series(fits))
+
+def get_quad_groups(dat,instrument = 'imap_lo_em'):
+    quads = pd.Series(np.digitize(dat['TOF3'],tof3_peaks_ns[instrument]-2),index = dat.index)
+    quads.name = 'tof3_quad'
+    return(quads)

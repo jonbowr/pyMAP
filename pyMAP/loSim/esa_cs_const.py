@@ -36,28 +36,38 @@ sim_input = {
                                 'P9 Electrode': -161.0,
                                 'Inner ESA': 1235.3,
                                 'P10 Electrode': 1782.4,
-                                'TOF PAC': 16000.0},
+                                'TOF PAC': 16000.0,
+                                'outter Magnet':11,
+                                'inner Magnet':-10
+                                },
                     'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
-                            # 'gem/splitup/IMAP-Lo_MAG1_HK6.GEM',
-                                # 'gem/splitup/IMAP-Lo_CR7_HK6.GEM',
-                                'gem/splitup/IMAP-Lo_CE12_TOF2_HK6.GEM'],
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CR7_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
+                                ],
                 },
         'imap7':
                 {
                     'volt_dict':{'Collimator': 0.0,
+                                'Inner Rejection Electrode': 4000.0,
+                                'Outer Rejection Electrode': -3500.0,
                                  'Conversion Surface': -362.73,
                                  'P2 Electrode': -393.03,
                                  'P3 Electrode': 0.0,
                                  'P9 Electrode': -71.996,
                                  'Inner ESA': 804.11,
                                  'P10 Electrode': 1160.24,
-                                 'TOF PAC': 16000.0},
+                                 'TOF PAC': 16000.0,
+                                'outter Magnet':11,
+                                'inner Magnet':-10
+                                },
                     'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
-                                # 'gem/splitup/IMAP-Lo_MAG1_HK6.GEM',
-                                # 'gem/splitup/IMAP-Lo_CR7_HK6.GEM',
-                                'gem/splitup/IMAP-Lo_CE12_TOF2_HK6.GEM']
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CR7_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
+                                ],
                 }
         }
 

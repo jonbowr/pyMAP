@@ -93,7 +93,11 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
             #     bp.plotJon.annot.vline(ax.get_xlim()[0],'loEM',ax = ax)
         if legend and legend_loc.lower() == 'inside':
             ax.legend()
-    fig.tight_layout()
+    if legend and legend_loc.lower()=='outside':
+        from pyMAP.bowPy.bowPy.plotJon.legend import legend_loc as ll
+        ll(fig = fig,ax = axs[0])
+    else:
+        fig.tight_layout()
     return(fig,axs)
 
 def tofs_2d(thing,pltx,plty,bins = 75,

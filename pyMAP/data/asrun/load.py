@@ -5,7 +5,6 @@ from pyMAP.pyMAP.data.load import load as loader
 
 def load_v1(f_as_run,home = './',sheet_name = 0):
     import os
-    
     df = pd.concat(pd.read_excel(os.path.join(home,f_as_run),
                 sheet_name = sheet_name,
                 header=2,
@@ -13,10 +12,20 @@ def load_v1(f_as_run,home = './',sheet_name = 0):
                 ),axis = 1).T.reset_index(level =0, drop = True ).T
     df = df.dropna(axis = 0,how = 'all')
     df = df.dropna(axis = 1,how = 'all')
-    
     return(df)
 
-loadlib = {'v001':load_v1}
+def ETU_v1(f_as_run,home = './',sheet_name = 0):
+    import os
+    df = pd.concat(pd.read_excel(os.path.join(home,f_as_run),
+                sheet_name = sheet_name,
+                header=5,
+                ),axis = 1).T.reset_index(level =0, drop = True ).T
+    df = df.dropna(axis = 0,subset = ['activity','file_name'])
+    df = df.dropna(axis = 1,how = 'all')
+    return(df.set_index(['date','run_n','activity']))
+
+loadlib = {'v001':load_v1,
+            'ETU_v001':ETU_v1}
 pages = {
         'v001':['Global',
                 'M145_beam',
