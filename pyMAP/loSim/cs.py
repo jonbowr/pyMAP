@@ -78,7 +78,7 @@ class cs_scatterer:
                     samples= ['036b',39,'100P','40P','xxx','L109'],
                         species = 'H',
                         charge = -1,
-                        frac_sputtered = 0):
+                        frac_sputtered = .1):
         import simPyon as sim
         self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
         self.data = None

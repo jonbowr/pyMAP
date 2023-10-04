@@ -173,13 +173,16 @@ def get_checksum(df):
 def log_checksum(df,check_max = 1):
     return(abs(calc_checksum(*df[['TOF0','TOF1','TOF2','TOF3']].T.values))<check_max)
 
-def log_valid_tof(athing,valid_num = 2):
+def log_valid_tof(athing,valid_num = 2,select_type = 'inclusive'):
     nams = []
     for stuff in athing:
         if 'validtof' in stuff.lower():
             # print(stuff)
             nams.append(stuff)
-    valid = athing[nams].sum(axis = 1)==valid_num
+    if select_type == 'inclusive':
+        valid = athing[nams].sum(axis = 1)>=valid_num
+    elif select_type == 'exclusive':
+        valid = athing[nams].sum(axis = 1)==valid_num
     valid.name = 'is_valid_%d'%valid_num
     return(valid)
 
@@ -313,13 +316,18 @@ def fit_tofs(df,
     import bowPy as bp
     fits = {}
     for tf in tof_ranges.keys():
-        bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
-        fits[tf] = bp.Jonda(data = df[tf],bins = bins)
-        fits[tf].bin_data()
-        fits[tf].interp_xy(kind = 'cubic')
-        if find_val != None:
-            fits[tf] = fits[tf].find_xy(find_val)
+        try:
+            bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
+            fits[tf] = bp.Jonda(data = df[tf],bins = bins)
+            fits[tf].bin_data()
+            fits[tf].interp_xy(kind = 'cubic')
+            if find_val != None:
+                    fits[tf] = fits[tf].find_xy(find_val)
+        except:
+            fits[tf] = np.nan
     return(pd.Series(fits))
 
 def get_quad_groups(dat,instrument = 'imap_lo_em'):
-    return(np.digitize(dat['TOF3'],tof3_peaks_ns[instrument]-2))
+    quads = pd.Series(np.digitize(dat['TOF3'],tof3_peaks_ns[instrument]-2),index = dat.index)
+    quads.name = 'tof3_quad'
+    return(quads)

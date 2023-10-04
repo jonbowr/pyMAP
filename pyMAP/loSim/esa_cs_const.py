@@ -37,14 +37,14 @@ sim_input = {
                                 'Inner ESA': 1235.3,
                                 'P10 Electrode': 1782.4,
                                 'TOF PAC': 16000.0,
-                                'outter Magnet':0,
-                                'inner Magnet':0
+                                'outter Magnet':11,
+                                'inner Magnet':-10
                                 },
                     'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
-                            'gem/splitup/IMAP-Lo_MAG1_HK6.GEM',
-                                'gem/splitup/IMAP-Lo_CE12_TOF2_HK6.GEM',
-                                'gem/splitup/IMAP-Lo_CR7_HK6.GEM'
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CR7_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
                                 ],
                 },
         'imap7':
@@ -59,13 +59,15 @@ sim_input = {
                                  'Inner ESA': 804.11,
                                  'P10 Electrode': 1160.24,
                                  'TOF PAC': 16000.0,
-                                'outter Magnet':0,
-                                'inner Magnet':0},
+                                'outter Magnet':11,
+                                'inner Magnet':-10
+                                },
                     'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
-                                'gem/splitup/IMAP-Lo_MAG1_HK6.GEM',
-                                'gem/splitup/IMAP-Lo_CR7_HK6.GEM',
-                                'gem/splitup/IMAP-Lo_CE12_TOF2_HK6.GEM']
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CR7_HK6.GEM',
+                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
+                                ],
                 }
         }
 
