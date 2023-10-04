@@ -11,23 +11,21 @@ class simulator:
     - fly(): function which executes particle propagation
     '''
 
-    def __init__(self,geo = 'imap1',scattering_input = {}):
-        inp = sim_input[geo].copy()
-        inp['home'] = os.path.relpath(sim_input[geo]['home'])
+    def __init__(self,geo = 'imap',mode = 'imap_hiTh',estep = 6,
+                                scattering_input = {}):
+        inp = sim_input(geo,mode,estep)
+        inp['home'] = os.path.relpath(inp['home'])
         from pandas import DataFrame
         # setup the simulator architecture
         self.sims = DataFrame([\
                     {'name':'inc_N',
-                        # 'kind':'simion',
                         'sim':sim.simion(**inp,
                                 obs_region = obs_regions['CS']),
                                 },
                     {'name':'cs_scatter',
-                        # 'kind':'modulator',
                         'sim':cs_scatterer(**scattering_input),
                                 },
                     {'name':'rec_ion',
-                        # 'kind':'simion',
                         'sim':sim.simion(**inp,
                                 obs_region = obs_regions['TOF']),
                                 }
@@ -37,11 +35,12 @@ class simulator:
         self.source = sim.particles.auto_parts()
         self.source['charge'] = 0
         self.source['ke'] = sim.particles.source('gaussian')
-        self.source['ke'].dist_vals = {'mean': 480, 'fwhm': 50}
+        self.source['ke'].dist_vals = {'mean': 480*volt_scale_facts[estep-1], 'fwhm': 50*volt_scale_facts[estep-1]}
         self.source['az'].dist_vals = {'mean': 180, 'fwhm': 2}
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
         self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
                                     'last': np.array([210.1,133.2,   0. ])}
+        self.sims[0].source = self.source.copy()
 
         # setup param control structure for easy access to sub simulation adjustable params
         self.params = {}
