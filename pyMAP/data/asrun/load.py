@@ -25,7 +25,7 @@ def ETU_v1(f_as_run,home = './',sheet_name = 0):
     return(df.set_index(['date','run_n','activity']))
 
 loadlib = {'v001':load_v1,
-            'ETU_v001':ETU_v1}
+            'ibex_lo_etu':ETU_v1}
 pages = {
         'v001':['Global',
                 'M145_beam',

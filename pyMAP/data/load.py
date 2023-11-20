@@ -166,12 +166,21 @@ def dat_loc(file_name,home,dtype = ''):
     # make input filename itterable if just a string
     if type(file_name) == str:
         file_name = [file_name]
+    if type(file_name)==list:
+        file_name = pd.Series(file_name)
 
-    fs = []
-    for f in getListOfFiles(home):
-        for fil in file_name:
-            f_indicator = fil.split('.')[0].replace('_','').lower()
-            ff = os.path.basename(f).split('.')[0].replace('_','').lower()
-            if f_indicator in ff and '.rec' not in f and dtype in f:
-                fs.append(f)
-    return(fs)
+    thing = pd.DataFrame(getListOfFiles(home),columns = ['loc'])
+    thing['nam'] = thing['loc'].apply(lambda x: os.path.basename(x).split('.')[0].replace('_','').lower())
+    thing['type'] = thing['loc'].apply(lambda x: os.path.splitext(x)[1])
+    thing = thing.loc[~thing['type'].str.lower().str.contains('rec')]
+    indic = file_name.apply(lambda x: x.split('.')[0].replace('_','').lower())
+    return(pd.concat(indic.apply(lambda x: thing.loc[thing['nam'].str.contains(x)]).values)['loc'].values)
+
+    # fs = []
+    # for f in getListOfFiles(home):
+    #     for fil in file_name:
+    #         f_indicator = fil.split('.')[0].replace('_','').lower()
+    #         ff = os.path.basename(f).split('.')[0].replace('_','').lower()
+    #         if f_indicator in ff and '.rec' not in f and dtype in f:
+    #             fs.append(f)
+    # return(fs)

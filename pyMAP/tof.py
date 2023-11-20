@@ -208,8 +208,9 @@ def clean(df_in,
               filt_speed = False,
               tof3_picker = None,
               min_tof = np.nan,
-              min_apply = ['TOF0','TOF1','TOF2','TOF3'],
-              remove_delay_input = {}):
+              min_apply = ['TOF0','TOF1','TOF2'],
+              remove_delay_input = {},
+              tof3_max = np.inf):
     df = df_in.copy()
 
     log_good = [np.ones(len(df)).astype(bool)]
@@ -221,6 +222,10 @@ def clean(df_in,
     # Filter for checksum max value
     if checksum < 999999:
         log_good.append(log_checksum(df,checksum))
+
+    # Filter for checksum max value
+    if tof3_max < 999999:
+        log_good.append(df['TOF3']<tof3_max)
 
 
     # Remove the delay line offset and electron flight time
@@ -277,9 +282,9 @@ def get_eff(dat):
     
     return(df.replace([np.inf, -np.inf,np.nan], 0))
 
-def de_effic(rawDE):
+def de_effic(rawDE,time_ind = 'SHCOARSE'):
     val_keys = rawDE.keys().to_series()
-    dt = max(rawDE['SHCOARSE'])-min(rawDE['SHCOARSE'])
+    dt = max(rawDE[time_ind])-min(rawDE[time_ind])
     df = rawDE[val_keys.loc[val_keys.str.contains('VALID')]].apply('sum')/dt
     
     df['SILVER'] = np.sum(log_trips(rawDE))/dt
@@ -311,13 +316,18 @@ def fit_tofs(df,
                              'TOF2':[0,255]
                           },
                  bin_ns = 2,
-                 find_val = None
+                 bin_num = None,
+                 find_val = None,
+                 logbins = False
                 ):
     import bowPy as bp
     fits = {}
     for tf in tof_ranges.keys():
         try:
-            bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
+            if logbins:
+                bins = np.geomspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
+            else:    
+                bins = np.linspace(*tof_ranges[tf],int((tof_ranges[tf][1]-tof_ranges[tf][0])*bin_ns))
             fits[tf] = bp.Jonda(data = df[tf],bins = bins)
             fits[tf].bin_data()
             fits[tf].interp_xy(kind = 'cubic')

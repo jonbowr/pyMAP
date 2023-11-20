@@ -17,8 +17,8 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
                         legend = False,
                         legend_loc='inside',
                         tof_ref_lines = {},
-                        units ='[nS]'
-                        ):
+                        units ='[nS]',
+                        title = ''):
 
     from pyMAP import bowPy as bp
 
@@ -93,6 +93,7 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
             #     bp.plotJon.annot.vline(ax.get_xlim()[0],'loEM',ax = ax)
         if legend and legend_loc.lower() == 'inside':
             ax.legend()
+    axs[0].set_title(title)
     if legend and legend_loc.lower()=='outside':
         from pyMAP.bowPy.bowPy.plotJon.legend import legend_loc as ll
         ll(fig = fig,ax = axs[0])

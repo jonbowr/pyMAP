@@ -17,6 +17,8 @@ class simulator:
         inp['home'] = os.path.relpath(inp['home'])
         from pandas import DataFrame
         # setup the simulator architecture
+        self.geo = geo
+        self.mode = mode
         self.sims = DataFrame([\
                     {'name':'inc_N',
                         'sim':sim.simion(**inp,
@@ -64,10 +66,22 @@ class simulator:
     
 
     def show(self):
-        return(self[0].show())
+        fig,ax = self[0].show()
+        from matplotlib.patches import Rectangle
+        for s in self.sims:
+            if s.type == 'simion':
+                sr = s.obs_region
+                ax.add_patch(Rectangle((sr['X_MIN'], sr['R_MIN']), 
+                                       sr['X_MAX']-sr['X_MIN'], 
+                                       sr['R_MAX']-sr['R_MIN'],linewidth=1, 
+                                       edgecolor='r', facecolor='none'))
+        return(fig,ax)
 
     def show_dist(self):
         self.sims.apply(lambda x: x.data.start().show())
+
+    def fast_adjust(self,estep = 6):
+        self.sims[0].fast_adjust(dict(v_modes()[estep][self.mode]))
 
     def sim_fix_stops(self,data,v_extrap = True):
         # uses the shapely instrument geometry to set points on surface of polygon

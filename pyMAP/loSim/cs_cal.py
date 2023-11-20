@@ -26,7 +26,7 @@ def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 27):
     hframe = pd.read_excel(f_cs_data,usecols = np.arange(index_cols,data_cols),
                                     nrows = 5)[3:].T
     # define header and reduce
-    hframe.values[:,1] = hframe.values[:,1]/2
+    hframe.values[:,1] = hframe.values[:,1]#/2
     head = pd.MultiIndex.from_frame(hframe,names = ['fit','energy'])
 
     cal = pd.read_excel(f_cs_data,usecols = np.arange(data_cols),header = 5)
@@ -128,12 +128,14 @@ def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
     sml_cal['v_perp'] = sml_cal.apply(\
                     lambda x: get_vperp(perd.elements.symbol(x['species']).mass,
                                                 x['energy'],x['incident_angle']),axis = 1)
+
     
     # define mass groups and v_groups to allow for selective averaging of the sample data
     sml_cal['m'] = sml_cal['species'].apply(lambda x: perd.elements.symbol(x).mass)
     sml_cal['m_group'] = ((sml_cal['m'].values/mass_split).astype(int)>=1).astype(int)
     sml_cal['v_group'] = np.digitize(sml_cal['v_perp'],v_bins)
     
+    # return(sml_cal)#.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
     # average sample data and transform to a shape to allow for simple linear fitting
     sml_cal.set_index(['recoil_props','v_perp','species','v_group'],inplace = True)
     sml_cal = sml_cal['val']
@@ -153,5 +155,5 @@ def get_cal_fits(load_data_input = {},data_av_input = {}):
         fde.fit_xy(use_err = False)
         fde.name = xx.name
         return(fde)    
-    fits = vdat.groupby(['species','recoil_props']).apply(thing).unstack('recoil_props')
+    fits = vdat.dropna().groupby(['species','recoil_props']).apply(thing).unstack('recoil_props')
     return(fits)
