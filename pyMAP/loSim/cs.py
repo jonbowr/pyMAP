@@ -62,7 +62,9 @@ def Er_sputter(E0,E1,theta1,phi1,theta2,phi2,m1,m2,E_bind=6.9):
     cosr = np.cos(np.abs(rel_ang*np.pi/180))
     # calculaate the recoil scattering energy for the knock on sputtered component
     Er = recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2)
-    Er[rel_ang>90]=surf_binding_sputter(E0[rel_ang>90],cosr[rel_ang>90],E_bind)
+    # print(np.sum(rel_ang>90)/len(rel_ang))
+    if any(rel_ang>90):
+        Er[rel_ang>90]=surf_binding_sputter(E0[rel_ang>90],cosr[rel_ang>90],E_bind)
     return(Er)
 
 def Er_ellastic(E0,E1,theta1,phi1,theta2,phi2):
@@ -101,16 +103,20 @@ class cs_scatterer:
                     }
         self.theta = {
                        'pdf': sim.particles.pdf('poisson',{'c':0,'b':.405,'k':1}),
-                       'pdf_sputter':sim.particles.source('cos',
-                                    dist_vals = {'mean':cs_elevation-90,'range':180,'a':90,'b':180,'x_min':0}),
+                       # 'pdf_sputter':sim.particles.source('cos',
+                       #              dist_vals = {'mean':cs_elevation-90,'range':180,'a':90,'b':180,'x_min':0}),
+                      'pdf_sputter':sim.particles.source('cos',
+                                    dist_vals = {'mean':1.25,'range':2.5,'a':.65,'b':2.5,'x_min':0}),
                        'modulator_f': self.cal_fits['theta'][self.part['species']],
                     }
         self.phi = {
                        'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':1}),
                        # 'pdf_sputter':sim.particles.source('uniform',
                        #              dist_vals = {'min':-90,'max':90}),
-                       'pdf_sputter':sim.particles.source('cos',
-                                    dist_vals = {'mean':0,'range':180,'a':0,'b':180,'x_min':0}),
+                       # 'pdf_sputter':sim.particles.source('cos',
+                       #              dist_vals = {'mean':0,'range':180,'a':0,'b':180,'x_min':0}),
+                        'pdf_sputter':sim.particles.source('cos',
+                                    dist_vals = {'mean':1,'range':.75,'a':0,'b':.75,'x_min':0}),
                        'modulator_f': self.cal_fits['phi'][self.part['species']],
                     }
 
@@ -170,7 +176,9 @@ class cs_scatterer:
 
         # take the stat determined sputtered stuff and sample the sputtered distribution
         if any(self.is_sputtered):
-            phi_new[self.is_sputtered] = self.phi['pdf_sputter'](np.sum(self.is_sputtered))
+            spt = self.is_sputtered
+            # phi_new[self.is_sputtered] = self.phi['pdf_sputter'](np.sum(self.is_sputtered))
+            phi_new[spt] = self.phi['pdf_sputter'](np.sum(spt))*(phi_new[spt])
         return(phi_new)
 
     def theta_scatter(self,ke,theta,phi):
@@ -186,7 +194,9 @@ class cs_scatterer:
         theta_new = (self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean
         # take the stat determined sputtered stuff and sample the sputtered distribution
         if any(self.is_sputtered):
-            theta_new[self.is_sputtered] = self.theta['pdf_sputter'](np.sum(self.is_sputtered))
+            spt = self.is_sputtered
+            theta_new[spt] = (self.theta['pdf_sputter'](np.sum(spt))*(theta_new[spt]))
+            # theta_new[spt]
         return(theta_new)
 
     def conv_effic(self,ke,theta,phi):
@@ -236,10 +246,11 @@ class cs_scatterer:
             splat['counts'] = self.conv_effic(ke,theta,phi)/100
             splat['is_start'] = False
             # take the sputtered particles and input the coupled sputtering energy-angle distribution
-            splat['ke'].values[self.is_sputtered] = Er_sputter(ke,splat['ke'],
-                                        theta,phi,
-                                        splat['theta'],splat['phi'],
-                                        self.part['m'],self.part['sputtered_m'])[self.is_sputtered]
+            if any(self.is_sputtered):
+                splat['ke'].values[self.is_sputtered] = Er_sputter(ke,splat['ke'],
+                                            theta,phi,
+                                            splat['theta'],splat['phi'],
+                                            self.part['m'],self.part['sputtered_m'])[self.is_sputtered]
             data.df = pd.concat([data.df[good_cols],splat],
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
