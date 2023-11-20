@@ -75,7 +75,7 @@ class cs_scatterer:
     # Control structure for cs scattering montecarlo simulations
     
     def __init__(self,cs_elevation = 165,
-                    samples= ['036b',39,'100P','40P','xxx','L109'],
+                    samples= ['xxx','FM-061','FM-093','FM-110','EM-036','EM-039'],
                         species = 'H',
                         charge = -1,
                         frac_sputtered = .1):
