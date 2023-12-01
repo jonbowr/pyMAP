@@ -174,7 +174,10 @@ def dat_loc(file_name,home,dtype = ''):
     thing['type'] = thing['loc'].apply(lambda x: os.path.splitext(x)[1])
     thing = thing.loc[~thing['type'].str.lower().str.contains('rec')]
     indic = file_name.apply(lambda x: x.split('.')[0].replace('_','').lower())
-    return(pd.concat(indic.apply(lambda x: thing.loc[thing['nam'].str.contains(x)]).values)['loc'].values)
+
+    return(indic.apply(lambda x: thing.loc[\
+                    np.logical_and(thing['nam'].str.contains(x),
+                        thing['nam'].str.contains(dtype))]['loc'].values[0]))
 
     # fs = []
     # for f in getListOfFiles(home):
