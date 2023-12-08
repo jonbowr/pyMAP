@@ -131,3 +131,4 @@ class simulator:
         for sim_in in self.sims:
             if sim_in.type == 'simion':
                 sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax,show_cbar = False)
+        return(fig,ax)

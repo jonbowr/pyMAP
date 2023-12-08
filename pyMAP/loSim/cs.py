@@ -102,7 +102,7 @@ class cs_scatterer:
 
                     }
         self.theta = {
-                       'pdf': sim.particles.pdf('poisson',{'c':0,'b':.405,'k':1}),
+                       'pdf': sim.particles.pdf('poisson',{'c':-.075,'b':.405*2**1.6,'k':3}),
                        # 'pdf_sputter':sim.particles.source('cos',
                        #              dist_vals = {'mean':cs_elevation-90,'range':180,'a':90,'b':180,'x_min':0}),
                       'pdf_sputter':sim.particles.source('cos',
@@ -191,7 +191,8 @@ class cs_scatterer:
         # mean[mean>360] = 360-mean[mean>360]
         direction = 1
         fwhm = self.theta['modulator_f'](v_perp)
-        theta_new = (self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b'])*fwhm*direction+mean
+
+        theta_new = (self.theta['pdf'].sample(len(theta),0,4)-self.theta['pdf']['b']/self.theta['pdf']['k'])*fwhm*direction+mean
         # take the stat determined sputtered stuff and sample the sputtered distribution
         if any(self.is_sputtered):
             spt = self.is_sputtered
