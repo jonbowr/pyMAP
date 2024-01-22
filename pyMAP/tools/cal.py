@@ -26,11 +26,7 @@ def db_init(loc = './',
 
     # Rename subdocuments
     default_docs = [
-                    'AsPlanned.xlsx', 
                     'AsRun.xlsx', 
-                    'IMAP_lo_TestProcedure.doc', 
-                    'TestPlan.docx', 
-                    'TestReport.docx'
                     ]
 
     for docnam in default_docs:

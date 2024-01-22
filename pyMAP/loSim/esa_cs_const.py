@@ -7,7 +7,8 @@ e_loss = np.array([0.7553,0.7576,0.7522,0.7364,0.7482,0.7295,0.7071])
 
 # def sim_input(geo = 'imap',vMode = 'imap_hiTh'):
 
-geos = {
+def geos(): 
+    return({
         'ibex':
                 {
                     'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IBEX',
@@ -30,7 +31,7 @@ geos = {
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
                                 ],
                 },
-        }
+        })
 
 def v_modes():
     import pandas as pd
@@ -43,8 +44,9 @@ def v_modes():
 
 def sim_input(geo = 'imap',mode = 'imap_hiTh',estep = 6):
     estep_table = v_modes()
-    out_put = dict(geos[geo])
+    out_put = dict(geos()[geo])
     out_put['volt_dict'] = dict(estep_table[estep][mode])
+    out_put['home'] = os.path.relpath(out_put['home'])
     return(out_put)
 
 cs_locs = {
