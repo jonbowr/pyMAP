@@ -16,7 +16,7 @@ def geos():
                 },
         'imap':
                 {
-                    'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
+                    'home':r'C:\Users\Jonny Woof\Documents\simPyon\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CR7_HK6.GEM',
@@ -25,7 +25,7 @@ def geos():
                 },
           'loV2':
                 {
-                    'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IMAP',
+                    'home':r'C:\Users\Jonny Woof\Documents\simPyon\IMAP-lo_ESA_CS_sims\IMAP',
                     'gemfil':[
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
