@@ -75,7 +75,7 @@ def get_all_dat(dirName = './',
             if dtype in f and run_tag in f:
                 # try:
                     nam = f.replace(dtype,'').lower()
-                    # ds['name'].append('_'.join(nam.split('_')[:-2]))
+                    ds['name'].append('_'.join(nam.split('_')[:-2]))
                     df = load_dt(fil,dtype = dtype,**load_params)
                     df['fRAW'] = f
                     ds[dtype].append(df)
@@ -175,15 +175,15 @@ def dat_loc(file_name,home,dtype = ''):
     thing = thing.loc[~thing['type'].str.lower().str.contains('rec')]
     indic = file_name.apply(lambda x: x.split('.')[0].replace('_','').lower())
 
-    return(indic.apply(lambda x: thing.loc[\
-                    np.logical_and(thing['nam'].str.contains(x),
-                        thing['nam'].str.contains(dtype))]['loc'].values[0]))
+    # return(indic.apply(lambda x: thing.loc[\
+    #                 np.logical_and(thing['nam'].str.contains(x),
+    #                     thing['nam'].str.contains(dtype))]['loc'].values[0]))
 
-    # fs = []
-    # for f in getListOfFiles(home):
-    #     for fil in file_name:
-    #         f_indicator = fil.split('.')[0].replace('_','').lower()
-    #         ff = os.path.basename(f).split('.')[0].replace('_','').lower()
-    #         if f_indicator in ff and '.rec' not in f and dtype in f:
-    #             fs.append(f)
-    # return(fs)
+    fs = []
+    for f in getListOfFiles(home):
+        for fil in file_name:
+            f_indicator = fil.split('.')[0].replace('_','').lower()
+            ff = os.path.basename(f).split('.')[0].replace('_','').lower()
+            if f_indicator in ff and '.rec' not in f and dtype in f:
+                fs.append(f)
+    return(fs)

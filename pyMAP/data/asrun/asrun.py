@@ -6,6 +6,7 @@ from pyMAP.pyMAP.data.load import load as loader
 
 
 
+
 def get_dat(s_run_loc,
              dtype = '',
                   ref_nam = 'file_name',
@@ -40,6 +41,7 @@ def import_em_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_R
     
     for tp in dtypes:
         df[tp] = get_dat(df,home = home,load_dt = loader,dtype = tp).values()
+        df = df.dropna(axis = 0,subset = tp)
     if combine:
         from pyMAP.pyMAP.tools.tools import concat_combine
         df['EM_data'] =df.apply(lambda x: concat_combine([x[l].set_index('SHCOARSE') for l in dtypes],'index'),axis = 1) 

@@ -11,13 +11,13 @@ class simulator:
     - fly(): function which executes particle propagation
     '''
 
-    def __init__(self,geo = 'imap',mode = 'imap_hiTh',estep = 6,
+    def __init__(self,config = 'imap',mode = 'imap_hiTh',estep = 6,
                                 scattering_input = {}):
-        inp = sim_input(geo,mode,estep)
+        inp = sim_input(config,mode,estep)
         inp['home'] = os.path.relpath(inp['home'])
         from pandas import DataFrame
         # setup the simulator architecture
-        self.geo = geo
+        self.config = config
         self.mode = mode
         self.sims = DataFrame([\
                     {'name':'inc_N',
@@ -32,6 +32,7 @@ class simulator:
                                 obs_region = obs_regions['TOF']),
                                 }
                     ]).set_index(['name'])['sim']
+        self.geo = self.sims['inc_N'].geo
 
         # setup the default source distribution
         self.source = sim.particles.auto_parts()
@@ -104,6 +105,7 @@ class simulator:
         data['x'] = verts[:,0]
         data['r'] = verts[:,1]
         return(data)
+
 
     def fly(self,n = 1000,quiet = True):
         self.source['n'] = n

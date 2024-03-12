@@ -85,8 +85,12 @@ def tofs_1d(dats,hist_plt = ['TOF0','TOF1','TOF2','TOF3'],
             from .tof import tof_expected,tof3_peaks_ns
             ref_tofs = tof_expected(**tof_ref_lines)
             if nam != 'TOF3':
-                ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[nam],'%.2d, %d'%(x['ke'],x['m']),ax = ax),axis = 1)
-                bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
+                if len(ref_tofs['ke'].unique())>1:
+                    ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[nam],'%.0f, %.0f'%(x['ke'],x['m']),ax = ax),axis = 1)
+                    bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
+                else:
+                    ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[nam],'%.0f'%(x['m']),ax = ax),axis = 1)
+                    bp.plotJon.annot.vline(ax.get_xlim()[0],'[amu]',ax = ax)
             # else:
             #     for tof,lab in zip(tof3_peaks_EM,tof3_lables):
             #         bp.plotJon.annot.vline(tof,lab,ax = ax)
@@ -169,9 +173,14 @@ def tofs_2d(thing,pltx,plty,bins = 75,
     if tof_ref_lines !={}:
         from .tof import tof_expected
         ref_tofs = tof_expected(**tof_ref_lines)
-        ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[pltx],'%.0f, %.0f'%(x['ke'],x['m']),ax = ax),axis = 1)
-        ref_tofs.apply(lambda x: ax.axhline(x[plty]),axis = 1)
-        bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
+        if len(ref_tofs['ke'].unique())>1:
+            ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[pltx],'%.0f, %.0f'%(x['ke'],x['m']),ax = ax),axis = 1)
+            ref_tofs.apply(lambda x: ax.axhline(x[plty]),axis = 1)
+            bp.plotJon.annot.vline(ax.get_xlim()[0],'[eV,amu]',ax = ax)
+        else:
+            ref_tofs.apply(lambda x: bp.plotJon.annot.vline(x[pltx],'%.0f'%(x['m']),ax = ax),axis = 1)
+            ref_tofs.apply(lambda x: ax.axhline(x[plty]),axis = 1)
+            bp.plotJon.annot.vline(ax.get_xlim()[0],'[amu]',ax = ax)
 
     if tof_mass_line !=None:
         from .tof import mass_line
@@ -194,11 +203,13 @@ def tofs_comprehensive(dats,
                         tof_mass_line = None,
                         units ='[nS]',
                         logy = False,
+                        title = ''
                         ):
     fig,axs = tofs_1d(dats,bins = bins,
                            bin_range = bin_range,
                            tof_ref_lines = tof_ref_lines,
                            logbins= logbins)
+    axs[0].set_title(title)
     if logy:
         for ax in axs:
             ax.semilogy()
@@ -206,12 +217,15 @@ def tofs_comprehensive(dats,
     tofx = ['TOF0','TOF2','TOF0']
     tofy = ['TOF1','TOF1','TOF2']
     for xpl,ypl in zip(tofx,tofy):
-        tofs_2d(dats,xpl,ypl,
+        fig,ax = tofs_2d(dats,xpl,ypl,
                 bins = bins,
                 bin_range = bin_range,
                 tof_ref_lines = tof_ref_lines,
                 logbins= logbins,
-                tof_mass_line = tof_mass_line)
+                tof_mass_line = tof_mass_line,plt_type = 'hist2d')
+        ax.set_title(title)
+        fig.set_size_inches(8,6)
+        fig.tight_layout()
 
 # define dict with same keys as data_groups to setup plot groups of data
 #   might want to move this to a different locaiton or combine somehow with data_groups
@@ -249,7 +263,8 @@ standard_groups = {
         }
 
 def df_plot_groups(df,plt_grps={},fmt = '',plt_input = {},
-                                fig = None,axs = None,legend = True):
+                                fig = None,axs = None,
+                                legend = True,err = False,df_err = None):
     # plots columns of datframe df defined by selector plt_groups 
     if type(plt_grps) == str:
         plt_grps = standard_groups[plt_grps]
@@ -259,7 +274,10 @@ def df_plot_groups(df,plt_grps={},fmt = '',plt_input = {},
     fig.set_size_inches(10,len(axs)*4)
     for lab,vals,ax in zip(plt_grps.keys(),plt_grps.values(),axs):
         for y in plt_grps[lab]:
-            ax.plot(df[y],fmt,label = y,**plt_input)
+            if err:
+                ax.errorbar(df.index,df[y],df[y],fmt=fmt,label = y,**plt_input)
+            else:
+                ax.plot(df[y],fmt,label = y,**plt_input)
         ax.set_ylabel(lab)
         if legend:ax.legend()
     axs[-1].set_xlabel(df.index.name)
