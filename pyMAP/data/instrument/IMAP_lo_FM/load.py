@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from .EM_data_types import EM_dtypes
+from .data_types import dtypes
 
 import pyMAP.pyMAP.tools.time as time_set
 
@@ -24,7 +24,7 @@ def load_IFB_v1(loc):
     df = pd.read_csv(loc,header = 0)
     len1 = len(df)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
-    df = df.astype(dtype = EM_dtypes['ILO_IFB']).drop_duplicates(subset = 'SHCOARSE').set_index('SHCOARSE')
+    df = df.astype(dtype = dtypes['ILO_IFB']).drop_duplicates(subset = 'SHCOARSE').set_index('SHCOARSE')
     len2 = len(df)
     if (len1-len2)/len1>.1:
         from warnings import warn

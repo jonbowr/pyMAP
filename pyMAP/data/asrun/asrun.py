@@ -37,15 +37,17 @@ def get_dat(s_run_loc,
     return(dats)
 
 
-def import_em_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],combine = False):
+def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],
+                                                instrument = 'imap_lo_fm'):
     
-    for tp in dtypes:
-        df[tp] = get_dat(df,home = home,load_dt = loader,dtype = tp).values()
-        df = df.dropna(axis = 0,subset = tp)
-    if combine:
+    if type(dtypes)==list:
+        for tp in dtypes:
+            df[tp] = get_dat(df,home = home,load_dt = loader,dtype = tp,load_params={'instrument':instrument}).values()
+            df = df.dropna(axis = 0,subset = tp)
+    elif type(dtypes) == dict:
         from pyMAP.pyMAP.tools.tools import concat_combine
-        df['EM_data'] =df.apply(lambda x: concat_combine([x[l].set_index('SHCOARSE') for l in dtypes],'index'),axis = 1) 
-        for l in dtypes:
-            df.drop(l,inplace = True)
-    
+        for lab,vals in dtypes.items():
+            dats = pd.DataFrame([pd.Series(get_dat(df,home = home,load_dt = loader,dtype = tp,load_params={'instrument':instrument})
+                              ,name = tp).apply(lambda x: x.set_index('SHCOARSE')) for tp in vals]).T
+            df[lab] = dats.apply(lambda x: concat_combine(list(x),'index'),axis = 1).values
     return(df)

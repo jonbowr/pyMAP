@@ -35,31 +35,30 @@
 import os
 from . import asrun as run
 
-
 class asRunr:
-    def __init__(self,asrun_nam = '',
-                 asrun_home = './',
-                    asrun_pages = [],
+    def __init__(self,fasrun = '',
+                    data_home = './',
+                    page_names = [],
                     instrument = '',
                     ref_nam = 'file_name'):
-        self.doc = asrun_nam
-        self.home = asrun_home
-        self.pages = asrun_pages
+        self.doc = fasrun
+        self.dhome = data_home
+        self.pages = page_names
         self.instrument = instrument
         self.ref_nam = 'file_name'
-        self.df = run.load(asrun_nam,asrun_home,asrun_pages,instrument)
+        self.df = run.load(fasrun,'',page_names,instrument)
         self.__df__ = self.df.copy()
         self.data_cols = []
 
-    def load_dat(self,dtype = '',drop_empty = False):
-        from . import load,dat_loc
-        self.df['%sloc'%dtype] = dat_loc(self.df[self.ref_nam],self.home,dtype)
-        if '%sdat'%dtype not in self.data_cols:
-            self.data_cols.append('%sdat'%dtype)
-        self.df['%sdat'%dtype] = self.df['%sloc'%dtype].apply(load,dtype = dtype,instrument = self.instrument)
-        # self.df['%sdat'%dtype] = run.get_dat(self.df,dtype,self.ref_nam,self.instrument)
-        if drop_empty:
-            self.mask(~self.df['%sdat'%dtype].apply(lambda x:x.empty))
+    def load_dat(self,d_types = {'dat_sensor':['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT'],
+                                    'dat_DE':['ILO_RAW_DE']
+                                    },
+                        ):
+        self.df = run.import_data(self.df,
+                            self.dhome,
+                                d_types,
+                                instrument = self.instrument)
+
 
     def __getitem__(self,item):
         return(self.df[item])
@@ -73,3 +72,6 @@ class asRunr:
 
     def mask(self,mask):
         self.df = self.df.loc[mask]
+
+
+

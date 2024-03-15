@@ -25,7 +25,8 @@ def ETU_v1(f_as_run,home = './',sheet_name = 0):
     return(df.set_index(['date','run_n','activity']))
 
 loadlib = {'v001':load_v1,
-            'ibex_lo_etu':ETU_v1}
+            'ibex_lo_etu':ETU_v1,
+            'imap_lo_fm':load_v1}
 pages = {
         'v001':['Global',
                 'M145_beam',
@@ -40,5 +41,8 @@ pages = {
                 'Princeton_PSPL']
         }
 
-def load(as_runloc,home = './',page_names = pages['v002'],version = 'v001'):
-    return(loadlib[version](as_runloc,home,sheet_name = page_names))
+def load(as_runloc,home = './',page_names = pages['v002'],version = 'v001',fillna = True):
+    df = loadlib[version](as_runloc,home,sheet_name = page_names)
+    if fillna:
+        df.fillna(method = 'ffill',inplace = True)
+    return(df)
