@@ -106,22 +106,39 @@ class simulator:
         data['r'] = verts[:,1]
         return(data)
 
+    def __fly_buff__(self,sim_in,dat_buffer,quiet = True):
+        dat = sim_in.fly(dat_buffer,quiet = quiet).stop()
+        if 'counts' in dat_buffer.df:
+            try:
+                sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
+            except:
+                Warning('Count Propagation failed: Most likely incorrect Ion initialization')
+        if sim_in.type == 'simion':
+            if len(dat)>0:
+                return(sim_in.fix_stops(dat.copy(),v_extrap = True,buffer = .025,mm_offset = .025))
+        else:
+            return(dat.copy())
 
-    def fly(self,n = 1000,quiet = True):
-        self.source['n'] = n
-        dat_buffer = self.source.copy()
-        for lab,sim_in in self.sims.items():
-            dat = sim_in.fly(dat_buffer,quiet = quiet) .stop()
-            if 'counts' in dat_buffer.df:
-                try:
-                    sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
-                except:
-                    Warning('Count Propagation failed: Most likely incorrect Ion initialization')
-            if sim_in.type == 'simion':
-                if len(dat)>0:
-                    dat_buffer = sim_in.fix_stops(dat.copy(),v_extrap = True,buffer = .025,mm_offset = .025)
+    def fly(self,n = 1000,quiet = True,leg = 'all'):
+        if leg == 'all':
+            steps = range(len(self.sims))
+        elif type(leg)==int:
+            steps = range(leg,leg+1)
+        else:
+            steps = leg
+
+        if leg ==0 or leg == 'all':
+            self.source['n'] = n
+            dat_buffer = self.source.copy()
+        else:
+            if self[steps[0]-1].type == 'simion':
+                dat_buffer = self[steps[0]-1].fix_stops(self[steps[0]-1].data.stop(),
+                                            v_extrap = True,buffer = .025,mm_offset = .025)
             else:
-                dat_buffer = dat.copy()
+                dat_buffer = self[steps[0]-1].data.stop()
+
+        for lab,sim_in in self.sims[steps].items():
+            dat_buffer = self.__fly_buff__(sim_in,dat_buffer,quiet = quiet)
         return(self)
 
     def fly_trajectory(self,n = 100,fig = None,ax = None):
