@@ -48,6 +48,6 @@ def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_
         from pyMAP.pyMAP.tools.tools import concat_combine
         for lab,vals in dtypes.items():
             dats = pd.DataFrame([pd.Series(get_dat(df,home = home,load_dt = loader,dtype = tp,load_params={'instrument':instrument})
-                              ,name = tp).apply(lambda x: x.set_index('SHCOARSE')) for tp in vals]).T
+                              ,name = tp) for tp in vals]).T
             df[lab] = dats.apply(lambda x: concat_combine(list(x),'index'),axis = 1).values
     return(df)

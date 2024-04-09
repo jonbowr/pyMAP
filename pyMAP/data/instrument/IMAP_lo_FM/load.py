@@ -125,16 +125,19 @@ loadlib = {
                             }
             }
 
-def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',timeZone = 'est'):
+def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'):
     
     print('Loading %s'%as_runloc)
     df = loadlib[dtype][version](as_runloc)
 
     # attempt to assign datetime index if index fails, resort to default SHCOARSE
     try:
+        df.index = time_set.spin_to_shcoarse(df.index)
+        # timeZone = 'GMT'
         df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
         try:
-            df['dateTime'] = df['dateTime'].apply(time_set.localize_to_tz,zone = timeZone)
+            df['dateTime'] = df['dateTime'].apply(time_set.localize_to_tz,zone = 'UTC')
+            df['dateTime'] = df['dateTime'].apply(time_set.utc_to_local,local = local)
         except:
             import warnings
             warnings.warn('Time Stamp Localization Failed')

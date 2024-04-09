@@ -36,7 +36,8 @@ import os
 from . import asrun as run
 
 class asRunr:
-    def __init__(self,fasrun = '',
+    def __init__(self,
+                    fasrun = '',
                     data_home = './',
                     page_names = [],
                     instrument = '',
@@ -47,6 +48,8 @@ class asRunr:
         self.instrument = instrument
         self.ref_nam = 'file_name'
         self.df = run.load(fasrun,'',page_names,instrument)
+        self.df.reset_index(inplace = True)
+        self.df.set_index('run_n',inplace = True)
         self.__df__ = self.df.copy()
         self.data_cols = []
 
@@ -58,7 +61,6 @@ class asRunr:
                             self.dhome,
                                 d_types,
                                 instrument = self.instrument)
-
 
     def __getitem__(self,item):
         return(self.df[item])

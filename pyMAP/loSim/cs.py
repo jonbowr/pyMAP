@@ -57,12 +57,14 @@ def recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2,
     return(np.abs(Er))
 
 
-def Er_sputter(E0,E1,theta1,phi1,theta2,phi2,m1,m2,E_bind=6.9):
+def Er_sputter(E0,E1,theta1,phi1,theta2,phi2,m1,m2,E_bind=6.9,surf_binding= .5):
     rel_ang = rel_angle(theta1,phi1,theta2,phi2)
     cosr = np.cos(np.abs(rel_ang*np.pi/180))
     # calculaate the recoil scattering energy for the knock on sputtered component
     Er = recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2)
     # print(np.sum(rel_ang>90)/len(rel_ang))
+    
+    rel_ang[np.random.rand(len(Er))<surf_binding] = 200
     if any(rel_ang>90):
         Er[rel_ang>90]=surf_binding_sputter(E0[rel_ang>90],cosr[rel_ang>90],E_bind)
     return(Er)

@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+from datetime import datetime, timezone
 from datetime import timedelta
 import time
 import numpy as np
@@ -31,7 +32,7 @@ def orbit_fraction(df):
     return(df['orbit'].values+orbit_frac.values/2)
 
 def spin_to_shcoarse(spinsec):
-    return(spinsec+2**31)
+    return(spinsec+2**31)   
 
 def shcoarse_to_datetime(timestanp):
     #turn start date of IMAP-LO epoch into a time stamp in seconds
@@ -51,9 +52,16 @@ def localize_to_tz(naive,zone = 'est'):
     elif zone=='bern':
         local=pytz.timezone('Europe/Zurich').localize(naive)
     else:
-        raise Exception("""Please choose a valid time zone : 'est', 'bern'""")
+        try: 
+            local=pytz.timezone(zone).localize(naive)
+        except:
+            raise Exception("""Please choose a valid time zone : 'est', 'bern'""")
     #return date with zone information added
     return local
+
+
+def utc_to_local(utc_dt,local = 'US/Eastern'):
+    return utc_dt.replace(tzinfo=timezone.utc).astimezone(tz=local)
 
 def get_file_times(path):
     import os

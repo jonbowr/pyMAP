@@ -111,7 +111,7 @@ class simulator:
         self.source['n'] = n
         dat_buffer = self.source.copy()
         for lab,sim_in in self.sims.items():
-            dat = sim_in.fly(dat_buffer,quiet = quiet).good().stop()
+            dat = sim_in.fly(dat_buffer,quiet = quiet) .stop()
             if 'counts' in dat_buffer.df:
                 try:
                     sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
@@ -119,7 +119,7 @@ class simulator:
                     Warning('Count Propagation failed: Most likely incorrect Ion initialization')
             if sim_in.type == 'simion':
                 if len(dat)>0:
-                    dat_buffer = self.sim_fix_stops(dat.copy())
+                    dat_buffer = sim_in.fix_stops(dat.copy(),v_extrap = True,buffer = .025,mm_offset = .025)
             else:
                 dat_buffer = dat.copy()
         return(self)

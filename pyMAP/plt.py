@@ -236,7 +236,7 @@ standard_groups = {
             'tof_rate[cts/s]':['TOF0','TOF1','TOF2','TOF3','SILVER'],             
             'Efficiency':['Eff_A','Eff_B','Eff_C','Eff_TRIP'],      
            'Monitors':['MCP_VM','MCP_CM','MCP_VSET','PAC_VSET','PAC_VM','PAC_CM'],          
-           'volts[V]':['TOF_MCP_VM','PAC_VM_volt'],  
+           # 'volts[V]':['TOF_MCP_VM','PAC_VM_volt'],  
            'Board Temp':['TEMP1','TEMP0','LV_TEMP','MCP_TEMP','PAC_TEMP'],        
            'Threshold register':['AN_A_THR_REG','AN_B0_THR_REG','AN_B3_THR_REG','AN_C_THR_REG'],                    
            } ,
