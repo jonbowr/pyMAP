@@ -15,6 +15,11 @@ class simulator:
                                 scattering_input = {}):
         inp = sim_input(config,mode,estep)
         inp['home'] = os.path.relpath(inp['home'])
+
+        lpath = os.path.dirname(__file__)
+        gemPath = os.path.join(lpath,'/IMAP-Lo_CR7_CE13_TOF2_HK6')
+
+        
         from pandas import DataFrame
         # setup the simulator architecture
         self.config = config
@@ -151,3 +156,26 @@ class simulator:
             if sim_in.type == 'simion':
                 sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax,show_cbar = False)
         return(fig,ax)
+
+    def set_estep(self,estep = 6,mode = 'imap_hiTh'):
+        v_nom = v_modes().loc[mode][estep]
+        for i in [0,2]:
+            self[i].volt_dict = dict(v_nom)
+        self[0].fast_adjust()
+        return(self)
+
+    def set_upos_uneg(self,upos ,uneg):
+        thing = {'u+':upos,'u-':uneg}
+        v_nom = v_modes().loc['imap_hiTh'][7]
+        v_out = dict(v_nom)
+        volt_setter = pd.DataFrame({'u':['u+','u-'],
+                               'elec':['P10 Electrode','P2 Electrode'],
+                              'elecs':[['Inner ESA','P10 Electrode'],
+                                      ['Conversion Surface','P2 Electrode','P9 Electrode']]})
+        new_volts = volt_setter.apply(lambda x: v_nom[x['elecs']]/v_nom[x['elec']]*thing[x['u']],axis = 1).stack().reset_index(0,drop = True)
+        for lab,v in new_volts.items():
+            v_out[lab] = v
+        for i in [0,2]:
+            self[i].volt_dict = v_out
+        self[0].fast_adjust()
+        return(v_out)
