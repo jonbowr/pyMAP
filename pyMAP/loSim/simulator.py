@@ -102,6 +102,21 @@ class simulator:
         self[0].fast_adjust(scale_fact = scale_fact)
         return(self)
 
+    def __set_upos_uneg__(self,upos ,uneg):
+        thing = {'u+':upos,'u-':uneg}
+        v_nom = v_modes().loc['imap_hiTh'][7]
+        v_out = dict(v_nom)
+        volt_setter = pd.DataFrame({'u':['u+','u-'],
+                               'elec':['P10 Electrode','P2 Electrode'],
+                              'elecs':[['Inner ESA','P10 Electrode'],
+                                      ['Conversion Surface','P2 Electrode','P9 Electrode']]})
+        new_volts = volt_setter.apply(lambda x: v_nom[x['elecs']]/v_nom[x['elec']]*thing[x['u']],axis = 1).stack().reset_index(0,drop = True)
+        for lab,v in new_volts.items():
+            v_out[lab] = v
+        for i in [0,2]:
+            self[i].volt_dict = v_out
+        return(v_out)
+
     def sim_fix_stops(self,data,v_extrap = True):
         # uses the shapely instrument geometry to set points on surface of polygon
         #   to prevent pixlization collisions on reinitialization using collision locs
@@ -170,20 +185,52 @@ class simulator:
                 sim_in.fly_trajectory(sim_in.data.start(),fig = fig,ax =ax,show_cbar = False)
         return(fig,ax)
 
-    def __set_upos_uneg__(self,upos ,uneg):
-        thing = {'u+':upos,'u-':uneg}
-        v_nom = v_modes().loc['imap_hiTh'][7]
-        v_out = dict(v_nom)
-        volt_setter = pd.DataFrame({'u':['u+','u-'],
-                               'elec':['P10 Electrode','P2 Electrode'],
-                              'elecs':[['Inner ESA','P10 Electrode'],
-                                      ['Conversion Surface','P2 Electrode','P9 Electrode']]})
-        new_volts = volt_setter.apply(lambda x: v_nom[x['elecs']]/v_nom[x['elec']]*thing[x['u']],axis = 1).stack().reset_index(0,drop = True)
-        for lab,v in new_volts.items():
-            v_out[lab] = v
-        for i in [0,2]:
-            self[i].volt_dict = v_out
-        return(v_out)
-
     def get_data(self):
-        return(self.sims.apply(lambda x: x.data.copy()))
+        return(splats(self.sims.apply(lambda x: x.data.copy())))
+
+    def get_good(self,dat,leg = 0):
+        #filter each data set step for one data set being good, assumes all data have exact same size
+        def good_app(x):
+            new_dat = x.copy()
+            new_dat.df = new_dat.df.set_index('ion n').loc[dat[leg].good().start().df['ion n'].values].reset_index()
+            return(new_dat)
+        return(dat.apply(good_app))
+
+
+class splats:
+    def __init__(self,dats):
+        self.dfs = dats
+        
+    def __getitem__(self,item):
+        return(self.dfs[item])
+    
+    def __setitem__(self,item,value):
+        self.dfs[item] = value
+    
+    def start(self):
+        return(dat.apply(lambda x:x.start()))
+
+    def get_good(self,leg = 0):
+        #filter each data set step for one data set being good, assumes all data have exact same size
+        def good_app(x):
+            new_dat = x.copy()
+            new_dat.df = new_dat.df.set_index('ion n').loc[self[leg].good().start().df['ion n'].values].reset_index()
+            return(new_dat)
+        
+        return(splats(self.apply(good_app)))
+
+    def get_loc(self,ion_nums):
+        def locr(dat,ion_nums):
+            new_dat = dat.copy()
+            new_dat.df = new_dat.df.set_index('ion n').loc[ion_nums].reset_index()
+            return(new_dat)
+        return(splats(self.apply(lambda x: locr(x,ion_nums))))
+    
+    def apply(self,func):
+        return(self.dfs.apply(func))
+    
+    def show(self,params = {}):
+        return(self.apply(lambda x: x.show(**params)))
+    
+    def start(self):
+        return(splats(self.apply(lambda x: x.start())))
