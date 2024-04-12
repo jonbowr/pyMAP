@@ -38,6 +38,7 @@ class simulator:
                                 }
                     ]).set_index(['name'])['sim']
         self.geo = self.sims['inc_N'].geo
+        self.sims['cs_scatter'].geo = self.geo
 
         # setup the default source distribution
         self.source = sim.particles.auto_parts()
@@ -86,8 +87,20 @@ class simulator:
     def show_dist(self):
         self.sims.apply(lambda x: x.data.start().show())
 
-    def fast_adjust(self,estep = 6):
-        self.sims[0].fast_adjust(dict(v_modes()[estep][self.mode]))
+    def fast_adjust(self,scale_fact = 1,
+                            estep = None,
+                                mode = 'imap_hiTh',
+                                up_un = None):
+        if up_un is not None:
+            v_nom = self.__set_upos_uneg__(*up_un)
+        elif estep is not None:
+            v_nom = v_modes().loc[mode][estep]
+        else:
+            v_nom = dict(self[0].volt_dict)
+        for i in [0,2]:
+            self[i].volt_dict = dict(v_nom)
+        self[0].fast_adjust(scale_fact = scale_fact)
+        return(self)
 
     def sim_fix_stops(self,data,v_extrap = True):
         # uses the shapely instrument geometry to set points on surface of polygon
@@ -154,17 +167,10 @@ class simulator:
             fig,ax = self.show()
         for sim_in in self.sims:
             if sim_in.type == 'simion':
-                sim_in.fly_trajectory(len(sim_in.data.start().df),fig = fig,ax =ax,show_cbar = False)
+                sim_in.fly_trajectory(sim_in.data.start(),fig = fig,ax =ax,show_cbar = False)
         return(fig,ax)
 
-    def set_estep(self,estep = 6,mode = 'imap_hiTh'):
-        v_nom = v_modes().loc[mode][estep]
-        for i in [0,2]:
-            self[i].volt_dict = dict(v_nom)
-        self[0].fast_adjust()
-        return(self)
-
-    def set_upos_uneg(self,upos ,uneg):
+    def __set_upos_uneg__(self,upos ,uneg):
         thing = {'u+':upos,'u-':uneg}
         v_nom = v_modes().loc['imap_hiTh'][7]
         v_out = dict(v_nom)
@@ -177,5 +183,7 @@ class simulator:
             v_out[lab] = v
         for i in [0,2]:
             self[i].volt_dict = v_out
-        self[0].fast_adjust()
         return(v_out)
+
+    def get_data(self):
+        return(self.sims.apply(lambda x: x.data.copy()))

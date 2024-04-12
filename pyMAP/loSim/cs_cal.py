@@ -33,7 +33,7 @@ def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 27):
     nams = ['geo','sample','coating','roughness','location','incident_angle','species','recoil_props']
     cal[nams] = cal[nams].fillna(method = 'ffill')
     cal.set_index(nams,inplace = True)
-    cal.set_axis(head,axis = 1,inplace = True)
+    cal = cal.set_axis(head,axis = 1, copy = False)
     for group in ['automatic','contour']:
         for val in cal[group].columns:
             cal[(group,val)] = pd.to_numeric(cal[(group,val)],errors='coerce')

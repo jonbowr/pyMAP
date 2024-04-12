@@ -3,6 +3,7 @@ import numpy as np
 import os
 import periodictable as perd
 from .cs_cal import *
+from simPyon.simPyon.data import sim_data
 
 def rel_angle(theta1,phi1,theta2,phi2):
     t1 = theta1/90*np.pi/2
@@ -82,18 +83,22 @@ class cs_scatterer:
                     samples= ['xxx','FM-061','FM-093','FM-110','EM-036','EM-039'],
                         species = 'H',
                         charge = -1,
-                        frac_sputtered = .1):
+                        frac_sputtered = .1,
+                        surf_binding = .5,
+                        geo = None):
         import simPyon as sim
         self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
         self.data = None
         self.type = 'modulator'
         self.is_sputtered = None
+        self.geo = geo
 
         self.part = {'cs_el':cs_elevation,
                     'm':perd.elements.symbol(species).mass,
                     'species':species,
                     'charge':charge,
                     'sputtering':frac_sputtered,
+                    'surf_binding':surf_binding,
                     'sputtered_m':perd.elements.symbol(species).mass}
 
         # assign distribution functions and cs scattering modulator functions
@@ -189,7 +194,11 @@ class cs_scatterer:
 
         rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
         v_perp = get_vperp(self.part['m'],ke,rel_ang)
-        mean = 180-(self.part['cs_el']-rel_ang)
+        if self.geo is None:
+            mean = 180-(self.part['cs_el']-rel_ang)
+        else:
+            # mean = 180-(self.part['cs_el']-rel_ang)
+            mean = sim_data(self.geo.reflect(self.data))['theta']
         # mean[mean>360] = 360-mean[mean>360]
         direction = 1
         fwhm = self.theta['modulator_f'](v_perp)
@@ -211,7 +220,7 @@ class cs_scatterer:
 
     def fly(self,source_df,
                 good_cols = ['ion n','tof','x','y','z','r',
-                                'ke','theta','phi','counts','is_start'],
+                                'ke','theta','phi','vx','vr','counts','is_start'],
                                 quiet = True):
         '''
         Function which takes source distribution and applies conversion surface
@@ -239,9 +248,11 @@ class cs_scatterer:
             data['phi'] = self.phi_scatter(ke,theta,phi)
             data['ke'] = self.ke_scatter(ke,theta,phi)
             data['counts'] = self.conv_effic(ke,theta,phi)/100
-            self.data = data[good_cols]
-            
+            self.data = data[good_cols]    
         else: 
+            self.data = data
+            if self.geo is not None:
+                self.part['cs_elevation'] = self.geo.get_normal(data[['x','r']])
             splat = data.df.copy()[good_cols]
             splat['theta'] = self.theta_scatter(ke,theta,phi)
             splat['phi'] = self.phi_scatter(ke,theta,phi)
@@ -258,8 +269,6 @@ class cs_scatterer:
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
             self.data = data
-
-
         return(self.data)
 
     def fly_trajectory(self,source_df,fig,ax):
@@ -291,4 +300,5 @@ class cs_scatterer:
             fit_pltr(group,axs[n])
             n+=1
         return(fig,axs)
+
 
