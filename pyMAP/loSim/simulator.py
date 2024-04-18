@@ -234,3 +234,19 @@ class splats:
     
     def start(self):
         return(splats(self.apply(lambda x: x.start())))
+
+    def calc_count_rate(self,inc_flux = 10000,pac_kv = 10,ap_window = 2.6,):
+        '''
+        ONLY for H right now
+        inc_flux: cts/sec/cm^2
+        pac_kv: pav_voltage in kV
+        ap_window: illuminated area in cm^2
+        '''
+        def effic_tof_H(pac_kv = 10):
+            # TOF trip effic taken from TOFCal
+            m = .019
+            b = .140
+            return(m*pac_kv+b)
+        effic_esa_cs = self[2].good().start()['counts'].sum()/self[0].good().start()['counts'].sum()
+        return(inc_flux*effic_esa_cs*ap_window*effic_tof_H(pac_kv))
+

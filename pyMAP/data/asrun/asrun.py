@@ -38,7 +38,7 @@ def get_dat(s_run_loc,
 
 
 def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],
-                                                instrument = 'imap_lo_fm'):
+                                                instrument = 'imap_lo_fm',interper = 'index'):
     
     if type(dtypes)==list:
         for tp in dtypes:
@@ -49,5 +49,12 @@ def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_
         for lab,vals in dtypes.items():
             dats = pd.DataFrame([pd.Series(get_dat(df,home = home,load_dt = loader,dtype = tp,load_params={'instrument':instrument})
                               ,name = tp) for tp in vals]).T
-            df[lab] = dats.apply(lambda x: concat_combine(list(x),'index'),axis = 1).values
+            def combiner(x):
+                try:
+                    return(concat_combine(list(x),interper))
+                except:
+                    print('Load Failed on file: %s'%str(x.name))
+                    return(None)
+                        
+            df[lab] = dats.apply(combiner,axis = 1).values
     return(df)

@@ -74,3 +74,8 @@ def get_file_times(path):
     c_ti = dt.fromtimestamp(ti_c)
     m_ti = dt.fromtimestamp(ti_m)
     return(c_ti,m_ti)
+
+def sec_from(seconds_off, str_start):
+    from datetime import datetime
+    t_start = datetime.strptime(str_start,'%Y%m%dT%H%M%S')
+    return(datetime.fromtimestamp(seconds_off+d_start.timestamp()))

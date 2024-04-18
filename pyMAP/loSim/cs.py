@@ -264,7 +264,8 @@ class cs_scatterer:
                 splat['ke'].values[self.is_sputtered] = Er_sputter(ke,splat['ke'],
                                             theta,phi,
                                             splat['theta'],splat['phi'],
-                                            self.part['m'],self.part['sputtered_m'])[self.is_sputtered]
+                                            self.part['m'],self.part['sputtered_m'],
+                                            surf_binding = self.part['surf_binding'])[self.is_sputtered]
             data.df = pd.concat([data.df[good_cols],splat],
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')

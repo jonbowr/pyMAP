@@ -56,9 +56,14 @@ class asRunr:
     def load_dat(self,d_types = {'dat_sensor':['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT'],
                                     'dat_DE':['ILO_RAW_DE']
                                     },
-                        ):
+                        dat_home = None):
+
+        if dat_home is None:
+            dl = self.dhome
+        else:
+            dl = dat_home
         self.df = run.import_data(self.df,
-                            self.dhome,
+                            dl,
                                 d_types,
                                 instrument = self.instrument)
 

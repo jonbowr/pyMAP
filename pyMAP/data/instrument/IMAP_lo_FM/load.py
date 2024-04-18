@@ -45,6 +45,20 @@ def load_CNT_v1(loc):
         warn('Data corruption:Large Ammount of Dropped Measurements')
     return(get_eff(df))
 
+def load_APP_NHK(loc):
+    df = pd.read_csv(loc,header = 0)
+    len1 = len(df)
+    df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
+    len2 = len(df)
+    if (len1-len2)/len1>.1:
+        from warnings import warn
+        warn('Data corruption:Large Ammount of Dropped Measurements')
+    use_cols = ['BHV_BULK_V','BHV_ESA_NEG_V','BHV_ESA_POS_V','BHV_DEF_NEG_V','BHV_DEF_POS_V',
+                'BHV_PMT_V','BHV_PMT_I','BHV_BULK_I','BHV_DEF_NEG_I','BHV_DEF_POS_I',
+                'BHV_ADC_REF1_V','BHV_ADC_REF2_V','BHV_12P0_V','BHV_N12P0_V','BHV_3P3_V','BHV_1P5_V']
+
+    return(df[use_cols])
+
 def load_RAW_DE_v1(loc):
     # check the headder for names and assign datatypes
     nanvals = {
@@ -122,26 +136,51 @@ loadlib = {
                             },
             'ILO_RAW_CNT':{
                             'v001':load_CNT_v1
-                            }
+                            },
+            'ILO_APP_NHK':{
+                            'v001':load_APP_NHK
+                            },
             }
 
 def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'):
+    from os.path import basename
     
     print('Loading %s'%as_runloc)
     df = loadlib[dtype][version](as_runloc)
 
     # attempt to assign datetime index if index fails, resort to default SHCOARSE
     try:
-        df.index = time_set.spin_to_shcoarse(df.index)
-        # timeZone = 'GMT'
-        df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
         try:
-            df['dateTime'] = df['dateTime'].apply(time_set.localize_to_tz,zone = 'UTC')
-            df['dateTime'] = df['dateTime'].apply(time_set.utc_to_local,local = local)
+            from datetime import datetime
+            df.index = time_set.spin_to_shcoarse(df.index)
+            t_start = datetime.strptime(basename(as_runloc).split('_')[-2],'%Y%m%dT%H%M%S').timestamp()
+            print(datetime.fromtimestamp(t_start))
+            d_sec = pd.Series(df.index - min(df.index))
+            df['dateTime'] = d_sec.apply(lambda x: datetime.fromtimestamp(x+t_start)).values
         except:
             import warnings
             warnings.warn('Time Stamp Localization Failed')
-        
+
+
+        # if 'Sniffer' in basename(as_runloc):
+        #     df.index = time_set.spin_to_shcoarse(df.index)
+        #     # timeZone = 'GMT'
+        #     df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
+        #     try:
+        #         df['dateTime'] = df['dateTime'].apply(time_set.localize_to_tz,zone = 'UTC')
+        #         df['dateTime'] = df['dateTime'].apply(time_set.utc_to_local,local = local)
+        #     except:
+        #         import warnings
+        #         warnings.warn('Time Stamp Localization Failed')
+        # elif 'Instrument' in basename(as_runloc):
+        #     df.index = time_set.spin_to_shcoarse(df.index)
+        #     df['dateTime'] = df.index.to_series().apply(time_set.shcoarse_to_datetime)
+        #     try:
+        #         df['dateTime'] = df['dateTime'].apply(time_set.localize_to_tz,zone = 'UTC')
+        #         df['dateTime'] = df['dateTime'].apply(time_set.utc_to_local,local = local)
+        #     except:
+        #         import warnings
+        #         warnings.warn('Time Stamp Localization Failed')
     except: 
         import warnings
         from datetime import datetime as dt
