@@ -5,6 +5,7 @@ import periodictable as perd
 from .cs_cal import *
 from simPyon.simPyon.data import sim_data
 
+
 def rel_angle(theta1,phi1,theta2,phi2):
     t1 = theta1/90*np.pi/2
     t2 = theta2/90*np.pi/2
@@ -164,11 +165,27 @@ class cs_scatterer:
         # take the values that show up below 0 and mark them as sputtered
         neg_log = new_ke<0
         self.is_sputtered[neg_log] = True
-        # if any(neg_log):
-        #     new_ke[neg_log] = self.ke['pdf2'].sample(np.sum(neg_log),0,.67)*ke[neg_log]
-            # new_ke[self.is_sputtered] = self.ke['pdf2'].sample(np.sum(self.is_sputtered),0,.67)*ke[self.is_sputtered]
+
         return(new_ke)
     
+    def ke_scatter_inellastic(self,ke,theta,phi,splat_theta,splat_phi):
+        # Function to take ion velocity vector apply statistical sampling to determine 
+        #   recoil ion ke
+
+        rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
+        v_perp = get_vperp(self.part['m'],ke,rel_ang)
+
+        new_ke = recoil_sputter_inellastic(ke,[],
+                            theta,phi,
+                            splat_theta,splat_phi,
+                            self.part['m'],self.part['m'],mean_E_loss = self.ke['modulator_f'](v_perp)/.75*.05)
+
+        # take the values that show up below 0 and mark them as sputtered
+        neg_log = new_ke<0
+        self.is_sputtered[neg_log] = True
+
+        return(new_ke)
+
     def phi_scatter(self,ke,theta,phi):
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil phi direction
@@ -233,11 +250,11 @@ class cs_scatterer:
               columns not declared here will may be affected by scattering 
               but their values are not computed so they are dropped 
         '''
-        from simPyon.simPyon.data import sim_data
         ke = source_df['ke']
         theta = source_df['theta']
         phi = source_df['phi']
         data = source_df.copy()
+        data['counts'] = 1
         data['is_start'] = True
 
         # determine if ion is sputtered or not
@@ -257,8 +274,14 @@ class cs_scatterer:
             splat['theta'] = self.theta_scatter(ke,theta,phi)
             splat['phi'] = self.phi_scatter(ke,theta,phi)
             splat['ke'] = self.ke_scatter(ke,theta,phi)
+
+            # splat['ke'] = self.ke_scatter_inellastic(ke,
+            #                         theta,phi,
+            #                         splat['theta'],splat['phi'])
+
             splat['counts'] = self.conv_effic(ke,theta,phi)/100
             splat['is_start'] = False
+
             # take the sputtered particles and input the coupled sputtering energy-angle distribution
             if any(self.is_sputtered):
                 splat['ke'].values[self.is_sputtered] = Er_sputter(ke,splat['ke'],

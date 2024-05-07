@@ -8,6 +8,7 @@ e_loss = np.array([0.7553,0.7576,0.7522,0.7364,0.7482,0.7295,0.7071])
 # def sim_input(geo = 'imap',vMode = 'imap_hiTh'):
 
 def geos(): 
+    from pandas import Series
     # f_gem_loc = os.path.join(lpath,"cal/cal_results/CS_Ilena_Scattering_Results.xlsx")
     home = r'C:\Users\Jonny Woof\Documents\simPyon\IMAP-lo_ESA_CS_sims\IMAP'
     return({
@@ -32,6 +33,8 @@ def geos():
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
                                 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',            
                                 ],
+                    'pa':[ 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/FM_PreCal_1_Mask.PA#'],
+                    'pa_info':{'pa_offset_position': Series({'x':188,'oy':170,'oz':170,'rt':25})}
                 },
         })
 

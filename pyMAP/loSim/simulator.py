@@ -55,6 +55,7 @@ class simulator:
         self.params = {}
         # self.params['source'] = self.source.params
         self.params['cs_scatter'] = self['cs_scatter'].params
+        self.volt_dict = v_modes().loc[mode][estep]
 
     def __repr__(self):
         return(
@@ -105,7 +106,7 @@ class simulator:
     def __set_upos_uneg__(self,upos ,uneg):
         thing = {'u+':upos,'u-':uneg}
         v_nom = v_modes().loc['imap_hiTh'][7]
-        v_out = dict(v_nom)
+        v_out = dict(self.volt_dict)
         volt_setter = pd.DataFrame({'u':['u+','u-'],
                                'elec':['P10 Electrode','P2 Electrode'],
                               'elecs':[['Inner ESA','P10 Electrode'],
@@ -113,6 +114,7 @@ class simulator:
         new_volts = volt_setter.apply(lambda x: v_nom[x['elecs']]/v_nom[x['elec']]*thing[x['u']],axis = 1).stack().reset_index(0,drop = True)
         for lab,v in new_volts.items():
             v_out[lab] = v
+        self.volt_dict = v_out
         for i in [0,2]:
             self[i].volt_dict = v_out
         return(v_out)
@@ -140,17 +142,20 @@ class simulator:
         return(data)
 
     def __fly_buff__(self,sim_in,dat_buffer,quiet = True):
-        dat = sim_in.fly(dat_buffer,quiet = quiet).stop()
+        dat = sim_in.fly(dat_buffer,quiet = quiet)#.stop()
         if 'counts' in dat_buffer.df:
             try:
-                sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
+                dat.df.loc[dat['is_start'],'counts'] = dat['counts'][dat['is_start']]*dat_buffer['counts']
+                dat.df.loc[~dat['is_start'],'counts'] = dat['counts'][~dat['is_start']]*dat['counts'][dat['is_start']]
+                # sim_in.data.append_col(dat_buffer['counts']*sim_in.data.start()['counts'],'counts')
             except:
                 Warning('Count Propagation failed: Most likely incorrect Ion initialization')
+        sim_in.data = dat.copy()
         if sim_in.type == 'simion':
             if len(dat)>0:
-                return(sim_in.fix_stops(dat.copy(),v_extrap = True,buffer = .025,mm_offset = .025))
+                return(sim_in.fix_stops(dat.stop(),v_extrap = True,buffer = .025,mm_offset = .025))
         else:
-            return(dat.copy())
+            return(dat.stop())
 
     def fly(self,n = 1000,quiet = True,leg = 'all'):
         if leg == 'all':
@@ -160,7 +165,7 @@ class simulator:
         else:
             steps = leg
 
-        if leg ==0 or leg == 'all':
+        if 0 in steps or leg == 'all':
             self.source['n'] = n
             dat_buffer = self.source.copy()
         else:
@@ -196,6 +201,48 @@ class simulator:
             return(new_dat)
         return(dat.apply(good_app))
 
+
+
+# import simPyon as sp
+# sim[2].source['pos']['last'] = np.array([160. , 117.85,   0. ])
+# sim[2].source['pos']['first'] = np.array([98.8 , 134.4,   0. ])
+# sim[2].source['az'] = sp.particles.source('uniform',{'min':-180,'max':180})
+# sim[2].source['el'] = sp.particles.source('uniform',{'min':0,'max':180})
+
+class fly_interper:
+    
+    def __init__(self,interp_data, p_start = ['x','ke','theta','phi'],p_stop = 'counts'):
+        self.interp_data = interp_data.copy()
+        if p_stop == 'counts':
+            self.interp_data['counts'] = self.interp_data['counts']*self.interp_data.log_good()
+        self.p_start = p_start
+        self.p_stop = p_stop
+        self.f = lambda x: np.nan
+        self.data = sp.data.sim_data(obs = {'X_MAX':np.inf,
+                                        'X_MIN':-np.inf,
+                                        'R_MAX':np.inf,
+                                        'R_MIN':-np.inf,
+                                        'TOF_MEASURE':False,
+                                        'R_WEIGHT':False})
+        
+    def interp(self):
+        from scipy.interpolate import LinearNDInterpolator as lp
+        self.f = lp(self.interp_data.start()[self.p_start],self.interp_data.stop()[self.p_stop],
+                    fill_value = 0 if self.p_stop == 'counts' else np.nan)
+        
+    def fly(self,source_df,good_cols = ['ion n','is_start']):
+        self.data['is_start'] = True
+        
+        splat = source_df.df.copy()
+        splat.loc[:] = np.nan
+        for c in good_cols:
+            splat.loc[:,c] = source_df[c]
+        
+        splat.loc[:,self.p_stop] = self.f(source_df[self.p_start])
+        self.data.df = pd.concat([source_df.df,splat],
+                            axis = 0).set_index('ion n',
+                            append = True).sort_index().reset_index(level = 'ion n')
+        return(self.data)
 
 class splats:
     def __init__(self,dats):
@@ -235,7 +282,7 @@ class splats:
     def start(self):
         return(splats(self.apply(lambda x: x.start())))
 
-    def calc_count_rate(self,inc_flux = 10000,pac_kv = 10,ap_window = 2.6,):
+    def calc_count_rate(self,inc_flux = 10000,pac_kv = 10,ap_window = 2.6,effic_tof = None):
         '''
         ONLY for H right now
         inc_flux: cts/sec/cm^2
@@ -247,6 +294,13 @@ class splats:
             m = .019
             b = .140
             return(m*pac_kv+b)
+
         effic_esa_cs = self[2].good().start()['counts'].sum()/self[0].good().start()['counts'].sum()
-        return(inc_flux*effic_esa_cs*ap_window*effic_tof_H(pac_kv))
+
+        T_P10grid = .91
+
+        if effic_tof is None:
+            effic_tof = effic_tof_H(pac_kv)
+
+        return(inc_flux*effic_esa_cs*ap_window*effic_tof*T_P10grid)
 
