@@ -93,6 +93,7 @@ class cs_scatterer:
         self.type = 'modulator'
         self.is_sputtered = None
         self.geo = geo
+        self.collision = {}
 
         self.part = {'cs_el':cs_elevation,
                     'm':perd.elements.symbol(species).mass,
@@ -101,6 +102,7 @@ class cs_scatterer:
                     'sputtering':frac_sputtered,
                     'surf_binding':surf_binding,
                     'sputtered_m':perd.elements.symbol(species).mass}
+
 
         # assign distribution functions and cs scattering modulator functions
         self.ke = {
@@ -149,14 +151,15 @@ class cs_scatterer:
 
     def ke_mean(self,ke,theta,phi):
         v_perp = get_vperp(self.part['m'],ke,abs(theta - self.part['cs_el']))
+
         return(self.ke['modulator_f'](v_perp)*ke)
     
     def ke_scatter(self,ke,theta,phi):
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil ion ke
 
-        rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
-        v_perp = get_vperp(self.part['m'],ke,rel_ang)
+        v_perp = self.collision['v_perp']
+
         mean = self.ke['modulator_f'](v_perp)*ke
         fwhm = (ke-mean)*2
         direction = -1
@@ -172,8 +175,7 @@ class cs_scatterer:
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil ion ke
 
-        rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
-        v_perp = get_vperp(self.part['m'],ke,rel_ang)
+        v_perp = self.collision['v_perp']
 
         new_ke = recoil_sputter_inellastic(ke,[],
                             theta,phi,
@@ -190,8 +192,8 @@ class cs_scatterer:
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil phi direction
         
-        rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
-        v_perp = get_vperp(self.part['m'],ke,rel_ang)
+        v_perp = self.collision['v_perp']
+
         phi_new =self.phi['pdf'](len(phi))*self.phi['modulator_f'](v_perp)+phi
 
         #correct for the angular ranges so simion can accept
@@ -209,14 +211,10 @@ class cs_scatterer:
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil ion theta direction
 
-        rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
-        v_perp = get_vperp(self.part['m'],ke,rel_ang)
-        if self.geo is None:
-            mean = 180-(self.part['cs_el']-rel_ang)
-        else:
-            # mean = 180-(self.part['cs_el']-rel_ang)
-            mean = sim_data(self.geo.reflect(self.data))['theta']
-        # mean[mean>360] = 360-mean[mean>360]
+        rel_ang = self.collision['rel_ang']
+        v_perp = self.collision['v_perp']
+        mean = self.collision['reflect']
+
         direction = 1
         fwhm = self.theta['modulator_f'](v_perp)
 
@@ -231,13 +229,12 @@ class cs_scatterer:
     def conv_effic(self,ke,theta,phi):
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil conversion efficiency weight factor
-        rel_ang = rel_angle(theta,phi,self.part['cs_el'],0)
-        v_perp = get_vperp(self.part['m'],ke,rel_ang)
+        v_perp = self.collision['v_perp']
         return(self.cal_fits['effic'][self.part['species']](v_perp))
 
     def fly(self,source_df,
                 good_cols = ['ion n','tof','x','y','z','r',
-                                'ke','theta','phi','vx','vr','counts','is_start'],
+                                'ke','theta','phi','counts','is_start'],
                                 quiet = True):
         '''
         Function which takes source distribution and applies conversion surface
@@ -253,10 +250,27 @@ class cs_scatterer:
         ke = source_df['ke']
         theta = source_df['theta']
         phi = source_df['phi']
+        
         data = source_df.copy()
         data['counts'] = 1
         data['is_start'] = True
 
+
+        check_labs = ['tof','vx','vy','vz','ke']
+        if self.data is None or ~ np.all(source_df[check_labs]==self.data.start()[check_labs]):
+            if self.geo is not None:
+                self.part['cs_el'] = self.geo.get_normal(data[['x','r']])+90
+
+            self.collision['rel_ang'] = rel_angle(theta,phi,self.part['cs_el'],0)
+            self.collision['v_perp'] = get_vperp(self.part['m'],ke,self.collision['rel_ang'])
+            
+            if self.geo is not None:        
+                self.collision['reflect']= sim_data(self.geo.reflect(data))['theta']
+            else:
+                self.collision['reflect'] = 180-(self.part['cs_el']-self.collision['rel_ang'])
+            
+            
+        
         # determine if ion is sputtered or not
         self.is_sputtered = np.random.rand(len(source_df))<self.part['sputtering']
 
@@ -267,16 +281,16 @@ class cs_scatterer:
             data['counts'] = self.conv_effic(ke,theta,phi)/100
             self.data = data[good_cols]    
         else: 
-            self.data = data
-            if self.geo is not None:
-                self.part['cs_el'] = self.geo.get_normal(data[['x','r']])
             splat = data.df.copy()
-            splat.loc[:] =np.nan
+            for k in splat.keys():
+                if k not in good_cols:
+                    splat.loc[:,k] =np.nan
+
             splat.loc[:,good_cols] = data.df[good_cols]
             splat['theta'] = self.theta_scatter(ke,theta,phi)
             splat['phi'] = self.phi_scatter(ke,theta,phi)
             splat['ke'] = self.ke_scatter(ke,theta,phi)
-
+            
             # splat['ke'] = self.ke_scatter_inellastic(ke,
             #                         theta,phi,
             #                         splat['theta'],splat['phi'])
@@ -291,7 +305,7 @@ class cs_scatterer:
                                             splat['theta'],splat['phi'],
                                             self.part['m'],self.part['sputtered_m'],
                                             surf_binding = self.part['surf_binding'])[self.is_sputtered]
-            data.df = pd.concat([data.df[good_cols],splat],
+            data.df = pd.concat([data.df,splat],
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
             self.data = data
