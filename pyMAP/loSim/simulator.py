@@ -11,8 +11,11 @@ class simulator:
     - fly(): function which executes particle propagation
     '''
 
-    def __init__(self,config = 'imap',mode = 'imap_hiTh',estep = 6,
-                                scattering_input = {}):
+    def __init__(self,config = 'imap',
+                        mode = 'imap_hiTh',
+                        estep = 6,
+                                scattering_input = {},
+                                interpolate = False):
         inp = sim_input(config,mode,estep)
         inp['home'] = os.path.relpath(inp['home'])
 
@@ -210,39 +213,53 @@ class simulator:
 # sim[2].source['el'] = sp.particles.source('uniform',{'min':0,'max':180})
 
 class fly_interper:
-    
-    def __init__(self,interp_data, p_start = ['x','ke','theta','phi'],p_stop = 'counts'):
-        self.interp_data = interp_data.copy()
-        if p_stop == 'counts':
-            self.interp_data['counts'] = self.interp_data['counts']*self.interp_data.log_good()
+    def __init__(self,interp_data=None,f = lambda x: np.nan,
+                                         p_start = ['x','ke','theta','phi'],
+                                        p_stop = 'counts',
+                                        volt_dict = {},geo = '',v_mode = ''):
+        if interp_data is not None:
+            self.interp_data = interp_data.copy()
+            if p_stop == 'counts':
+                self.interp_data['counts'] = self.interp_data['counts']*self.interp_data.log_good()
         self.p_start = p_start
         self.p_stop = p_stop
-        self.f = lambda x: np.nan
-        self.data = sp.data.sim_data(obs = {'X_MAX':np.inf,
+        self.f = f
+        self.data = sim.data.sim_data(obs = {'X_MAX':np.inf,
                                         'X_MIN':-np.inf,
                                         'R_MAX':np.inf,
                                         'R_MIN':-np.inf,
                                         'TOF_MEASURE':False,
                                         'R_WEIGHT':False})
+        self.type = 'interpolated simion'
+        self.scale_fact = 1
         
     def interp(self):
         from scipy.interpolate import LinearNDInterpolator as lp
         self.f = lp(self.interp_data.start()[self.p_start],self.interp_data.stop()[self.p_stop],
                     fill_value = 0 if self.p_stop == 'counts' else np.nan)
         
-    def fly(self,source_df,good_cols = ['ion n','is_start']):
-        self.data['is_start'] = True
+    def fly(self,source_df,good_cols = ['ion n','is_start'],quiet = True):
+        # self.data['is_start'] = True
         
-        splat = source_df.df.copy()
-        splat.loc[:] = np.nan
+        scr = source_df.df.copy()
+        scr['counts'] = 1
+        scr['is_start'] = True
+        splat = scr.copy()
+        splat['is_start'] = False
+        scr['ke'] = scr['ke']/self.scale_fact
+
         for c in good_cols:
             splat.loc[:,c] = source_df[c]
         
-        splat.loc[:,self.p_stop] = self.f(source_df[self.p_start])
-        self.data.df = pd.concat([source_df.df,splat],
+        splat.loc[:,self.p_stop] = self.f(scr[self.p_start])
+        scr['ke'] = scr['ke']*self.scale_fact
+        self.data.df = pd.concat([scr,splat],
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
-        return(self.data)
+        return(self.data.copy())
+    
+    def fast_adjust(self,scale_fact = 1):
+        self.scale_fact = scale_fact
 
 class splats:
     def __init__(self,dats):
@@ -282,6 +299,10 @@ class splats:
     def start(self):
         return(splats(self.apply(lambda x: x.start())))
 
+
+    def calc_effic(self):
+        return(self[2].good().stop()['counts'].sum()/self[0].good().start()['counts'].sum())
+
     def calc_count_rate(self,inc_flux = 10000,pac_kv = 10,ap_window = 2.6,effic_tof = None):
         '''
         ONLY for H right now
@@ -295,7 +316,7 @@ class splats:
             b = .140
             return(m*pac_kv+b)
 
-        effic_esa_cs = self[2].good().start()['counts'].sum()/self[0].good().start()['counts'].sum()
+        effic_esa_cs = self.calc_effic()
 
         T_P10grid = .91
 

@@ -38,6 +38,16 @@ def geos():
                 },
         })
 
+# def sim_interpolators(geo,volt_config):
+#     interpolators = {
+#                         'loV2':{
+#                                 'HiTh': 
+#                                 'HiRes':
+#                                 }
+
+#                     }
+#     return(interpolators[geo][volt_config])
+
 def v_modes():
     import pandas as pd
     lpath = os.path.dirname(__file__)

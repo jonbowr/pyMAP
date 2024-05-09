@@ -269,8 +269,10 @@ class cs_scatterer:
         else: 
             self.data = data
             if self.geo is not None:
-                self.part['cs_elevation'] = self.geo.get_normal(data[['x','r']])
-            splat = data.df.copy()[good_cols]
+                self.part['cs_el'] = self.geo.get_normal(data[['x','r']])
+            splat = data.df.copy()
+            splat.loc[:] =np.nan
+            splat.loc[:,good_cols] = data.df[good_cols]
             splat['theta'] = self.theta_scatter(ke,theta,phi)
             splat['phi'] = self.phi_scatter(ke,theta,phi)
             splat['ke'] = self.ke_scatter(ke,theta,phi)
