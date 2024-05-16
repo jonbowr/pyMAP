@@ -1,11 +1,12 @@
-from . import instrument,asrun
+from . import instrument,asrun,facility
 import numpy as np
 import pandas as pd
 loadlib = {
             'imap_lo_em':instrument.IMAP_lo_EM.load,
             'imap_lo_fm':instrument.IMAP_lo_FM.load,
             'ibex_lo_etu':instrument.IBEX_lo_ETU.load,
-            'EMstrSen':instrument.IMAP_lo_EMStrSen.load
+            'EMstrSen':instrument.IMAP_lo_EMStrSen.load,
+            'pspl':facility.PSPL.load
             # 'asrun':asrun.load
             }
 
@@ -170,21 +171,31 @@ def dat_loc(file_name,home,dtype = ''):
     if type(file_name)==list:
         file_name = pd.Series(file_name)
 
-    thing = pd.DataFrame(getListOfFiles(home),columns = ['loc'])
-    thing['nam'] = thing['loc'].apply(lambda x: os.path.basename(x).split('.')[0].replace('_','').lower())
-    thing['type'] = thing['loc'].apply(lambda x: os.path.splitext(x)[1])
-    thing = thing.loc[~thing['type'].str.lower().str.contains('rec')]
-    indic = file_name.apply(lambda x: x.split('.')[0].replace('_','').lower())
+    # thing = pd.DataFrame(getListOfFiles(home),columns = ['loc'])
+    # thing['nam'] = thing['loc'].apply(lambda x: os.path.basename(x).split('.')[0].replace('_','').lower())
+    # thing['type'] = thing['loc'].apply(lambda x: os.path.splitext(x)[1])
+    # thing = thing.loc[~thing['type'].str.lower().str.contains('rec')]
+    # indic = file_name.apply(lambda x: x.split('.')[0].replace('_','').lower())
 
     # return(indic.apply(lambda x: thing.loc[\
     #                 np.logical_and(thing['nam'].str.contains(x),
     #                     thing['nam'].str.contains(dtype))]['loc'].values[0]))
 
+    def nam_reducer(st):
+        strip = ['.txt','.csv']
+        str_remove = ['_','-','.']
+        st_new = st.lower()
+        for strp in strip:
+            st_new = st_new.strip(strp)
+        for rep in str_remove:
+            st_new = st_new.replace(rep,'')
+        return(st_new)
+
     fs = []
     for f in getListOfFiles(home):
         for fil in file_name:
-            f_indicator = fil.split('.')[0].replace('_','').lower()
-            ff = os.path.basename(f).split('.')[0].replace('_','').lower()
+            f_indicator = nam_reducer(fil)
+            ff = nam_reducer(os.path.basename(f))
             if f_indicator in ff and '.rec' not in f and dtype in f:
                 fs.append(f)
     return(fs)

@@ -65,7 +65,7 @@ class asRunr:
         self.df = run.import_data(self.df,
                             dl,
                                 d_types,
-                                instrument = self.instrument)
+                                instrument = self.instrument,ref_nam= self.ref_nam)
 
     def __getitem__(self,item):
         return(self.df[item])
