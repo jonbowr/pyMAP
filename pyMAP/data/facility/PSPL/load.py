@@ -4,14 +4,19 @@ import numpy as np
 def load_abm_v1(loc):
     
     df = pd.read_csv(loc,usecols = range(6))
-
     df['Start Time'] = pd.to_datetime(df['Start Time'])
     df['effic'] = df['COIN Rate']**2/(df['OUT CEM Rate']*df['IN CEM Rate'])
     df['abs_mean'] =df['COIN Rate']/df['effic'] 
     return(df.set_index('Start Time'))
 
+def load_motion_control_v1(loc):
+    df = pd.read_csv(loc,header = 1)
+    df['Time'] = pd.to_datetime(df['Time'])
+    return(df.set_index('Time'))
+
 loadlib = {
-            'ABM-Counts':load_abm_v1
+            'ABM-Counts':load_abm_v1,
+            'Motion-System-Control':load_motion_control_v1
             }
 
 def load(as_runloc,dtype = 'strSen',version = 'v001'):

@@ -25,6 +25,8 @@ def load_IFB_v1(loc):
     len1 = len(df)
     df = df.apply(lambda x: pd.to_numeric(x, errors = 'coerce')).dropna(axis = 0)
     df = df.astype(dtype = dtypes['ILO_IFB']).drop_duplicates(subset = 'SHCOARSE').set_index('SHCOARSE')
+    # df = df.astype(dtype = dtypes['ILO_IFB']).set_index('SHCOARSE')
+    df = df.iloc[df.index>0]
     len2 = len(df)
     if (len1-len2)/len1>.1:
         from warnings import warn
@@ -140,6 +142,11 @@ loadlib = {
             'ILO_APP_NHK':{
                             'v001':load_APP_NHK
                             },
+            
+            'ILO_DIAG_TOF_BD':{
+                            'v001':load_APP_NHK
+                            },
+
             }
 
 def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'):
