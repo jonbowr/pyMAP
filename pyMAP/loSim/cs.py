@@ -25,7 +25,7 @@ def surf_binding_sputter(E0,cosr,E_bind):
     return(e_pdf.sample(len(E0),0,np.max(E0)))
 
 def recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2,
-                                    a = 1,b = 1,c = 1,mean_E_loss = .15):
+                                    a = 1,b = 1,c = 1,mean_E_loss = .15,ke_dispersion = None):
     '''
     calculation of the recoil sputtered particle energy distribution 
     - E0: incidention Neutral energy
@@ -43,15 +43,23 @@ def recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2,
     rel_ang = rel_angle(theta1,phi1,theta2,phi2)
     cosr = np.cos(np.abs(rel_ang*np.pi/180))
     from simPyon.simPyon.particles import source
-    e_loss = source('poisson',{'a1':0,
-                                        'b1':4,
-                                        'c':0,
-                                        'b':.4,
-                                        'k':1,
-                                        'fwhm':1,
-                                        'mean':1,
-                                        'direction':1})
-    q = e_loss(len(E0))*cosr/np.max(cosr)*E0*mean_E_loss
+    if ke_dispersion is None:
+        e_loss = source('poisson',{'a1':0,
+                                            'b1':4,
+                                            'c':0,
+                                            'b':.4,
+                                            'k':1,
+                                            'fwhm':1,
+                                            'mean':1,
+                                            'direction':1})
+        frac_loss = e_loss(len(E0))
+        q = frac_loss*cosr/np.max(cosr)*E0*mean_E_loss
+    else: 
+        e_loss = source('pdf')
+        e_loss['f'] = ke_dispersion
+        e_loss['b'] = 4
+        frac_loss = e_loss(len(E0))-ke_dispersion['b']+1
+        q = (frac_loss*cosr/np.max(cosr)-1)*E0+E0*mean_E_loss
     c1 = 2*mu/(1+mu)**2*E0*cosr**2
     c2 = 2*cosr/(1+mu)*np.sqrt(np.abs((mu/(1+mu)*E0*cosr)**2-mu*E0*q/(1+mu)))
     c3 = -q/(1+mu)
@@ -94,6 +102,7 @@ class cs_scatterer:
         self.is_sputtered = None
         self.geo = geo
         self.collision = {}
+        self.scatter_type = 'statistical' #setting to 'inelastic' gives option to generate ke from inelastic scattering
 
         self.part = {'cs_el':cs_elevation,
                     'm':perd.elements.symbol(species).mass,
@@ -109,12 +118,16 @@ class cs_scatterer:
                    'pdf': sim.particles.pdf('poisson',{'c':0,'b':.105,'k':1}),
                    # 'pdf_sputter':sim.particles.pdf('sputtered'),
                    'modulator_f': self.cal_fits['e_loss'][self.part['species']],
-
+                   # params for use with elastic collision
+                   # 'pdf': sim.particles.pdf('poisson',{'c':0,'b':.05,'k':1}),
+                   # modulator function y intercept /.75*.05
                     }
         self.theta = {
                        'pdf': sim.particles.pdf('poisson',{'c':-.075,'b':.405*2**1.6,'k':3}),
                        # 'pdf_sputter':sim.particles.source('cos',
                        #              dist_vals = {'mean':cs_elevation-90,'range':180,'a':90,'b':180,'x_min':0}),
+                       # Sputtering distribution chosen so we angularly scatter around out scatter dimension while avoiding scattering
+                       #    forward inth the cs floor
                       'pdf_sputter':sim.particles.source('cos',
                                     dist_vals = {'mean':1.25,'range':2.5,'a':.65,'b':2.5,'x_min':0}),
                        'modulator_f': self.cal_fits['theta'][self.part['species']],
@@ -123,8 +136,6 @@ class cs_scatterer:
                        'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':1}),
                        # 'pdf_sputter':sim.particles.source('uniform',
                        #              dist_vals = {'min':-90,'max':90}),
-                       # 'pdf_sputter':sim.particles.source('cos',
-                       #              dist_vals = {'mean':0,'range':180,'a':0,'b':180,'x_min':0}),
                         'pdf_sputter':sim.particles.source('cos',
                                     dist_vals = {'mean':1,'range':.75,'a':0,'b':.75,'x_min':0}),
                        'modulator_f': self.cal_fits['phi'][self.part['species']],
@@ -134,6 +145,7 @@ class cs_scatterer:
         self.params = {l:{'modulator_f':t['modulator_f'].p0} for l,t in zip(['ke','theta','phi'],
                                                                         [self.ke,self.theta,self.phi])}
         self.params['ke']['pdf'] = self.ke['pdf'].kwargs
+        self.params['effic'] = self.cal_fits['effic'][self.part['species']].p0
         self.params['setup'] = self.part
 
     def __str__(self):
@@ -180,12 +192,15 @@ class cs_scatterer:
         new_ke = recoil_sputter_inellastic(ke,[],
                             theta,phi,
                             splat_theta,splat_phi,
-                            self.part['m'],self.part['m'],mean_E_loss = self.ke['modulator_f'](v_perp)/.75*.05)
+                            self.part['m'],self.part['m'],
+                            # mean_E_loss = .01,
+                            mean_E_loss = (1-self.ke['modulator_f'](v_perp))*.2,
+                            ke_dispersion=self.ke['pdf']
+                            )
 
         # take the values that show up below 0 and mark them as sputtered
         neg_log = new_ke<0
         self.is_sputtered[neg_log] = True
-
         return(new_ke)
 
     def phi_scatter(self,ke,theta,phi):
@@ -289,11 +304,14 @@ class cs_scatterer:
             splat.loc[:,good_cols] = data.df[good_cols]
             splat['theta'] = self.theta_scatter(ke,theta,phi)
             splat['phi'] = self.phi_scatter(ke,theta,phi)
-            splat['ke'] = self.ke_scatter(ke,theta,phi)
+
+            if self.scatter_type == 'inelastic':
+                splat['ke'] = self.ke_scatter_inellastic(ke,
+                                        theta,phi,
+                                        splat['theta'],splat['phi'])
+            else:
+                splat['ke'] = self.ke_scatter(ke,theta,phi)
             
-            # splat['ke'] = self.ke_scatter_inellastic(ke,
-            #                         theta,phi,
-            #                         splat['theta'],splat['phi'])
 
             splat['counts'] = self.conv_effic(ke,theta,phi)/100
             splat['is_start'] = False
@@ -305,6 +323,7 @@ class cs_scatterer:
                                             splat['theta'],splat['phi'],
                                             self.part['m'],self.part['sputtered_m'],
                                             surf_binding = self.part['surf_binding'])[self.is_sputtered]
+
             data.df = pd.concat([data.df,splat],
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
@@ -323,7 +342,7 @@ class cs_scatterer:
         def fit_pltr(fits,ax):
             def fit_pltr(x):
                 xx = np.linspace(min(x.xy[0]),max(x.xy[0]),1000)
-                lin = ax.plot(*x.xy,'.-',label = x.name)[0]
+                lin = ax.plot(*x.xy,'.-',label = '(%s)'%','.join(x.name))[0]
                 ax.plot(xx,x(xx),'--',color = lin.get_color())
             print(fits)
             fits.apply(fit_pltr)

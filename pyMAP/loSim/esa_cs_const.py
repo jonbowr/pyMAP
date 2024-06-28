@@ -14,27 +14,29 @@ def geos():
     return({
         'ibex':
                 {
-                    'home':r'C:\Users\Jonny Woof\OneDrive - USNH\Box\Research\Projects\IMAP\simulations\IMAP-lo_ESA_CS_sims\IBEX',
-                    'gemfil':'IBEX-Lo_CR3_CE6_TOF3_HK3.GEM',
+                    'home':r'C:\Users\Jonny Woof\Documents\simPyon\IMAP-lo_ESA_CS_sims\IBEX',
+                    'gemfil':'IBEX-Lo_CR3_CE6_TOF3_HK4.GEM',
                 },
         'imap':
                 {
                     'home':home,
                     'gemfil':[
-                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
-                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CR7_HK6.GEM',
-                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
+                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
+                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM',
+                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
                                 ],
+                    'pa':[ 'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#'],
+                    'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
                 },
           'loV2':
                 {
                     'home':home,
                     'gemfil':[
-                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
-                                'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',            
+                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
+                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',            
                                 ],
-                    'pa':[ 'gem/IMAP-Lo_CR7_CE13_TOF2_HK6/FM_PreCal_1_Mask.PA#'],
-                    'pa_info':{'pa_offset_position': Series({'x':188,'oy':170,'oz':170,'rt':25})}
+                    # 'pa':[ 'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/100-07-1615_FM PreCal 1 Mask_Rev-.PA#'],
+                    # 'pa_info':{'pa_offset_position': Series({'x':188,'oy':170,'oz':170,'rt':25})}
                 },
         })
 

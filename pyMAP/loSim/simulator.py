@@ -270,9 +270,6 @@ class splats:
     
     def __setitem__(self,item,value):
         self.dfs[item] = value
-    
-    def start(self):
-        return(dat.apply(lambda x:x.start()))
 
     def get_good(self,leg = 0):
         #filter each data set step for one data set being good, assumes all data have exact same size
@@ -299,6 +296,8 @@ class splats:
     def start(self):
         return(splats(self.apply(lambda x: x.start())))
 
+    def stop(self):
+        return(splats(self.apply(lambda x: x.stop())))
 
     def calc_effic(self):
         return(self[2].good().stop()['counts'].sum()/self[0].good().start()['counts'].sum())
