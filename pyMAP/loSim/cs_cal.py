@@ -121,7 +121,7 @@ def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
     # rather than ke. scattering distributions should be linear in this form
 
     # select sample data to be used in determination of cs scattering effects
-    sml_cal = cal.stack().unstack(['sample','geo'])[samples].mean(axis = 1)
+    sml_cal = cal.stack().unstack(['sample','geo'])[samples].stack().stack()#.mean(axis = 1)
     sml_cal.name = 'val'
     sml_cal = sml_cal.reset_index()
     # calculate the v_perp value from mass, energy and incident angle
@@ -138,20 +138,33 @@ def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
     # return(sml_cal)#.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
     # average sample data and transform to a shape to allow for simple linear fitting
     sml_cal.set_index(['recoil_props','v_perp','species','v_group'],inplace = True)
-    sml_cal = sml_cal['val']
-    sml_cal = sml_cal.reset_index('v_perp').groupby(['v_group','species','recoil_props']).mean()
+    # sml_cal = sml_cal['val']
+    # sml_cal = sml_cal.reset_index('v_perp').groupby(['v_group','species','recoil_props']).mean()
+    return(sml_cal.reset_index('v_group',drop = True).sort_index().reset_index('v_perp'))
     return(sml_cal.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
+
 
 def get_cal_fits(load_data_input = {},data_av_input = {}):
     # function to load elena scattering data, linearize the desired data in v_perp
     # and perform linear fit functions
     from pyMAP import bowPy as bp
 
+    #Rollover function taken from [wurz 2006]
+    def rollover_v(xx,n_0=.0135,vc=4*10**4,a=.31):
+        b=1.5
+        x = xx*1000 #km/s to m/s
+        return(n_0*(1-np.exp(-(x/vc)**(2*b)))*(x/vc)**(2*a))
+
+    func_fits = {'e_loss':'linear',
+                'phi':rollover_v,
+                'theta':rollover_v,
+                'effic':rollover_v}
+
     vdat = vperp_av_data(load_cal_data(**load_data_input),**data_av_input)
     def thing(xx):
         x = xx['v_perp']
         y = xx['val']
-        fde = bp.Jonda(xy_data = np.stack([x,y]),func = 'linear')
+        fde = bp.Jonda(xy_data = np.stack([x,y]),func = func_fits[xx.name[1]])
         fde.fit_xy(use_err = False)
         fde.name = xx.name
         return(fde)    

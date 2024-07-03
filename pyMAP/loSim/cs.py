@@ -25,7 +25,7 @@ def surf_binding_sputter(E0,cosr,E_bind):
     return(e_pdf.sample(len(E0),0,np.max(E0)))
 
 def recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2,
-                                    a = 1,b = 1,c = 1,mean_E_loss = .15,ke_dispersion = None):
+                                    a = 1,b = 1,c =1,mean_E_loss = .15,ke_dispersion = None):
     '''
     calculation of the recoil sputtered particle energy distribution 
     - E0: incidention Neutral energy
@@ -60,6 +60,9 @@ def recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2,
         e_loss['b'] = 4
         frac_loss = e_loss(len(E0))-ke_dispersion['b']+1
         q = (frac_loss*cosr/np.max(cosr)-1)*E0+E0*mean_E_loss
+        # frac_loss = e_loss(len(E0))-ke_dispersion['b']
+        # q = frac_loss*E0+E0*mean_E_loss
+        
     c1 = 2*mu/(1+mu)**2*E0*cosr**2
     c2 = 2*cosr/(1+mu)*np.sqrt(np.abs((mu/(1+mu)*E0*cosr)**2-mu*E0*q/(1+mu)))
     c3 = -q/(1+mu)
@@ -188,7 +191,6 @@ class cs_scatterer:
         #   recoil ion ke
 
         v_perp = self.collision['v_perp']
-
         new_ke = recoil_sputter_inellastic(ke,[],
                             theta,phi,
                             splat_theta,splat_phi,
