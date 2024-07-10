@@ -138,10 +138,12 @@ def vperp_av_data(cal,samples= ['036b',39,'100P','40P','xxx','L109'],
     # return(sml_cal)#.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
     # average sample data and transform to a shape to allow for simple linear fitting
     sml_cal.set_index(['recoil_props','v_perp','species','v_group'],inplace = True)
+
+    return(sml_cal.reset_index('v_group',drop = True).sort_index().reset_index('v_perp'))
+
     # sml_cal = sml_cal['val']
     # sml_cal = sml_cal.reset_index('v_perp').groupby(['v_group','species','recoil_props']).mean()
-    return(sml_cal.reset_index('v_group',drop = True).sort_index().reset_index('v_perp'))
-    return(sml_cal.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
+    # return(sml_cal.reset_index('v_group',drop = True).set_index('v_perp',append = True).sort_index().reset_index('v_perp'))
 
 
 def get_cal_fits(load_data_input = {},data_av_input = {}):
@@ -155,7 +157,7 @@ def get_cal_fits(load_data_input = {},data_av_input = {}):
         x = xx*1000 #km/s to m/s
         return(n_0*(1-np.exp(-(x/vc)**(2*b)))*(x/vc)**(2*a))
 
-    func_fits = {'e_loss':'linear',
+    func_fits = {'e_loss':rollover_v,
                 'phi':rollover_v,
                 'theta':rollover_v,
                 'effic':rollover_v}

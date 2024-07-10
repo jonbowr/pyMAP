@@ -330,7 +330,7 @@ class cs_scatterer:
                             axis = 0).set_index('ion n',
                             append = True).sort_index().reset_index(level = 'ion n')
             self.data = data
-        return(self.data)
+        return(self.data.copy())
 
     def fly_trajectory(self,source_df,fig,ax):
         # dat = self.fly(source_df)
@@ -344,7 +344,7 @@ class cs_scatterer:
         def fit_pltr(fits,ax):
             def fit_pltr(x):
                 xx = np.linspace(min(x.xy[0]),max(x.xy[0]),1000)
-                lin = ax.plot(*x.xy,'.-',label = '(%s)'%','.join(x.name))[0]
+                lin = ax.plot(*x.xy,'.',label = '(%s)'%','.join(x.name))[0]
                 ax.plot(xx,x(xx),'--',color = lin.get_color())
             print(fits)
             fits.apply(fit_pltr)

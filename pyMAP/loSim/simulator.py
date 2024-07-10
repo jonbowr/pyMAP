@@ -30,14 +30,14 @@ class simulator:
         self.sims = DataFrame([\
                     {'name':'inc_N',
                         'sim':sim.simion(**inp,
-                                obs_region = obs_regions['CS']),
+                                obs_region = obs_regions[config]['CS']),
                                 },
                     {'name':'cs_scatter',
                         'sim':cs_scatterer(**scattering_input),
                                 },
                     {'name':'rec_ion',
                         'sim':sim.simion(**inp,
-                                obs_region = obs_regions['TOF']),
+                                obs_region = obs_regions[config]['TOF']),
                                 }
                     ]).set_index(['name'])['sim']
         self.geo = self.sims['inc_N'].geo
@@ -50,8 +50,8 @@ class simulator:
         self.source['ke'].dist_vals = {'mean': 480*volt_scale_facts[estep-1], 'fwhm': 50*volt_scale_facts[estep-1]}
         self.source['az'].dist_vals = {'mean': 180, 'fwhm': 2}
         self.source['el'].dist_vals = {'mean': 0,'fwhm': 2}
-        self.source['pos'].dist_vals = {'first': np.array([210, 119.2,   0. ]), 
-                                    'last': np.array([210.1,133.2,   0. ])}
+        self.source['pos'].dist_vals = {'first': np.array([210, cs_locs[config]['first'][1],   0. ]), 
+                                    'last': np.array([210.1,cs_locs[config]['last'][1],   0. ])}
         self.sims[0].source = self.source.copy()
 
         # setup param control structure for easy access to sub simulation adjustable params
@@ -59,6 +59,7 @@ class simulator:
         # self.params['source'] = self.source.params
         self.params['cs_scatter'] = self['cs_scatter'].params
         self.volt_dict = v_modes().loc[mode][estep]
+        self.volt_steps = v_modes().loc[mode]
 
     def __repr__(self):
         return(
@@ -93,12 +94,11 @@ class simulator:
 
     def fast_adjust(self,scale_fact = 1,
                             estep = None,
-                                mode = 'imap_hiTh',
                                 up_un = None):
         if up_un is not None:
             v_nom = self.__set_upos_uneg__(*up_un)
         elif estep is not None:
-            v_nom = v_modes().loc[mode][estep]
+            v_nom = self.volt_steps[estep]
         else:
             v_nom = dict(self[0].volt_dict)
         for i in [0,2]:
@@ -108,7 +108,7 @@ class simulator:
 
     def __set_upos_uneg__(self,upos ,uneg):
         thing = {'u+':upos,'u-':uneg}
-        v_nom = v_modes().loc['imap_hiTh'][7]
+        v_nom = self.volt_steps[7]
         v_out = dict(self.volt_dict)
         volt_setter = pd.DataFrame({'u':['u+','u-'],
                                'elec':['P10 Electrode','P2 Electrode'],
@@ -121,28 +121,6 @@ class simulator:
         for i in [0,2]:
             self[i].volt_dict = v_out
         return(v_out)
-
-    def sim_fix_stops(self,data,v_extrap = True):
-        # uses the shapely instrument geometry to set points on surface of polygon
-        #   to prevent pixlization collisions on reinitialization using collision locs
-        from shapely.geometry import MultiPoint
-        from shapely.ops import nearest_points
-        pol = self[0].geo.get_single_poly().boundary
-
-        pts = MultiPoint(data[['x','r']])
-        verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts.geoms]])
-        if v_extrap:
-            #calc offset distance of point from surface
-            mm_offset = np.sqrt((data['x'] -verts[:,0])**2+(data['r'] - verts[:,1])**2)
-            # step the particles backward according to offset distance
-            #    in trajectory based on their velocity
-            for dim in ['x','r']:
-                data[dim] = data[dim]-data['v'+dim]/abs(data['v'+dim])*mm_offset
-            pts = MultiPoint(data[['x','r']])
-            verts = np.array([[pr.x,pr.y] for pr in [nearest_points(pol,pt)[0] for pt in pts.geoms]])
-        data['x'] = verts[:,0]
-        data['r'] = verts[:,1]
-        return(data)
 
     def __fly_buff__(self,sim_in,dat_buffer,quiet = True):
         dat = sim_in.fly(dat_buffer,quiet = quiet)#.stop()
@@ -178,8 +156,10 @@ class simulator:
             else:
                 dat_buffer = self[steps[0]-1].data.stop()
 
+
         for lab,sim_in in self.sims[steps].items():
             dat_buffer = self.__fly_buff__(sim_in,dat_buffer,quiet = quiet)
+            
         return(self)
 
     def fly_trajectory(self,n = 100,fig = None,ax = None):
@@ -204,13 +184,6 @@ class simulator:
             return(new_dat)
         return(dat.apply(good_app))
 
-
-
-# import simPyon as sp
-# sim[2].source['pos']['last'] = np.array([160. , 117.85,   0. ])
-# sim[2].source['pos']['first'] = np.array([98.8 , 134.4,   0. ])
-# sim[2].source['az'] = sp.particles.source('uniform',{'min':-180,'max':180})
-# sim[2].source['el'] = sp.particles.source('uniform',{'min':0,'max':180})
 
 class fly_interper:
     def __init__(self,interp_data=None,f = lambda x: np.nan,
@@ -271,14 +244,14 @@ class splats:
     def __setitem__(self,item,value):
         self.dfs[item] = value
 
-    def get_good(self,leg = 0):
-        #filter each data set step for one data set being good, assumes all data have exact same size
-        def good_app(x):
-            new_dat = x.copy()
-            new_dat.df = new_dat.df.set_index('ion n').loc[self[leg].good().start().df['ion n'].values].reset_index()
-            return(new_dat)
-        
-        return(splats(self.apply(good_app)))
+    def copy(self):
+        return(splats(self.apply(lambda x: x.copy())))
+
+    def apply(self,func):
+        return(self.dfs.apply(func))
+
+    def shape(self):
+        return(self.apply(lambda x: x.df.shape))
 
     def get_loc(self,ion_nums):
         def locr(dat,ion_nums):
@@ -286,9 +259,16 @@ class splats:
             new_dat.df = new_dat.df.set_index('ion n').loc[ion_nums].reset_index()
             return(new_dat)
         return(splats(self.apply(lambda x: locr(x,ion_nums))))
-    
-    def apply(self,func):
-        return(self.dfs.apply(func))
+
+    def get_good(self,leg = 0):
+        #filter each data set step for one data set being good, assumes all data have exact same size
+        return(self.get_loc(self[leg].good().start().df['ion n'].values))
+
+    def good(self):
+        dd = self.copy()
+        for leg in range(len(self.dfs)):
+            dd = dd.get_good(leg)
+        return(dd)
     
     def show(self,params = {}):
         return(self.apply(lambda x: x.show(**params)))
@@ -300,7 +280,7 @@ class splats:
         return(splats(self.apply(lambda x: x.stop())))
 
     def calc_effic(self):
-        return(self[2].good().stop()['counts'].sum()/self[0].good().start()['counts'].sum())
+        return(self[-1].good().stop()['counts'].sum()/self[0].good().start()['counts'].sum())
 
     def calc_count_rate(self,inc_flux = 10000,pac_kv = 10,ap_window = 2.6,effic_tof = None):
         '''

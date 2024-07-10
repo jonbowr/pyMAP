@@ -63,6 +63,7 @@ def sim_input(geo = 'imap',mode = 'imap_hiTh',estep = 6):
     estep_table = v_modes()
     out_put = dict(geos()[geo])
     out_put['volt_dict'] = dict(estep_table[estep][mode])
+    print(out_put['volt_dict'])
     out_put['home'] = os.path.relpath(out_put['home'])
     return(out_put)
 
@@ -72,16 +73,33 @@ cs_locs = {
                 }
 
 obs_regions = {
-                'TOF':{'X_MAX': 81,
-                        'X_MIN':72,
-                        'R_MAX':45.1,
-                        'R_MIN':35.4,
-                        'TOF_MEASURE':True,
-                        'R_WEIGHT':False},
-                'CS':{'X_MAX': 160,
-                        'X_MIN':98,
-                        'R_MAX':134.6,
-                        'R_MIN':117.4,
-                        'TOF_MEASURE':False,
-                        'R_WEIGHT':True}
+
+                'imap':{
+                    'TOF':{'X_MAX': 81,
+                            'X_MIN':72,
+                            'R_MAX':45.1,
+                            'R_MIN':35.4,
+                            'TOF_MEASURE':True,
+                            'R_WEIGHT':False},
+                    'CS':{'X_MAX': 160,
+                            'X_MIN':98,
+                            'R_MAX':134.6,
+                            'R_MIN':117.4,
+                            'TOF_MEASURE':False,
+                            'R_WEIGHT':True}
+                            },
+                'ibex':{
+                    'TOF':{'X_MAX': 81,
+                            'X_MIN':72,
+                            'R_MAX':45.1,
+                            'R_MIN':35.4,
+                            'TOF_MEASURE':True,
+                            'R_WEIGHT':False},
+                    'CS':{'X_MAX': 158.9,
+                            'X_MIN':99.4,
+                            'R_MAX':133,
+                            'R_MIN':116.8,
+                            'TOF_MEASURE':False,
+                            'R_WEIGHT':True}
+                            }
                 }
