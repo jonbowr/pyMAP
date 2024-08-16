@@ -240,6 +240,18 @@ standard_groups = {
            'Board Temp':['TEMP1','TEMP0','LV_TEMP','MCP_TEMP','PAC_TEMP'],        
            'Threshold register':['AN_A_THR_REG','AN_B0_THR_REG','AN_B3_THR_REG','AN_C_THR_REG'],                    
            } ,
+        'ILO_INST_Status':
+            {
+                 'Currnent Monitor [mA]': ['MCP_CM','TOF_MCP_CM'],
+             'MCP volts [V]': ['MCP_VM','TOF_MCP_VM', ],
+                'MCP Monitors':['MCP_VSET_MON','MCP_OCP_MON'],
+             'PAC volts [V]': [ 'PAC_VM','PAC_VSET',],
+                'Monitors':['PAC_VSET_MON','HV_DIS_HK_N','PAC_OCP_MON'],
+             'Board Temp': ['TEMP1', 'TEMP0', 'LV_TEMP', 'MCP_TEMP', 'PAC_TEMP'],
+              'instrument status bits':['PAC_ENB[0]','PAC_ENB[1]','PAC_ENB_1','MCP_ENB[0]',
+                                        'MCP_ENB[1]','MCP_ENB_1','PAC_ENB_2','MCP_ENB_2'],
+             'LV [v]':['V12P0_VM','V12N0_VM'],                  
+           } ,
        'EM_status_comp':
         {
              'Currnent Monitor [mA]': ['MCP_CM','TOF_MCP_CM'],

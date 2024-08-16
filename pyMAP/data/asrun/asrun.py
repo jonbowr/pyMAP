@@ -10,7 +10,7 @@ from pyMAP.pyMAP.data.load import load as loader
 def get_dat(s_run_loc,
              dtype = '',
                     load_dt = lambda x: np.nan,
-                        load_params = {},home = './'):
+                        load_params = {},home = './',source = ''):
     dats = {}
     for rn in s_run_loc.keys():
         dats[str(rn)] = []
@@ -21,11 +21,13 @@ def get_dat(s_run_loc,
         hom = list(home)
 
     for fil,rn,hh in zip(s_run_loc.values,s_run_loc.keys(),hom):
-        floc = dat_loc(str(fil).strip('.rec'),home = hh,dtype = dtype)
+        floc = dat_loc(str(fil).strip('.rec'),home = hh,dtype = dtype,selector = source)
         if floc:
             for ff in floc:
-                dats[str(rn)].append(load_dt(ff,dtype = dtype,**load_params))
-
+                try:
+                        dats[str(rn)].append(load_dt(ff,dtype = dtype,**load_params))
+                except:
+                    print('Load Failed on file: %s'%str(rn))
     for lab,vals in dats.items():
         if vals:
             dats[lab] = pd.concat(vals,axis = 0,sort=True)
@@ -33,21 +35,35 @@ def get_dat(s_run_loc,
         else: 
             dats[lab] = np.nan
 
-    return(dats)
+    return(pd.Series(dats))
 
 
 def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],
                                                 instrument = 'imap_lo_fm',interper = 'index',
-                                            ref_nam = 'file_name',):
+                                            ref_nam = 'file_name',source = ''):
     if type(dtypes)==list:
         for tp in dtypes:
-            df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,load_params={'instrument':instrument}).values()
-            df = df.dropna(axis = 0,subset = tp)
+            if tp not in df.keys():
+                df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,
+                                 load_params={'instrument':instrument},source = source)
+            else:
+                df.loc[df[tp].isna(),tp] = get_dat(df.loc[df[tp].isna()][ref_nam],home = home,load_dt = loader,dtype = tp,
+                                 load_params={'instrument':instrument},source = source)# df = df.dropna(axis = 0,subset = tp)
+    elif type(dtypes)==str:
+        for tp in [dtypes]:
+            if tp not in df.keys():
+                df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,
+                                 load_params={'instrument':instrument},source = source)
+            else:
+                df.loc[df[tp].isna(),tp] = get_dat(df.loc[df[tp].isna()][ref_nam],home = home,load_dt = loader,dtype = tp,
+                                 load_params={'instrument':instrument},source = source)
+            # df = df.dropna(axis = 0,subset = tp)
     elif type(dtypes) == dict:
         from pyMAP.pyMAP.tools.tools import concat_combine
         for lab,vals in dtypes.items():
             dats = pd.DataFrame([pd.Series(get_dat(df[ref_nam],home = home,load_dt = loader,
-                                                   dtype = tp,load_params={'instrument':instrument})
+                                                   dtype = tp,load_params={'instrument':instrument},
+                                                   source = source)
                               ,name = tp) for tp in vals]).T
             def combiner(x):
                 try:

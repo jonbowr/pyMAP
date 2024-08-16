@@ -196,7 +196,7 @@ class cs_scatterer:
                             splat_theta,splat_phi,
                             self.part['m'],self.part['m'],
                             # mean_E_loss = .01,
-                            mean_E_loss = (1-self.ke['modulator_f'](v_perp))*.2,
+                            mean_E_loss = (1-self.ke['modulator_f'](v_perp))*.1,
                             ke_dispersion=self.ke['pdf']
                             )
 
@@ -292,6 +292,7 @@ class cs_scatterer:
         self.is_sputtered = np.random.rand(len(source_df))<self.part['sputtering']
 
         if type(data) != sim_data:
+            print('normal_data')
             data['theta'] = self.theta_scatter(ke,theta,phi)
             data['phi'] = self.phi_scatter(ke,theta,phi)
             data['ke'] = self.ke_scatter(ke,theta,phi)

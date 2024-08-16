@@ -45,7 +45,14 @@ def load_CNT_v1(loc):
     if (len1-len2)/len1>.1:
         from warnings import warn
         warn('Data corruption:Large Ammount of Dropped Measurements')
-    return(get_eff(df))
+
+    df['dT'] = np.gradient(df.reset_index()['SHCOARSE'])
+    df = get_eff(df)
+
+    rate_labs = ['START_A', 'START_C', 'STOP_B0', 'STOP_B3','TOF3','TOF0','TOF1','TOF2','SILVER']
+    for r in rate_labs: 
+        df['r%s'%r] = df[r]/df['dT']
+    return(df)
 
 def load_APP_NHK(loc):
     df = pd.read_csv(loc,header = 0)
@@ -59,7 +66,8 @@ def load_APP_NHK(loc):
                 'BHV_PMT_V','BHV_PMT_I','BHV_BULK_I','BHV_DEF_NEG_I','BHV_DEF_POS_I',
                 'BHV_ADC_REF1_V','BHV_ADC_REF2_V','BHV_12P0_V','BHV_N12P0_V','BHV_3P3_V','BHV_1P5_V']
 
-    return(df[use_cols])
+    # return(df[use_cols])
+    return(df)
 
 def load_RAW_DE_v1(loc):
     # check the headder for names and assign datatypes
