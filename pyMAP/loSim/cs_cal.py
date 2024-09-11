@@ -26,7 +26,8 @@ def load_cal_data(dloc = 'auto',index_cols = 8,data_cols = 27):
     hframe = pd.read_excel(f_cs_data,usecols = np.arange(index_cols,data_cols),
                                     nrows = 5)[3:].T
     # define header and reduce
-    hframe.values[:,1] = hframe.values[:,1]#/2
+    hframe[4] = hframe[4].astype(float)#/2
+    
     head = pd.MultiIndex.from_frame(hframe,names = ['fit','energy'])
 
     cal = pd.read_excel(f_cs_data,usecols = np.arange(data_cols),header = 5)
