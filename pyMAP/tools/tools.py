@@ -30,7 +30,7 @@ def gauss_filt_nan(arr, sigma,mode = 'constant'):
     return gauss
 
 def concat_combine(list_df,interper = 'time'):
-    return(pd.concat(list_df).sort_index().interpolate(interper).drop_duplicates())
+    return(pd.concat(list_df).sort_index().interpolate(interper).drop_duplicates().dropna())
 
 def combiner(base,other_in, usecol = 'index'):
     # use np.in1d to combine values between data frames
@@ -58,3 +58,10 @@ def combiner(base,other_in, usecol = 'index'):
         dat_parts.append(other.iloc[np.digitize(base_id,other_id)-1].reset_index().drop(
                                                     columns = (other_id.name if usecol == 'index' else usecol)))
     return(pd.concat(dat_parts,axis = 1))
+
+def bin_find(x, bins = 50,find_val = 'peak',weights = None):
+    from pyMAP.bowPy import Jonda
+    fitr = Jonda(data = x,bins = bins,weights = weights)
+    fitr.bin_data()
+    fitr.interp_xy(kind = 'cubic')
+    return(fitr.find_xy(find_val))

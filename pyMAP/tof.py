@@ -107,6 +107,7 @@ def delay_line_offset(tof3=tof3_peaks_ns['imap_lo_em'],
     if times_out:
         return(offsets,delay_times)
     else: return(offsets)
+
 def delay_shift(tof0,tof1,tof2,tof3,
                             instrument,
                             technique='signal',
@@ -300,6 +301,32 @@ def de_effic(rawDE,time_ind = 'SHCOARSE'):
     df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
     return(df)
     
+def de_rates(rawDE,time_ind = 'SPIN_SECONDS',H_rng = [10,25],O_rng = [60,120]):
+    val_keys = rawDE.keys().to_series()
+    dt = max(rawDE[time_ind])-min(rawDE[time_ind])
+    if dt ==0:
+        dt = 1
+    df = rawDE[val_keys.loc[val_keys.str.contains('VALID')]].apply('sum')/dt
+    
+    df[time_ind] = rawDE[time_ind].mean()
+
+    df['rDE_SILVER'] = np.sum(log_trips(rawDE))/dt
+    df['cDE_SILVER'] = np.sum(log_trips(rawDE))
+    
+    df['DE_Eff_A'] = df['rDE_SILVER']/df['VALIDTOF1']
+    df['DE_Eff_C'] = df['rDE_SILVER']/df['VALIDTOF0']
+    df['DE_Eff_B'] = df['rDE_SILVER']/df['VALIDTOF2']
+    df['DE_Eff_TRIP'] = df['DE_Eff_A']*df['DE_Eff_C']*df['DE_Eff_B']
+    
+    # pick species based on TOF2 measuremnts
+    log_H = ((rawDE['TOF2']>H_rng[0])&(rawDE['TOF2']<H_rng[1]))
+    log_O = ((rawDE['TOF2']>O_rng[0])&(rawDE['TOF2']<O_rng[1]))
+    df['cDE_SILVER_H'] = np.sum(log_trips(rawDE.loc[log_H])) 
+    df['rDE_SILVER_H'] = df['cDE_SILVER_H']/dt 
+    df['cDE_SILVER_O'] = np.sum(log_trips(rawDE.loc[log_O])) 
+    df['rDE_SILVER_O'] = df['cDE_SILVER_O']/dt 
+    return(df)
+
 def de_effic_filt(df_in,elec_ns = 15):
     rawDE = df_in.copy()
     val_keys = rawDE.keys().to_series()
