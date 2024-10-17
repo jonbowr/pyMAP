@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import periodictable as perd
 from .tof_const import *
 
 def tof_expected(ke=16000,
@@ -10,6 +9,8 @@ def tof_expected(ke=16000,
                     e_loss = 0,
                     delay_quad = None,
                     instrument = 'nominal'):
+
+    import periodictable as perd
 
     ke = np.array(ke).reshape(-1)
     # Setup species array, parse input type
