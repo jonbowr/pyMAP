@@ -48,7 +48,7 @@ class asRunr:
         self.instrument = instrument
         self.source = 'Sniffer'
         self.ref_nam = 'file_name'
-        self.df = run.load(fasrun,'',page_names,instrument)
+        self.df = run.load(fasrun,'',page_names,instrument).drop_duplicates()
         self.df.reset_index(inplace = True)
         self.df.set_index('run_n',inplace = True)
         self.__df__ = self.df.copy()
@@ -57,7 +57,7 @@ class asRunr:
     def import_dat(self,d_types = {'dat_sensor':['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT'],
                                     'dat_DE':['ILO_RAW_DE']
                                     },
-                        dat_home = None):
+                        dat_home = None,replace = False):
 
         if dat_home is None:
             dl = self.dhome
@@ -67,7 +67,7 @@ class asRunr:
                             dl,
                                 d_types,
                                 instrument = self.instrument,
-                                ref_nam= self.ref_nam,source = self.source)
+                                ref_nam= self.ref_nam,source = self.source,replace = replace)
         
         for l in (d_types if type(d_types) is list else [d_types]):
             if l not in self.__df__:

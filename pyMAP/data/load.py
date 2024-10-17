@@ -55,7 +55,7 @@ def get_all_dat(dirName = './',
         dats = []
         for fil in fils:
             f = os.path.basename(fil)#.split('.')[0]
-            if dtype in f:
+            if dtype in f and run_tag in f:
                 try:
                     ds = load_dt(fil,dtype = dtype,**load_params)
                     # ds['name'] = f.replace(dtype,'')

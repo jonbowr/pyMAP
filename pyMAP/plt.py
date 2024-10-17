@@ -271,7 +271,13 @@ standard_groups = {
             'single_rates [cts/s]':['START_A', 'START_C', 'STOP_B0', 'STOP_B3','TOF3'],                 
             'tof_rate[cts/s]':['TOF0','TOF1','TOF2','SILVER'],             
             'Efficiency':['Eff_A','Eff_B','Eff_C','Eff_TRIP']
-            }      
+            },
+        'ILO_FM_rates':
+            {
+            'single_rates [cts/s]':['rSTART_A', 'rSTART_C', 'rSTOP_B0', 'rSTOP_B3','rTOF3'],                 
+            'tof_rate[cts/s]':['rTOF0','rTOF1','rTOF2','rSILVER'],             
+            'Efficiency':['Eff_A','Eff_B','Eff_C','Eff_TRIP']
+            } 
         }
 
 def df_plot_groups(df,plt_grps={},fmt = '',plt_input = {},

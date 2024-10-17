@@ -58,10 +58,12 @@ def recoil_sputter_inellastic(E0,E1,theta1,phi1,theta2,phi2,m1,m2,
         e_loss = source('pdf')
         e_loss['f'] = ke_dispersion
         e_loss['b'] = 4
-        frac_loss = e_loss(len(E0))-ke_dispersion['b']+1
+        frac_loss = (e_loss(len(E0))-ke_dispersion['b'])/e_loss['b']+1
         q = (frac_loss*cosr/np.max(cosr)-1)*E0+E0*mean_E_loss
+        # q = (frac_loss*cosr/np.max(cosr)*E0*mean_E_loss)
         # frac_loss = e_loss(len(E0))-ke_dispersion['b']
         # q = frac_loss*E0+E0*mean_E_loss
+        # q = frac_loss*E0*mean_E_loss
         
     c1 = 2*mu/(1+mu)**2*E0*cosr**2
     c2 = 2*cosr/(1+mu)*np.sqrt(np.abs((mu/(1+mu)*E0*cosr)**2-mu*E0*q/(1+mu)))
@@ -189,15 +191,15 @@ class cs_scatterer:
     def ke_scatter_inellastic(self,ke,theta,phi,splat_theta,splat_phi):
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil ion ke
-
         v_perp = self.collision['v_perp']
         new_ke = recoil_sputter_inellastic(ke,[],
                             theta,phi,
                             splat_theta,splat_phi,
                             self.part['m'],self.part['m'],
                             # mean_E_loss = .01,
-                            mean_E_loss = (1-self.ke['modulator_f'](v_perp))*.1,
-                            ke_dispersion=self.ke['pdf']
+                            mean_E_loss = .82-self.ke['modulator_f'](v_perp),
+                            ke_dispersion=self.ke['pdf'],
+                            c = 1
                             )
 
         # take the values that show up below 0 and mark them as sputtered

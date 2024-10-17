@@ -272,6 +272,22 @@ class splats:
     
     def show(self,params = {}):
         return(self.apply(lambda x: x.show(**params)))
+
+    def show_life(self,params = ['ke','theta'],bins = 50,title = ''):
+        from pyMAP.bowPy import Jonda
+        from matplotlib import pyplot as plt
+        fig,axs = plt.subplots(len(params),1)
+
+        print(self.dfs.index)
+        for param,ax in zip(params,axs):
+            fits = self.apply(lambda x: Jonda(x.start()[param],weights = x.start()['counts']))
+            fits.apply(lambda x: x.bin_data(bins).interp_xy())
+            fits.index = self.dfs.index
+            fits.reset_index().apply(lambda x: x['sim'].show(ax = ax,label = x['name']),axis = 1)
+        axs[0].set_title(title)
+        from pyMAP.bowPy.bowPy.plotJon.legend import legend_loc
+        legend_loc(fig = fig,ax = axs[0])
+        return(fig,axs)
     
     def start(self):
         return(splats(self.apply(lambda x: x.start())))

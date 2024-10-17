@@ -167,7 +167,8 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'
     try:
         try:
             from datetime import datetime
-            df.index = time_set.spin_to_shcoarse(df.index)
+            df = df.loc[df.index!=0]
+            # df.index = time_set.spin_to_shcoarse(df.index)
             t_start = datetime.strptime(basename(as_runloc).split('_')[-2],'%Y%m%dT%H%M%S').timestamp()
             print(datetime.fromtimestamp(t_start))
             d_sec = pd.Series(df.index - min(df.index))

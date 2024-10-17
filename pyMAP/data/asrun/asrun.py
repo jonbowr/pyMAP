@@ -40,24 +40,23 @@ def get_dat(s_run_loc,
 
 def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],
                                                 instrument = 'imap_lo_fm',interper = 'index',
-                                            ref_nam = 'file_name',source = ''):
+                                            ref_nam = 'file_name',source = '',replace =False):
+
+    def load_or(df,tp):
+        if tp not in df.keys() or replace:
+                df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,
+                                 load_params={'instrument':instrument},source = source)
+        else:
+            df.loc[df[tp].isna(),tp] = get_dat(df.loc[df[tp].isna()][ref_nam],home = home,load_dt = loader,dtype = tp,
+                             load_params={'instrument':instrument},source = source)
+        return(df)
+
     if type(dtypes)==list:
         for tp in dtypes:
-            if tp not in df.keys():
-                df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,
-                                 load_params={'instrument':instrument},source = source)
-            else:
-                df.loc[df[tp].isna(),tp] = get_dat(df.loc[df[tp].isna()][ref_nam],home = home,load_dt = loader,dtype = tp,
-                                 load_params={'instrument':instrument},source = source)# df = df.dropna(axis = 0,subset = tp)
+            df =load_or(df,tp)
     elif type(dtypes)==str:
         for tp in [dtypes]:
-            if tp not in df.keys():
-                df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,
-                                 load_params={'instrument':instrument},source = source)
-            else:
-                df.loc[df[tp].isna(),tp] = get_dat(df.loc[df[tp].isna()][ref_nam],home = home,load_dt = loader,dtype = tp,
-                                 load_params={'instrument':instrument},source = source)
-            # df = df.dropna(axis = 0,subset = tp)
+            df =load_or(df,tp)
     elif type(dtypes) == dict:
         from pyMAP.pyMAP.tools.tools import concat_combine
         for lab,vals in dtypes.items():
