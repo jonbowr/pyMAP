@@ -3,7 +3,6 @@ import numpy as np
 import os
 import periodictable as perd
 from .cs_cal import *
-from simPyon.simPyon.data import sim_data
 
 
 def rel_angle(theta1,phi1,theta2,phi2):
@@ -266,6 +265,8 @@ class cs_scatterer:
               columns not declared here will may be affected by scattering 
               but their values are not computed so they are dropped 
         '''
+
+        from simPyon.simPyon.data import sim_data
         ke = source_df['ke']
         theta = source_df['theta']
         phi = source_df['phi']

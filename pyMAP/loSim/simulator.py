@@ -1,4 +1,4 @@
-import simPyon as sim
+
 from .esa_cs_const import *
 from .cs import cs_scatterer
 import os
@@ -16,6 +16,7 @@ class simulator:
                         estep = 6,
                                 scattering_input = {},
                                 interpolate = False):
+        import simPyon as sim
         inp = sim_input(config,mode,estep)
         inp['home'] = os.path.relpath(inp['home'])
 
