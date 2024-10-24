@@ -10,6 +10,18 @@ def tof_expected(ke=16000,
                     delay_quad = None,
                     instrument = 'nominal'):
 
+    '''
+        Calculate the expected times of flight through the tof
+        ke [float]: ion kinetic energy incident to the TOF first foil [eV]. also can be an array of floats
+        species [str]: name of desired species to calculate tof example ['H','O','H2']
+        q [int]: charge of incident ion
+        e_loss [float]: fractional energy loss through foil
+        delay_quad [int range(0,4)]: quadrant to include delay line timing in the resulting TOFs
+            default: None no delay line effectes included
+        instrument [str]: use calibration results to determine TOF rather than the ideal condition
+
+    '''
+
     import periodictable as perd
 
     ke = np.array(ke).reshape(-1)

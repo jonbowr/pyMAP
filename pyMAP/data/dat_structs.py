@@ -42,6 +42,7 @@ class asRunr:
                     page_names = [],
                     instrument = '',
                     ref_nam = 'file_name'):
+        from numpy import nan
         self.doc = fasrun
         self.dhome = data_home
         self.pages = page_names
@@ -51,6 +52,8 @@ class asRunr:
         self.df = run.load(fasrun,'',page_names,instrument).drop_duplicates()
         self.df.reset_index(inplace = True)
         self.df.set_index('run_n',inplace = True)
+        self.df = self.df.loc[~self.df.index.duplicated(keep='first')]
+        self.df = self.df.replace('x',nan)
         self.__df__ = self.df.copy()
         self.data_cols = []
 

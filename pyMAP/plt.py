@@ -250,7 +250,9 @@ standard_groups = {
              'Board Temp': ['TEMP1', 'TEMP0', 'LV_TEMP', 'MCP_TEMP', 'PAC_TEMP'],
               'instrument status bits':['PAC_ENB[0]','PAC_ENB[1]','PAC_ENB_1','MCP_ENB[0]',
                                         'MCP_ENB[1]','MCP_ENB_1','PAC_ENB_2','MCP_ENB_2'],
-             'LV [v]':['V12P0_VM','V12N0_VM'],                  
+             'LV [v]':['V12P0_VM','V12N0_VM'],    
+
+             'LV [I]':['LVPS_12V_I', 'LVPS_3P3V_I', 'LVPS_5V_I','LVPS_N12V_I', 'LVPS_N5V_I', 'LV_I']             
            } ,
        'EM_status_comp':
         {

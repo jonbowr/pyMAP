@@ -92,3 +92,73 @@ def raw_DE_import(f_ILO_RAW_DE,
     from pyMAP.pyMAP.data.load import load
     return(load(os.path.join(home,f_ILO_RAW_DE),
                      dtype = dtype))
+
+
+################################################################################
+'''
+Funcitons for generating DER Curve data 
+'''
+
+def bin_makr(mode,estep,DER='DER1'):
+    if mode == 'HiTh':
+        scale = 1.2**(np.arange(-8,13))
+    else:                 
+        scale = 1.1**(np.arange(-8,13))
+    
+    volt_step = {'HiTh':pd.DataFrame({'U+':[61.91,119.41,229.42,451.48,870.61,1782.40,3452],
+                            'U-':[30.55,58.92,113.19,222.75,429.54,879.40,1701]}),
+                 'HiRes':pd.DataFrame({'U+':[40.30,77.73,149.34,293.89,566.72,1160.24,2248.26],
+                            'U-':[13.65,26.33,50.59,99.56,191.98,393.03,761.60]})}
+    
+    if DER == 'DER1':
+        things = volt_step[mode]['U+'].loc[int(estep)-1]*scale
+    else: 
+        things = volt_step[mode]['U+'].values
+        things = np.append(things,[things[-1]*2])
+    stuff = things-np.gradient(things)/2
+    return(stuff)
+
+def break_out(dat,by = 'BHV_ESA_POS_V',
+                  pull_out = ['BHV_ESA_POS_V','BHV_ESA_NEG_V','rSILVER','Eff_TRIP','rTOF0','rTOF1','rTOF2',
+                              'rDE_SILVER', 'cDE_SILVER','DE_Eff_TRIP', 'cDE_SILVER_H', 'rDE_SILVER_H',
+                              'cDE_SILVER_O', 'rDE_SILVER_O'],
+              v_bins = np.geomspace(10,3500,100)):
+    # Group rate data according to BHV_ESA_POS_V and average the contained values
+    groups = pd.cut(dat[by].values,v_bins)
+    oot = dat.groupby(groups).mean()[pull_out].T.stack()
+    oot_sum = dat.groupby(groups).sum()[['SILVER','TOF0','TOF1','TOF2','TOF3']].T.stack()
+    final =pd.concat([oot,oot_sum],axis = 0).dropna() 
+    final.index.set_names('v_bins',level = -1,inplace = True)
+    return(final)
+
+def calc_vals(dat,v_modes):
+    # calculate the voltage scale factor and incident kinetic energy
+    conv_name = {'HiTh':'imap_hiTh',
+                    'HiRes':'imap_hiRes'}
+    oot = {}
+    use_x ='BHV_ESA_POS_V'
+    up_nom = dat['beam_ke']/np.round(dat['amu'])
+    v_rel = up_nom/dat[use_x]*v_modes[int(dat['E_step'])][conv_name[dat['E_mode']]]['P10 Electrode']
+    oot['ke_inc'] = v_rel
+    oot['volt_scale_fact'] = dat[use_x]/v_modes[6][conv_name[dat['E_mode']]]['P10 Electrode']
+    return(pd.Series(oot))
+
+def volt_builder(asrun_dat,
+                    dat_col = 'sensor_dat',
+                    new_index = ['e_mode','e_step','species','beam_ke'],
+                    esa_mode_lab = 'E_mode',
+                    Estep_lab = 'E_step',
+                    esa_up_volt_lab = 'u_pos'):
+    # apply voltage accumulator to asrun separated run data
+    from pyMAP.pyMAP.loSim import v_modes
+    by_col = 'BHV_ESA_POS_V'
+    stuff = asrun_dat.set_index(new_index,append = True)
+    stuff = pd.concat([stuff,stuff.index.to_frame()],axis = 1).apply(lambda x:break_out(x[dat_col],
+                        by = by_col,v_bins = bin_makr(x['E_mode'],x['E_step'],x['u_pos']),
+                        ),axis=1).stack(level = 0).stack().dropna().unstack(level = -2)
+#     return(stuff)
+
+    v_modes = v_modes()
+    new_vals = pd.concat([stuff,stuff.index.to_frame()],axis = 1).T.apply(lambda x: calc_vals(x,v_modes = v_modes)).T
+    stuff = pd.concat([stuff,new_vals],axis = 1)
+    return(stuff.set_index('ke_inc',append = True).dropna())
