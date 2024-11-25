@@ -9,8 +9,13 @@ e_loss = np.array([0.7553,0.7576,0.7522,0.7364,0.7482,0.7295,0.7071])
 
 def geos(): 
     from pandas import Series
+    import os
     # f_gem_loc = os.path.join(lpath,"cal/cal_results/CS_Ilena_Scattering_Results.xlsx")
-    home = r'C:\Users\Jonny Woof\Documents\simPyon\IMAP-lo_ESA_CS_sims\IMAP'
+    # home = r'C:\Users\Jonny Woof\Documents\simPyon\IMAP-lo_ESA_CS_sims\IMAP'
+    home = os.path.join(os.getenv('APPDATA'),'pyMAP')
+    if not os.path.exists(home):
+        os.makedirs(home)
+    lpath = os.path.dirname(__file__)
     return({
         'ibex':
                 {
@@ -21,19 +26,19 @@ def geos():
                 {
                     'home':home,
                     'gemfil':[
-                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
-                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM',
-                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',              
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
                                 ],
-                    # 'pa':[ 'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#'],
-                    # 'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
+                    'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
+                    'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
                 },
           'loV2':
                 {
                     'home':home,
                     'gemfil':[
-                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM',
-                                'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM',            
+                                os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                                os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),          
                                 ],
                     # 'pa':[ 'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/100-07-1615_FM PreCal 1 Mask_Rev-.PA#'],
                     # 'pa_info':{'pa_offset_position': Series({'x':188,'oy':170,'oz':170,'rt':25})}

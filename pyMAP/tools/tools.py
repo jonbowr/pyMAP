@@ -59,6 +59,15 @@ def combiner(base,other_in, usecol = 'index'):
                                                     columns = (other_id.name if usecol == 'index' else usecol)))
     return(pd.concat(dat_parts,axis = 1))
 
+def append_df(from_data, to_data):
+    thing = pd.concat([to_data.index.to_frame().drop_duplicates(),
+            from_data],axis = 1).loc[to_data.index]
+
+    total_data = to_data.copy()
+    for lab in from_data.keys():
+        total_data[lab] = thing[lab]
+    return(total_data)
+
 def bin_find(x, bins = 50,find_val = 'peak',weights = None):
     from pyMAP.bowPy import Jonda
     fitr = Jonda(data = x,bins = bins,weights = weights)

@@ -60,7 +60,7 @@ class asRunr:
     def import_dat(self,d_types = {'dat_sensor':['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT'],
                                     'dat_DE':['ILO_RAW_DE']
                                     },
-                        dat_home = None,replace = False):
+                        dat_home = None,replace = False,reduce_name = True):
 
         if dat_home is None:
             dl = self.dhome
@@ -70,14 +70,22 @@ class asRunr:
                             dl,
                                 d_types,
                                 instrument = self.instrument,
-                                ref_nam= self.ref_nam,source = self.source,replace = replace)
+                                ref_nam= self.ref_nam,source = self.source,
+                                replace = replace,reduce_name = reduce_name)
         
-        for l in (d_types if type(d_types) is list else [d_types]):
+        if type(d_types) is list:
+            itterator = d_types
+        elif type(d_types) is dict:
+            itterator = d_types.keys()
+        else: 
+            itterator = [d_types] 
+
+        for l in itterator:
             if l not in self.__df__:
                 self.__df__[l] = self.df[l]
                 self.data_cols.append(l)
             else:
-                self.__df__[l].loc[self.df.index] = self.df[l]
+                self.__df__.loc[self.df.index,l] = self.df[l]
         
         # elif type(d_types) is str:
         #     self.__df__[d_types].loc[self.df.index] = self.df[d_types]
@@ -95,7 +103,9 @@ class asRunr:
 
         data_cols = list(self.df.keys()[self.df.apply(\
                         lambda x: np.any(x.apply(lambda xx: type(xx) is DataFrame)))])
-        
+        for lab in self.df.keys():
+            if lab not in self.__df__:
+                data_cols.append(lab)
 
         self.drop_empty(data_cols,how = 'all')
 
@@ -111,14 +121,14 @@ class asRunr:
                 self.__df__[l] = self.df[l]
                 self.data_cols.append(l)
             else:
-                self.__df__[l].loc[self.df[l].index] = self.df[l]
+                self.__df__.loc[self.df[l].index,l] = self.df[l]
         return(self)
 
     def save_dat(self,dat_fil = 'auto'):
         if dat_fil == 'auto':
             self.__df__.to_pickle(os.path.basename(self.doc).split('.')[0]+'.pkl')
         else:
-            self.df = pd.read_pickle(dat_fil)        
+            self.df.to_pickle(dat_fil)        
 
 
     def __getitem__(self,item):
@@ -129,7 +139,7 @@ class asRunr:
 
     def refresh(self):
         self.df = self.__df__.copy()
-        self.data_cols = []
+        # self.data_cols = []
 
     def mask(self,mask):
         self.df = self.df.loc[mask]
@@ -137,3 +147,15 @@ class asRunr:
     def drop_empty(self,subset = None,how = 'any'):
         self.df = self.df.dropna(axis = 0,subset = subset,how = how)
 
+    def append(self,df,axis =1,inplace = True):
+        for lab in df.keys():
+            if lab in self.df:
+                self.df.loc[df.index,lab] = df[lab]
+            else: 
+                self.df[lab] = df[lab]
+            if inplace: 
+                if lab in self.__df__:
+                    self.__df__.loc[df.index,lab] = df[lab]
+                else: 
+                    self.__df__[lab] = df[lab]
+        return(self.df)

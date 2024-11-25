@@ -43,6 +43,36 @@ pages = {
 
 def load(as_runloc,home = './',page_names = pages['v002'],version = 'v001',fillna = True):
     df = loadlib[version](as_runloc,home,sheet_name = page_names)
+
     if fillna:
-        df.fillna(method = 'ffill',inplace = True)
+        subset = np.array(['pac',
+        'mcp_v',
+        'mcp_v_reg',
+        'TOF_mcp_v',
+        'mcp_anode_thresh',
+        'acc_t',
+        'gas','species',
+        'beam_ke',
+        'voltMatsu',
+        'beam_meas',
+        'wein_mag',
+        'Helm Enabled',
+        'volt_wein',
+        'voltFocus1',
+        'voltFocus2',
+        'beam_ext_ke',
+        'Emission',
+        'beamPx',
+        'beamPy',
+        'chrg_ex_y',
+        'beamEnabled',
+        'pressureChamber',
+        'chamber_ig',
+        'stageOuter',
+        'stageInner',
+        'stageX',
+        'Collimator',
+        'ABM'])
+        use_subset = subset[[sub in df for sub in subset]]
+        df[use_subset] = df[use_subset].fillna(method = 'ffill')
     return(df)

@@ -160,7 +160,7 @@ def combiner(base,other_in, usecol = 'index'):
                                                     columns = (other_id.name if usecol == 'index' else usecol)))
     return(pd.concat(dat_parts,axis = 1))
 
-def dat_loc(file_name,home,dtype = '',selector = ''):
+def dat_loc(file_name,home,dtype = '',selector = '',reduce_name = True):
     # Function to locate a file path from a file name
     # File names considered to be unique ignoring case and underscores
     import os
@@ -191,12 +191,15 @@ def dat_loc(file_name,home,dtype = '',selector = ''):
             st_new = st_new.replace(rep,'')
         return(st_new)
 
-
     fs = []
     for f in getListOfFiles(home):
         for fil in file_name:
-            f_indicator = nam_reducer(fil)
-            ff = nam_reducer(os.path.basename(f))
+            if reduce_name: 
+                f_indicator = nam_reducer(fil)
+                ff = nam_reducer(os.path.basename(f))
+            else: 
+                f_indicator = str(fil)
+                ff = os.path.basename(f)
             if type(selector) is str:
                 picker = selector in os.path.basename(f)
             elif type(selector) is list:

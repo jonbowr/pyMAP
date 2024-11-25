@@ -1,0 +1,33 @@
+
+;=============================================================================================================
+; IMAP-lo Magnet assembly
+;
+;Created by Jonathan Bower 3/2020
+;
+;=============================================================================================================
+; Tags for external Processing:
+;   RELOC_SKIP:   locate call ignored by relocation program
+;   CS_END:       line that declares the end position (x) of the conversion surface
+;                   - Used to auto adjust particle source position
+;   SHIFT_%n:     Used to auto change vertex position
+;                 (%n should be in gem file as integer [1,2,3....])
+;
+;   Jonathan Bower UNH 2/1/19
+;=============================================================================================================
+
+;pa_define(3400,2200,1,cylindrical,y_mirror,magnetic)
+pa_define(2000,1800,1,cylindrical,y_mirror,magnetic,,0.1,surface = fractional)
+; to use with 0.1  mm / grid unit (the last value in this vector is what determines the resolution)         New
+  electrode(12) ; outter Magnet
+  {
+    fill{
+      within{polyline(86.9,158.3,81.9,158.3,81.9,159.3,86.9,159.3)}
+    }
+  }
+
+electrode(11) ; inner Magnet
+  {
+    fill{
+      within{polyline(89.0,133.4,84.0,133.4,84.0,132.4,89.0,132.4)}
+    }
+  }

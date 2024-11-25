@@ -203,4 +203,8 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'
         warnings.warn('Time Indexing Failed, Use SHCOARSE instead')
         df['dateTime'] = time_set.localize_to_tz(dt(2010, 1, 1, 0, 0, 0))
 
+    # df.file_origin = as_runloc
+    # df.data_type = dtype
+    # from os.time import now
+    # df.import_time = now()
     return(df.reset_index().set_index('dateTime'))

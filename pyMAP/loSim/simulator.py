@@ -18,7 +18,8 @@ class simulator:
                                 interpolate = False):
         import simPyon as sim
         inp = sim_input(config,mode,estep)
-        inp['home'] = os.path.relpath(inp['home'])
+        # inp['home'] = os.path.relpath(inp['home'])
+        
 
         lpath = os.path.dirname(__file__)
         gemPath = os.path.join(lpath,'/IMAP-Lo_CR7_CE13_TOF2_HK6')

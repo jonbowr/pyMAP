@@ -10,7 +10,8 @@ from pyMAP.pyMAP.data.load import load as loader
 def get_dat(s_run_loc,
              dtype = '',
                     load_dt = lambda x: np.nan,
-                        load_params = {},home = './',source = ''):
+                        load_params = {},home = './',source = '',
+                        reduce_name = True):
     dats = {}
     for rn in s_run_loc.keys():
         dats[str(rn)] = []
@@ -21,7 +22,8 @@ def get_dat(s_run_loc,
         hom = list(home)
 
     for fil,rn,hh in zip(s_run_loc.values,s_run_loc.keys(),hom):
-        floc = dat_loc(str(fil).strip('.rec'),home = hh,dtype = dtype,selector = source)
+        floc = dat_loc(str(fil).strip('.rec'),home = hh,dtype = dtype,
+                                selector = source,reduce_name = reduce_name)
         if floc:
             for ff in floc:
                 try:
@@ -40,15 +42,17 @@ def get_dat(s_run_loc,
 
 def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_DE'],
                                                 instrument = 'imap_lo_fm',interper = 'index',
-                                            ref_nam = 'file_name',source = '',replace =False):
+                                            ref_nam = 'file_name',source = '',replace =False,
+                                            reduce_name = True):
 
     def load_or(df,tp):
         if tp not in df.keys() or replace:
                 df[tp] = get_dat(df[ref_nam],home = home,load_dt = loader,dtype = tp,
-                                 load_params={'instrument':instrument},source = source)
+                                 load_params={'instrument':instrument},source = source,
+                                 reduce_name = reduce_name)
         else:
             df.loc[df[tp].isna(),tp] = get_dat(df.loc[df[tp].isna()][ref_nam],home = home,load_dt = loader,dtype = tp,
-                             load_params={'instrument':instrument},source = source)
+                             load_params={'instrument':instrument},source = source,reduce_name = reduce_name)
         return(df)
 
     if type(dtypes)==list:
@@ -62,7 +66,7 @@ def import_data(df,home,dtypes = ['ILO_TOF_BD','ILO_IFB','ILO_RAW_CNT','ILO_RAW_
         for lab,vals in dtypes.items():
             dats = pd.DataFrame([pd.Series(get_dat(df[ref_nam],home = home,load_dt = loader,
                                                    dtype = tp,load_params={'instrument':instrument},
-                                                   source = source)
+                                                   source = source,reduce_name = reduce_name)
                               ,name = tp) for tp in vals]).T
             def combiner(x):
                 try:
