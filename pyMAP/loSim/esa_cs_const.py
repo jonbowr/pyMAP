@@ -30,8 +30,8 @@ def geos():
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
                                 ],
-                    'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
-                    'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
+                    # 'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
+                    # 'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
                 },
           'loV2':
                 {

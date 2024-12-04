@@ -148,7 +148,12 @@ def calc_vals(dat,v_modes,):
         oot['ke_inc'] = v_rel
     except:
         oot['ke_inc'] = np.nan
-    oot['volt_scale_fact'] = dat[use_x]/v_modes[6][conv_name[dat['E_mode']]]['P10 Electrode']
+
+
+    scale_norm = []
+    for use_x,ref_elec in zip(['BHV_ESA_POS_V','BHV_ESA_NEG_V'],['P10 Electrode','P2 Electrode']):
+        scale_norm.append(abs(dat[use_x]/v_modes[6][conv_name[dat['E_mode']]][ref_elec]))
+    oot['volt_scale_fact'] =np.mean(scale_norm)
     return(pd.Series(oot))
 
 def volt_builder(asrun_dat,
@@ -190,3 +195,42 @@ def dat_combiner(asrun_df,dat_cols = ['ILO_RAW_CNT','ILO_APP_NHK','DE_rates'],
         stuff[count_labs] = stuff[count_labs].fillna(0)
         return(stuff.interpolate('time'))
     return(asrun_df.apply(lambda x: combiner(x[dat_cols].values),axis = 1))
+
+
+def comp_plt(all_data,norm_group = ['E_mode'],plot_group = ['E_step'],
+                 obs_x = 'volt_scale_fact',obs_y = 'eSILVER',
+                     err_y = 'cDE_SILVER_H', single_col = True,do_norm = True):
+    def plt_both(x):
+        xx = x.reset_index()[obs_x]
+        obs = x[obs_y]
+        obs_err = obs/np.sqrt(x['SILVER'].astype(float))
+        
+
+        if 'HiTh' in x.name:
+            fmtr = '.-'
+        else:
+            fmtr = '.--'
+        try:
+            thing = ax.errorbar(xx,obs,obs_err,fmt = fmtr,label = '%s'%(str(x.name)))[0]
+        except:
+            thing = ax.plot(xx,obs,fmtr,label = '%s'%(str(x.name)))[0]
+        return(thing)
+    def norm_plot(x):
+        thing = x.copy()
+        if do_norm:
+            thing[obs_y] = thing[obs_y]/thing[obs_y].max()
+        max_group = thing[plot_group].loc[thing[obs_y]==thing[obs_y].max()].values[0]#.reset_index()[plot_group]
+        stuff = thing.groupby(plot_group).apply(plt_both)
+        if single_col: 
+            picr = (stuff.index.to_frame()==max_group).all(axis = 1)
+            col = stuff[picr].values[0].get_color()
+            stuff.apply(lambda x: x.set_color(col))
+        
+    fig,ax = plt.subplots()
+    thing = all_data.groupby(norm_group).apply(norm_plot)
+    from pyMAP import bowPy as bp
+    bp.plotJon.legend.legend_loc(fig,ax,'(%s)'%','.join(plot_group))
+    ax.set_xlabel(obs_x)
+    ax.set_ylabel(obs_y)
+    ax.semilogx()
+    return(fig,ax,thing)

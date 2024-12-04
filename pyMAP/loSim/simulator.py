@@ -192,6 +192,7 @@ class fly_interper:
                                          p_start = ['x','ke','theta','phi'],
                                         p_stop = 'counts',
                                         volt_dict = {},geo = '',v_mode = ''):
+        import simPyon as sim
         if interp_data is not None:
             self.interp_data = interp_data.copy()
             if p_stop == 'counts':
