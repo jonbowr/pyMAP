@@ -89,6 +89,7 @@ def Er_ellastic(E0,E1,theta1,phi1,theta2,phi2):
     cosr = np.cos(rel_angle(theta1,phi1,theta2,phi2)*np.pi/180)
     return(gamma*E0*cosr**2)
 
+
 class cs_scatterer:
     # Control structure for cs scattering montecarlo simulations
     
@@ -144,22 +145,21 @@ class cs_scatterer:
                                     dist_vals = {'mean':1,'range':.75,'a':0,'b':.75,'x_min':0}),
                        'modulator_f': self.cal_fits['phi'][self.part['species']],
                     }
+        self.effic = self.cal_fits['effic'][self.part['species']].copy()
 
         # setup structure to make the mod params easily accessable
         self.params = {l:{'modulator_f':t['modulator_f'].p0} for l,t in zip(['ke','theta','phi'],
                                                                         [self.ke,self.theta,self.phi])}
         self.params['ke']['pdf'] = self.ke['pdf'].kwargs
-        self.params['effic'] = self.cal_fits['effic'][self.part['species']].p0
+        # self.params['effic'] = self.cal_fits['effic'][self.part['species']].p0
         self.params['setup'] = self.part
 
     def __str__(self):
         return('%s\n'%str(type(self))+
-               'Incident M:\t%.2f[AMU]\n'%self.part['m']+
-               'Sputtered M:\t%.2f[AMU]\n'%self.part['sputtered_m']+
-               'Sputtering:\t%.2f[%%]\n'%self.part['sputtering']+
-               'Ke Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.ke.items()])+
-               'Theta Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])+
-               'Phi Scatter:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.phi.items()])
+               'cs_scatterer.part:\n   '+'   '.join(['%12s: %s\n'%(lab,str(val)) for lab,val in self.part.items()])+
+               'cs_scatterer.ke:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.ke.items()])+
+               'cs_scatterer.theta:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])+
+               'cs_scatterer.phi:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.phi.items()])
                )
     
     def __repr__(self):
@@ -248,7 +248,7 @@ class cs_scatterer:
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil conversion efficiency weight factor
         v_perp = self.collision['v_perp']
-        return(self.cal_fits['effic'][self.part['species']](v_perp))
+        return(self.effic(v_perp))
 
     def fly(self,source_df,
                 good_cols = ['ion n','tof','x','y','z','r',
@@ -367,3 +367,18 @@ class cs_scatterer:
         return(fig,axs)
 
 
+    def show_modulators(self,fig=None, axs = None):
+        # Function to quick visualize the modulator function fits
+        from matplotlib import pyplot as plt
+        
+        if fig == None:
+            fig,axs = plt.subplots(4,sharex = True)
+        fig.set_size_inches(6,12)
+        for func,nam,ax in zip([self.ke['modulator_f'],self.effic,
+                               self.phi['modulator_f'],self.theta['modulator_f']],
+                               ['ke eloss','effic [%]','phi FWHM [deg]','theta FWHM [deg]'],
+                               axs):
+            func.show(ax = ax)
+            ax.set_ylabel(nam)
+        ax.set_xlabel('v_perp')
+        return(fig,axs)

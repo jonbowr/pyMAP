@@ -158,10 +158,10 @@ def get_cal_fits(load_data_input = {},data_av_input = {}):
         x = xx*1000 #km/s to m/s
         return(n_0*(1-np.exp(-(x/vc)**(2*b)))*(x/vc)**(2*a))
 
-    func_fits = {'e_loss':rollover_v,
+    func_fits = {'e_loss':'linear',
                 'phi':rollover_v,
                 'theta':rollover_v,
-                'effic':rollover_v}
+                'effic':'linear'}
 
     vdat = vperp_av_data(load_cal_data(**load_data_input),**data_av_input)
     def thing(xx):
