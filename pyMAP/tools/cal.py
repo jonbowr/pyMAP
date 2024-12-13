@@ -234,3 +234,33 @@ def comp_plt(all_data,norm_group = ['E_mode'],plot_group = ['E_step'],
     ax.set_ylabel(obs_y)
     ax.semilogx()
     return(fig,ax,thing)
+
+
+def cal_sim_compare(der_sim_df,xparam = 'volt_scale_fact',
+                                measured_param = 'eDE_H_total_CS',
+                                sim_param ='sim_ESA-CS_effic',
+                                locate = 'peak',
+                                show = False):
+    from pyMAP.bowPy import Jonda
+
+    if show:
+        fig,ax = plt.subplots()
+    def find_xy(dats,param = locate):
+        thing = Jonda(xy_data = dats.astype(float))
+        thing.interp_xy(kind = 'cubic',sigma = 1)
+        if show:
+            thing.show(ax = ax)
+        return(thing.find_xy(param))
+
+    def find_offset(x,ref_meas=''):
+        stuff = {ref_meas: find_xy(x[[xparam,ref_meas]].values.T),
+                sim_param:find_xy(x[[xparam,sim_param]].values.T),
+                }
+        stuff['meas/sim'] = stuff[ref_meas]/stuff[sim_param]
+        return(pd.Series(stuff))
+
+    sim_offset =find_offset(der_sim_df,ref_meas = measured_param)
+    if show:
+        return(sim_offset,fig,ax)
+    else:
+        return(sim_offset)

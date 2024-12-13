@@ -172,6 +172,7 @@ class simulator:
             fig,ax = self.show()
         for sim_in in self.sims:
             if sim_in.type == 'simion':
+                print(sim_in.type)
                 sim_in.fly_trajectory(sim_in.data.start(),fig = fig,ax =ax,show_cbar = False)
         return(fig,ax)
 

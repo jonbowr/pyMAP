@@ -30,8 +30,6 @@ def geos():
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
                                 ],
-                    # 'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
-                    # 'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
                 },
           'loV2':
                 {
@@ -42,6 +40,17 @@ def geos():
                                 ],
                     # 'pa':[ 'gem/IMAP-Lo_CR8_CE13_TOF2_HK6/100-07-1615_FM PreCal 1 Mask_Rev-.PA#'],
                     # 'pa_info':{'pa_offset_position': Series({'x':188,'oy':170,'oz':170,'rt':25})}
+                },
+        'imap_full':
+                {
+                    'home':home,
+                    'gemfil':[
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
+                                ],
+                    'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
+                    'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
                 },
         })
 
@@ -75,6 +84,7 @@ def sim_input(geo = 'imap',mode = 'imap_hiTh',estep = 6):
 cs_locs = {
                 'ibex':{'first':np.array([99.4,133,0]),'last':np.array([158.9,116.8,0])},
                 'imap':{'first':np.array([100.5,134.6,0]),'last':np.array([160,118.4,0])},
+                'imap_full':{'first':np.array([100.5,134.6,0]),'last':np.array([160,118.4,0])},
                 }
 
 obs_regions = {
@@ -91,7 +101,21 @@ obs_regions = {
                             'R_MAX':134.6,
                             'R_MIN':117.4,
                             'TOF_MEASURE':False,
-                            'R_WEIGHT':True}
+                            'R_WEIGHT':False}
+                            },
+                'imap_full':{
+                    'TOF':{'X_MAX': 81,
+                            'X_MIN':72,
+                            'R_MAX':45.1,
+                            'R_MIN':35.4,
+                            'TOF_MEASURE':True,
+                            'R_WEIGHT':False},
+                    'CS':{'X_MAX': 160,
+                            'X_MIN':98,
+                            'R_MAX':134.6,
+                            'R_MIN':117.4,
+                            'TOF_MEASURE':False,
+                            'R_WEIGHT':False}
                             },
                 'ibex':{
                     'TOF':{'X_MAX': 81,

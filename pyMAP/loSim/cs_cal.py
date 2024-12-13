@@ -173,3 +173,30 @@ def get_cal_fits(load_data_input = {},data_av_input = {}):
         return(fde)    
     fits = vdat.dropna().groupby(['species','recoil_props']).apply(thing).unstack('recoil_props')
     return(fits)
+
+
+def make_f_eloss():
+    eloss_vals = pd.DataFrame([0.82809887]*7 ,index = range(1,8),columns = ['Eloss'])
+
+    from .esa_cs_const import cent_eng
+
+    eloss_vals['ke'] = cent_eng
+    eloss_vals['v_perp'] = get_vperp(1,eloss_vals['ke'],15)
+    # Eloss defined 12/11/2024
+    eloss_run0 = pd.Series({3 : 0.866685,
+                            4 :  0.946218,
+                            5 :  0.977120,
+                            6 :  1.029214,
+                            7:  0.950984})
+    eloss_vals['eloss_1']=eloss_run0*eloss_vals['Eloss']
+    #second run using polyfit of eloss values
+    eloss_vals['eloss_2'] = pd.Series({3 :   0.698561,
+                                        4:    0.786205,
+                                        5:    0.784077,
+                                        6:    0.886756,
+                                        7:    0.777787})
+    from pyMAP.bowPy import Jonda
+    f_eloss_new =Jonda(xy_data = eloss_vals[['v_perp','eloss_2']].dropna().values.T)
+    f_eloss_new.interp_xy('cubic',sigma = .9,bounds_error = False,interp_input = {'fill_value':'extrapolate'})
+    
+    return(eloss_vals,f_eloss_new)
