@@ -191,12 +191,14 @@ class cs_scatterer:
         # Function to take ion velocity vector apply statistical sampling to determine 
         #   recoil ion ke
         v_perp = self.collision['v_perp']
+        mean_eloss = .82-self.ke['modulator_f'](v_perp)
+        mean_eloss[mean_eloss<0] = 0
         new_ke = recoil_sputter_inellastic(ke,[],
                             theta,phi,
                             splat_theta,splat_phi,
                             self.part['m'],self.part['m'],
                             # mean_E_loss = .01,
-                            mean_E_loss = .82-self.ke['modulator_f'](v_perp),
+                            mean_E_loss = mean_eloss,
                             ke_dispersion=self.ke['pdf'],
                             c = 1
                             )
