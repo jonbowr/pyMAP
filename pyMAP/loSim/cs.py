@@ -91,7 +91,6 @@ def Er_ellastic(E0,E1,theta1,phi1,theta2,phi2):
 
 
 class cs_scatterer:
-    # Control structure for cs scattering montecarlo simulations
     
     def __init__(self,cs_elevation = 165,
                     samples= ['xxx','FM-061','FM-093','FM-110','EM-036','EM-039'],
@@ -100,6 +99,58 @@ class cs_scatterer:
                         frac_sputtered = .1,
                         surf_binding = .5,
                         geo = None):
+    '''
+    Control structure for cs scattering montecarlo simulations developed for IMAP-lo FM calibration
+
+    
+    Parameters
+    ----------
+        self.part: dict, control control structure defining the scattering particle 
+                properties
+            dict{
+                'cs_el':cs_elevation,
+                'm':perd.elements.symbol(species).mass,
+                'species':species,
+                'charge':charge,
+                'sputtering':frac_sputtered,
+                'surf_binding':surf_binding,
+                'sputtered_m':perd.elements.symbol(species).mass}
+        self.ke: dict control structure defining the ke modulation functions
+            dict{
+                   'pdf': sim.particles.pdf('poisson',{'c':0,'b':.105,'k':1}),
+                   'modulator_f': self.cal_fits['e_loss'][self.part['species']],
+                    }
+        self.theta: dict defining the polar scatering modulation properties
+            dict{
+                       'pdf': sim.particles.pdf('poisson',{'c':-.075,'b':.405*2**1.6,'k':3}),
+                       'pdf_sputter':sim.particles.source('cos',
+                                    dist_vals = {'mean':1.25,'range':2.5,'a':.65,'b':2.5,'x_min':0}),
+                       'modulator_f': self.cal_fits['theta'][self.part['species']],
+                    }
+        self.phi: dict defining the azimuthal scattering modulation properties
+            dict{
+                       'pdf': sim.particles.source('gaussian',{'mean':0,'fwhm':1}),
+                       'pdf_sputter':sim.particles.source('cos',
+                                    dist_vals = {'mean':1,'range':.75,'a':0,'b':.75,'x_min':0}),
+                       'modulator_f': self.cal_fits['phi'][self.part['species']],
+                    }
+        self.effic: bowPy.Jonda, function defining the perpendicular velocity conversion efficiency
+            self.cal_fits['effic'][self.part['species']].copy()
+        scatter_type: str, 
+            options: 
+                statistical: purely statistical scattering when applying ke['pdf'] and 
+                        ke['modulator_f']
+                inelastic: applies ke ke['pdf'] and ke['modulator_f'] in conjunction with 
+                    inellastic scattering via cs.recoil_sputter_inellastic
+    Dependent Parameters
+    --------------------
+        data: pyMAP.data.sim_data generated when cs_scatterer.fly is executed
+        cal_fits
+        type: str, 'modulator', for use in loSIM.simulator 
+        is_sputtered
+        geo
+        collision
+    '''
         import simPyon as sim
         self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
         self.data = None
