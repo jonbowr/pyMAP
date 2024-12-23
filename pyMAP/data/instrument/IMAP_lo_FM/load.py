@@ -158,6 +158,32 @@ loadlib = {
             }
 
 def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'):
+    '''
+        Load IMAP-Lo_FM data sets, optional dtypes and versions: 
+            'TOF_DE_sample':{
+                            'v001':load_DE_v1
+                            },
+            'ILO_RAW_DE':{
+                            'v001':load_RAW_DE_v1
+                            },
+            'ILO_TOF_BD':{
+                            'v001':load_HK_v1
+                            },
+            'ILO_IFB':{
+                            'v001':load_IFB_v1
+                            },
+            'ILO_RAW_CNT':{
+                            'v001':load_CNT_v1
+                            },
+            'ILO_APP_NHK':{
+                            'v001':load_APP_NHK
+                            },
+            
+            'ILO_DIAG_TOF_BD':{
+                            'v001':load_APP_NHK
+                            },
+    '''
+
     from os.path import basename
     
     print('Loading %s'%as_runloc)

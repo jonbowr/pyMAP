@@ -44,12 +44,16 @@ class asRunr:
                     ref_nam = 'file_name'):
 
         '''
-        Structure to control importing and loading asrun table structured data. Upon initialization asRunr will input the given asrun data table and search the local directory for .pkl with the same name as fasrun/doc and import data cols to  the existing dataframe (__df__)
+        Structure to control importing and loading asrun table structured data. Upon 
+        initialization asRunr will input the given asrun data table and search the local directory
+        for .pkl with the same name as fasrun/doc and import data cols to  the existing dataframe
+        (__df__)
 
         __init__ Inputs: 
             fasrun (str): File location for asrun .xlsx table listing test runs
             data_home (str): Folder location to search when importing desired runs
-            page_names (list):  xlsx page names to be imported, all pages of the asrun table are imported and concatenated
+            page_names (list):  xlsx page names to be imported, all pages of the asrun table are 
+                imported and concatenated
                 Standard input from final cal: ['Global','TOF','FM_optics','Princeton_PSPL']
                 - view fasrun defined above for available options
             instrument (str): instrument option to be used to define set of data load functions
@@ -66,9 +70,11 @@ class asRunr:
         Parameters
         ----------
         doc: str, xlsx doc loaded (see inputs fasrun)
-        dhome: str, folder location of input data used to search for data files while performing import, see input data_home
+        dhome: str, folder location of input data used to search for data files while performing 
+            import, see input data_home
         pages: list, see input page_names
-        instrument: str, load library to use when importing data see input instrument: pyMAP.data.loadlib
+        instrument: str, load library to use when importing data see input instrument: 
+            pyMAP.data.loadlib
         source: str/list, tag to filter data against when importing
             Options: 
             - 'Sniffer'
@@ -155,7 +161,9 @@ class asRunr:
 
     def load_dat(self,dat_fil = 'auto'):
         '''
-            load data from pandas.DataFrame pickle, asRunr.data_cols from the pickle are appended to the existing data frame, and will fill in empty data elements of existing data_cols. All elements from the asRunr.df that already exist remain unchanged
+            load data from pandas.DataFrame pickle, asRunr.data_cols from the pickle are appended 
+            to the existing data frame, and will fill in empty data elements of existing 
+            data_cols. All elements from the asRunr.df that already exist remain unchanged
         '''
 
         from pandas import read_pickle,DataFrame
@@ -191,7 +199,8 @@ class asRunr:
 
     def save_dat(self,dat_fil = 'auto'):
         '''
-        Save asRunr.__df__ to pandas.DataFrame.to_pickle, if dat_fil == 'auto' then the resulting pickle is assigned the same name as th asRunr.doc
+        Save asRunr.__df__ to pandas.DataFrame.to_pickle, if dat_fil == 'auto' then the resulting 
+            pickle is assigned the same name as th asRunr.doc
         '''
         if dat_fil == 'auto':
             self.__df__.to_pickle(os.path.basename(self.doc).split('.')[0]+'.pkl')
@@ -231,7 +240,8 @@ class asRunr:
             Inputs: 
                 - df: pandas.DataFrame to add to existing asRunr.df
                 - axis: currenently unused
-                - inplace: bool [True/False]: if true, values from df are also appended to core __df__ parameter, otherwise they are just appended to asRunr.df parameter
+                - inplace: bool [True/False]: if true, values from df are also appended to core 
+                    __df__ parameter, otherwise they are just appended to asRunr.df parameter
         '''
         for lab in df.keys():
             if lab in self.df:

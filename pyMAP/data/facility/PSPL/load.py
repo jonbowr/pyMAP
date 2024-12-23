@@ -72,6 +72,15 @@ loadlib = {
             }
 
 def load(as_runloc,dtype = 'strSen',version = 'v001'):
+    '''
+        Load data from PSPL system available dtypes:
+        {
+            'ABM-Counts':load_abm_v1,
+            'Motion-System-Control':load_motion_control_v1,
+            'Ion-Source-Operate':load_ion_source_operate_v1,
+            'System-Monitoring-Log':load_sample_pressures
+        }
+    '''
     print(as_runloc)
     # try:
     df = loadlib[dtype](as_runloc)

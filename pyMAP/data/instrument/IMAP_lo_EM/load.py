@@ -127,7 +127,26 @@ loadlib = {
             }
 
 def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',timeZone = 'est'):
-    
+    '''
+        Load data generated from IMAP-Lo ETU, Available Dtypes:
+        loadlib = {
+            'TOF_DE_sample':{
+                            'v001':load_DE_v1
+                            },
+            'ILO_RAW_DE':{
+                            'v001':load_RAW_DE_v1
+                            },
+            'ILO_TOF_BD':{
+                            'v001':load_HK_v1
+                            },
+            'ILO_IFB':{
+                            'v001':load_IFB_v1
+                            },
+            'ILO_RAW_CNT':{
+                            'v001':load_CNT_v1
+                            }
+            }
+    '''
     print('Loading %s'%as_runloc)
     df = loadlib[dtype][version](as_runloc)
 
