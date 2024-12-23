@@ -16,6 +16,53 @@ class simulator:
                         estep = 6,
                                 scattering_input = {},
                                 interpolate = False):
+        '''
+        End to end Instrument simulator designed for use in the IMAP-lo FM calibration
+
+        parameters:
+            config: str, instrument configuration to be used in simulator setups
+                Options: defined in pyMAP.loSIM.esa_cs_const.geos and 
+                        pyMAP.loSIM.esa_cs_const.obs_region 
+                    'ibex':
+                            {'gemfil':'IBEX-Lo_CR3_CE6_TOF3_HK4.GEM',
+                            },
+                    'imap':
+                            {'gemfil':[
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
+                                os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
+                                ],
+                            },
+                    'loV2':
+                            {'gemfil':[
+                                os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                                os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),          
+                                ],
+                             },
+                    'imap_full':
+                            {'gemfil':[
+                                    os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                                    os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
+                                    os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
+                                    ],
+                            'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
+                            'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
+                            },
+            mode: str, voltage mode to be used for esa/cs voltage assignment
+                Options:
+                - 'ibex'
+                - 'imap_hiTh'
+                - 'imap_hiRes'
+                - 'imap_bk'
+            sims: pandas.Series, series of simulation nodes sequentially executed in fly function
+            geo: simPyon.geo defined from simulator.sims['inc_N'].geo
+            source: simPyon.particles.auto_parts, source distribution used to fly through insturment model
+                see help(simulator.source)
+            params: dict, quick access to adjustable parameters fed into instrument simulator
+            volt_dict: voltage dictionary used in fast adjust defining ESA-CS voltages, defined according to mode string
+            volt_steps
+        '''
+
         import simPyon as sim
         inp = sim_input(config,mode,estep)
         # inp['home'] = os.path.relpath(inp['home'])
@@ -193,6 +240,9 @@ class fly_interper:
                                          p_start = ['x','ke','theta','phi'],
                                         p_stop = 'counts',
                                         volt_dict = {},geo = '',v_mode = ''):
+        '''
+        Control structure for numerical model of simPyon.simion good/bad collision poisitions
+        '''
         import simPyon as sim
         if interp_data is not None:
             self.interp_data = interp_data.copy()
@@ -240,6 +290,11 @@ class fly_interper:
 
 class splats:
     def __init__(self,dats):
+        '''
+        Control structure for simulator.get_data() generated from simulator.fly functiono
+        parameters:
+            splats.dfs: pandas.Series, series of start and stop data for each leg flown in the simulator.fly function
+        '''
         self.dfs = dats
         
     def __getitem__(self,item):
