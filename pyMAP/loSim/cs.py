@@ -91,17 +91,8 @@ def Er_ellastic(E0,E1,theta1,phi1,theta2,phi2):
 
 
 class cs_scatterer:
-    
-    def __init__(self,cs_elevation = 165,
-                    samples= ['xxx','FM-061','FM-093','FM-110','EM-036','EM-039'],
-                        species = 'H',
-                        charge = -1,
-                        frac_sputtered = .1,
-                        surf_binding = .5,
-                        geo = None):
     '''
     Control structure for cs scattering montecarlo simulations developed for IMAP-lo FM calibration
-
     
     Parameters
     ----------
@@ -151,6 +142,14 @@ class cs_scatterer:
         geo
         collision
     '''
+    def __init__(self,cs_elevation = 165,
+                    samples= ['xxx','FM-061','FM-093','FM-110','EM-036','EM-039'],
+                        species = 'H',
+                        charge = -1,
+                        frac_sputtered = .1,
+                        surf_binding = .5,
+                        geo = None):
+
         import simPyon as sim
         self.cal_fits = get_cal_fits(data_av_input = {'samples':samples})
         self.data = None

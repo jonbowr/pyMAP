@@ -6,48 +6,38 @@ import pandas as pd
 
 class simulator:
     '''
-    Structure requirements for usage a sim node:
-    - kind: string catagorizing the simulation type
-    - fly(): function which executes particle propagation
-    '''
-
-    def __init__(self,config = 'imap',
-                        mode = 'imap_hiTh',
-                        estep = 6,
-                                scattering_input = {},
-                                interpolate = False):
-        '''
         End to end Instrument simulator designed for use in the IMAP-lo FM calibration
 
         parameters:
+        ----------
             config: str, instrument configuration to be used in simulator setups
                 Options: defined in pyMAP.loSIM.esa_cs_const.geos and 
                         pyMAP.loSIM.esa_cs_const.obs_region 
-                    'ibex':
-                            {'gemfil':'IBEX-Lo_CR3_CE6_TOF3_HK4.GEM',
-                            },
-                    'imap':
-                            {'gemfil':[
+                'ibex':
+                        {'gemfil':'IBEX-Lo_CR3_CE6_TOF3_HK4.GEM',
+                        },
+                'imap':
+                        {'gemfil':[
+                            os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                            os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
+                            os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
+                            ],
+                        },
+                'loV2':
+                        {'gemfil':[
+                            os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
+                            os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),          
+                            ],
+                         },
+                'imap_full':
+                        {'gemfil':[
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
                                 os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
                                 ],
-                            },
-                    'loV2':
-                            {'gemfil':[
-                                os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
-                                os.path.join(lpath,'/IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),          
-                                ],
-                             },
-                    'imap_full':
-                            {'gemfil':[
-                                    os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CE13_TOF2_HK6.GEM'),
-                                    os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_CR8_HK6.GEM'),
-                                    os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP-Lo_MAG1_HK6.GEM'),              
-                                    ],
-                            'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
-                            'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
-                            },
+                        'pa':[ os.path.join(lpath,'IMAP-Lo_CR8_CE13_TOF2_HK6/IMAP Lo Collimator_20230921.PA#')],
+                        'pa_info':{'pa_offset_position': Series({'x':183,'y':-157,'z':-157})}
+                        },
             mode: str, voltage mode to be used for esa/cs voltage assignment
                 Options:
                 - 'ibex'
@@ -61,17 +51,25 @@ class simulator:
             params: dict, quick access to adjustable parameters fed into instrument simulator
             volt_dict: voltage dictionary used in fast adjust defining ESA-CS voltages, defined according to mode string
             volt_steps
-        '''
+
+        Structure requirements for usage a sim node:
+        - kind: string catagorizing the simulation type
+        - fly(): function which executes particle propagation
+    '''
+    
+    def __init__(self,config = 'imap',mode = 'imap_hiTh',
+                    estep = 6,scattering_input = {},
+                    interpolate = False):
 
         import simPyon as sim
         inp = sim_input(config,mode,estep)
         # inp['home'] = os.path.relpath(inp['home'])
-        
+
 
         lpath = os.path.dirname(__file__)
         gemPath = os.path.join(lpath,'/IMAP-Lo_CR7_CE13_TOF2_HK6')
 
-        
+
         from pandas import DataFrame
         # setup the simulator architecture
         self.config = config

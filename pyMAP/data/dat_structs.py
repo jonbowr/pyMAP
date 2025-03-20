@@ -36,6 +36,54 @@ import os
 from . import asrun as run
 
 class asRunr:
+    '''
+    Structure to control importing and loading asrun table structured data. Upon 
+    initialization asRunr will input the given asrun data table and search the local directory
+    for .pkl with the same name as fasrun/doc and import data cols to  the existing dataframe
+    (__df__)
+
+    __init__ Inputs: 
+        fasrun (str): File location for asrun .xlsx table listing test runs
+        data_home (str): Folder location to search when importing desired runs
+        page_names (list):  xlsx page names to be imported, all pages of the asrun table are 
+            imported and concatenated
+            Standard input from final cal: ['Global','TOF','FM_optics','Princeton_PSPL']
+            - view fasrun defined above for available options
+        instrument (str): instrument option to be used to define set of data load functions
+            Options: pyMAP.data.loadlib 
+                dict{
+                 'imap_lo_em': <function pyMAP.pyMAP.data.instrument.IMAP_lo_EM.load.load>,
+                 'imap_lo_fm': <function pyMAP.pyMAP.data.instrument.IMAP_lo_FM.load.load>,
+                 'ibex_lo_etu': <function pyMAP.pyMAP.data.instrument.IBEX_lo_ETU.load.load>,
+                 'EMstrSen': <function pyMAP.pyMAP.data.instrument.IMAP_lo_EMStrSen.load.load>,
+                 'pspl': <function pyMAP.pyMAP.data.facility.PSPL.load.load>
+                    }
+        ref_name (str):
+
+    Parameters
+    ----------
+    doc: str, xlsx doc loaded (see inputs fasrun)
+    dhome: str, folder location of input data used to search for data files while performing 
+        import, see input data_home
+    pages: list, see input page_names
+    instrument: str, load library to use when importing data see input instrument: 
+        pyMAP.data.loadlib
+    source: str/list, tag to filter data against when importing
+        Options: 
+        - 'Sniffer'
+        - 'Instrument'
+        Combine data aq option with unit options 
+        - 'EU': engineering units
+        - 'DN': data number
+        e.g.: ['Sniffer','DN'] to import sniffer data with defined DN
+    ref_nam: str, column of data frame for run hash to search for when importing data
+    df: pandas.DataFrame giving the filtered data structure
+    __df__: pandas.DataFrame giving the unfiltered complete data structure
+    data_cols: list, additional data columns generated from data load and import
+
+
+    '''
+
     def __init__(self,
                     fasrun = '',
                     data_home = './',
@@ -43,53 +91,6 @@ class asRunr:
                     instrument = '',
                     ref_nam = 'file_name'):
 
-        '''
-        Structure to control importing and loading asrun table structured data. Upon 
-        initialization asRunr will input the given asrun data table and search the local directory
-        for .pkl with the same name as fasrun/doc and import data cols to  the existing dataframe
-        (__df__)
-
-        __init__ Inputs: 
-            fasrun (str): File location for asrun .xlsx table listing test runs
-            data_home (str): Folder location to search when importing desired runs
-            page_names (list):  xlsx page names to be imported, all pages of the asrun table are 
-                imported and concatenated
-                Standard input from final cal: ['Global','TOF','FM_optics','Princeton_PSPL']
-                - view fasrun defined above for available options
-            instrument (str): instrument option to be used to define set of data load functions
-                Options: pyMAP.data.loadlib 
-                    dict{
-                     'imap_lo_em': <function pyMAP.pyMAP.data.instrument.IMAP_lo_EM.load.load>,
-                     'imap_lo_fm': <function pyMAP.pyMAP.data.instrument.IMAP_lo_FM.load.load>,
-                     'ibex_lo_etu': <function pyMAP.pyMAP.data.instrument.IBEX_lo_ETU.load.load>,
-                     'EMstrSen': <function pyMAP.pyMAP.data.instrument.IMAP_lo_EMStrSen.load.load>,
-                     'pspl': <function pyMAP.pyMAP.data.facility.PSPL.load.load>
-                        }
-            ref_name (str):
-
-        Parameters
-        ----------
-        doc: str, xlsx doc loaded (see inputs fasrun)
-        dhome: str, folder location of input data used to search for data files while performing 
-            import, see input data_home
-        pages: list, see input page_names
-        instrument: str, load library to use when importing data see input instrument: 
-            pyMAP.data.loadlib
-        source: str/list, tag to filter data against when importing
-            Options: 
-            - 'Sniffer'
-            - 'Instrument'
-            Combine data aq option with unit options 
-            - 'EU': engineering units
-            - 'DN': data number
-            e.g.: ['Sniffer','DN'] to import sniffer data with defined DN
-        ref_nam: str, column of data frame for run hash to search for when importing data
-        df: pandas.DataFrame giving the filtered data structure
-        __df__: pandas.DataFrame giving the unfiltered complete data structure
-        data_cols: list, additional data columns generated from data load and import
-
-
-        '''
         from numpy import nan
         self.doc = fasrun
         self.dhome = data_home
