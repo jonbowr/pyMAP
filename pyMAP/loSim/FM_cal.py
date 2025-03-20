@@ -172,3 +172,28 @@ def get_mcp_gain(species = 'H2'):
 
     f_data = join(lpath,"cal/cal_results/20241218_T105_FinalCal_MCP_Gain.pkl")
     return(read_pickle(f_data)[species])
+
+
+def get_inst_response(species = 'H'):
+    '''
+    import instrument energy response funciton calibcated from final cal. 
+    - Response functions loaded from fin_cal1_H_KE_Response.pkl. 
+    
+    Input:
+        species [str]: calibration species for gain curve
+        Options:
+            'D/H2'
+            'H2'
+            'He'
+            'O'
+    Output:
+    '''
+
+    from pandas import read_pickle
+    from os.path import dirname,join
+    lpath = dirname(__file__)
+    for up in range(2):
+        lpath = dirname(lpath+'..')
+
+    f_data = join(lpath,"cal/cal_results/fin_cal1_H_KE_Response.pkl")
+    return(read_pickle(f_data))
