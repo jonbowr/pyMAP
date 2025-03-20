@@ -26,34 +26,6 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal1'):
         - see 20241204_FinalCal_DER1 H Model Comparison.ipynb for exact definition
         '''
 
-        def make_f_eloss():
-            '''
-             energy loss funciton defined following final cal 12/16/2024
-             energy loss here defined in addition to inellastic scattering loss processes
-            '''
-
-            from pyMAP import bowPy as bp
-            from . import cent_eng,cs_cal
-            eloss_vals = pd.DataFrame([0.82809887]*7 ,index = range(1,8),columns = ['Eloss'])
-
-            eloss_vals['ke'] = cent_eng
-            eloss_vals['v_perp'] = cs_cal.get_vperp(1,eloss_vals['ke'],15)
-            # Eloss defined 12/11/2024
-            eloss_run0 = pd.Series({3 : 0.866685,
-                                    4 :  0.946218,
-                                    5 :  0.977120,
-                                    6 :  1.029214,
-                                    7:  0.950984})
-            eloss_vals['eloss_1']=eloss_run0*eloss_vals['Eloss']
-            #second run using polyfit of eloss values
-            eloss_vals['eloss_2'] = pd.Series({3 :   0.698561,
-                                                4:    0.786205,
-                                                5:    0.784077,
-                                                6:    0.886756,
-                                                7:    0.777787})
-            f_eloss_new = bp.Jonda(xy_data = eloss_vals[['v_perp','eloss_2']].dropna().values.T)
-            f_eloss_new.interp_xy('cubic',sigma = .9,bounds_error = False,interp_input = {'fill_value':'extrapolate'})
-            return(eloss_vals,f_eloss_new)
             
         if species == 'H':
             sim[1].part['surf_binding'] = .25
@@ -62,17 +34,21 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal1'):
             sim[1].effic.p0 =sim[1].cal_fits['effic']['He'].p0*.0968*.68
 
             sim[1].scatter_type = 'inelastic'
-            sim[1].ke['modulator_f'] = f_eloss_new
+            sim[1].ke['modulator_f'] = make_f_eloss()[1]
         return(sim)
 
     dict_cals = {
-                    'fin_cal1': fin_cal1_h,
+                    'fin_cal1': fin_cal1_H,
                 }
 
-    return(dict_cal[result](sim,species))
+    return(dict_cals[result](sim,species))
 
 
 def make_f_eloss():
+    '''
+     energy loss funciton defined following final cal 12/16/2024
+     energy loss here defined in addition to inellastic scattering loss processes
+    '''
     import pandas as pd
     from .cs_cal import get_vperp
     eloss_vals = pd.DataFrame([0.82809887]*7 ,index = range(1,8),columns = ['Eloss'])
