@@ -57,10 +57,32 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal_H_2'):
         sim[1].phi['modulator_f'].p0 = array([ 1.16825037, 36.99865872,  0.22471439])
         return(sim)
 
+    def fin_cal_H_3(sim):
+        '''
+        Simulator settings defined following IMAP-Lo FM cal
+        - model regression performed primarily against final cal results, 20241219-FMv3_T105_PSPL_FinalCal_DER.csv
+            - also possibly agains 20241220
+        - model checked against IBEX-lo H final cal results and precal2 results
+        - see 20241204_FinalCal_DER1 H Model Comparison.ipynb for exact definition
+        '''
+        from numpy import array
+        sim[1].part['surf_binding'] = .1
+        sim[1].part['sputtering'] = .2
+        sim.params['cs_scatter']['ke']['pdf']['b'] = .3
+        sim[1].effic.p0 =array([0.00721197/.8, 0.19172372*.8])*.9*.438
+
+        sim[1].scatter_type = 'inelastic'
+        sim[1].ke['modulator_f'] = make_f_eloss()[1]
+        
+        sim[1].theta['modulator_f'].p0 = array([0.92923537, 2.        , 0.1530386 ])
+        sim[1].phi['modulator_f'].p0 = array([ 1.16825037, 36.99865872,  0.22471439])
+        return(sim)
+
     dict_cals = {
                     'H':{
                         'fin_cal1': fin_cal_H_1,
-                        'fin_cal2': fin_cal_H_2
+                        'fin_cal2': fin_cal_H_2,
+                        'fin_cal3': fin_cal_H_3
                         }
                 }
 
