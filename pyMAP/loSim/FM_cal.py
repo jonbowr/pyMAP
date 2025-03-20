@@ -113,21 +113,21 @@ def grids_n_spokes(instrument_config = 'IMAP_flight'):
     from pandas import Series
     g_spokes = {
             'IMAP_flight':{
-                            'coll_trans':1/.96,
-                            'p10_trans':.91,
-                            'tof_trans': .6,
+                            'coll_trans':1,
+                            'p10_trans':.85,
+                            'tof_trans': .68,
                             'p2_trans': .89,
                             },
             'IMAP_finCal':{
                             'coll_grid':.92,
-                            'p10_trans':.91,
-                            'tof_trans': .6,
+                            'p10_trans':.85,
+                            'tof_trans': .68,
                             'p2_grid': 1,
                             },
             'IMAP_preCal2':{
                             'coll_grid':1,
-                            'p10_trans':.91,
-                            'tof_trans': .6,
+                            'p10_trans':.85,
+                            'tof_trans': .68,
                             'p2_grid': 1,
                             },
             'IBEX_finCal':{
