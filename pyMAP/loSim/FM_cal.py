@@ -69,7 +69,7 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal_H_2'):
         sim[1].part['surf_binding'] = .1
         sim[1].part['sputtering'] = .2
         sim.params['cs_scatter']['ke']['pdf']['b'] = .3
-        sim[1].effic.p0 =array([0.00721197/.8, 0.19172372*.8])*.9*.438
+        sim[1].effic.p0 =array([0.00721197/.8, 0.19172372*.8])*.9*.438*0.6391
 
         sim[1].scatter_type = 'inelastic'
         sim[1].ke['modulator_f'] = make_f_eloss()[1]
@@ -137,10 +137,10 @@ def grids_n_spokes(instrument_config = 'IMAP_flight'):
                             'coll_trans':1,
                             'p10_trans':.85,
                             'tof_trans': .68,
-                            'p2_trans': .89,
+                            'p2_trans': .9363,
                             },
             'IMAP_finCal':{
-                            'coll_grid':.92,
+                            'coll_grid':.694,
                             'p10_trans':.85,
                             'tof_trans': .68,
                             'p2_grid': 1,
@@ -156,7 +156,7 @@ def grids_n_spokes(instrument_config = 'IMAP_flight'):
                             'coll_grnd_grid':.9,
                             'p2_grid': .855,
                             'p10_Trans':.83,
-                            'tof_trans':.5504
+                            'tof_trans':.5504,
                             },
             'IBEX_flight':{
                             'coll_grnd_grid':.9,
