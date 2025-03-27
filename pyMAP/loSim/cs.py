@@ -208,6 +208,7 @@ class cs_scatterer:
         return('%s\n'%str(type(self))+
                'cs_scatterer.part:\n   '+'   '.join(['%12s: %s\n'%(lab,str(val)) for lab,val in self.part.items()])+
                'cs_scatterer.ke:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.ke.items()])+
+               'cs_scatterer.effic:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in {'modulator_f':self.effic}.items()])+
                'cs_scatterer.theta:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])+
                'cs_scatterer.phi:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.phi.items()])
                )
