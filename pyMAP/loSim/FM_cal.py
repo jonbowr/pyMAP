@@ -12,9 +12,15 @@ def sim_h2_dispersion(n,mean = 100,fwhm = 50):
     return(e_diss(E0,Ed = 4.52,pm = pm,alpha = alpha))
 
 
-def set_simulator_cal(sim, species = 'H',result = 'fin_cal_H_2'):
+def set_simulator_cal(sim, result = 'fin_cal_H_2'):
     '''
     Function to setup instrument scattering simulator to calibrated values from FinalCal
+
+    Options:
+        result:
+            'fin_cal_H_1': 
+            'fin_cal_H_2': 
+            'fin_cal_H_3': 
     '''
 
 
@@ -60,8 +66,8 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal_H_2'):
     def fin_cal_H_3(sim):
         '''
         Simulator settings defined following IMAP-Lo FM cal
-        - model regression performed primarily against final cal results, 20241219-FMv3_T105_PSPL_FinalCal_DER.csv
-            - also possibly agains 20241220
+        - model regression performed primarily against final cal results, 20250324-FMv3_T105_PSPL_FinalCal_DER.csv
+            - regression performed against parameter: 'eDE_SILVER_H_CS_H2fix'
         - model checked against IBEX-lo H final cal results and precal2 results
         - see 20241204_FinalCal_DER1 H Model Comparison.ipynb for exact definition
         '''
@@ -69,7 +75,7 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal_H_2'):
         sim[1].part['surf_binding'] = .1
         sim[1].part['sputtering'] = .2
         sim.params['cs_scatter']['ke']['pdf']['b'] = .3
-        sim[1].effic.p0 =array([0.00721197/.8, 0.19172372*.8])*.9*.438*0.6391
+        sim[1].effic.p0 =array([0.00721197/.8, 0.19172372*.8])*.9*.438*.84716
 
         sim[1].scatter_type = 'inelastic'
         sim[1].ke['modulator_f'] = make_f_eloss()[1]
@@ -79,14 +85,12 @@ def set_simulator_cal(sim, species = 'H',result = 'fin_cal_H_2'):
         return(sim)
 
     dict_cals = {
-                    'H':{
-                        'fin_cal1': fin_cal_H_1,
-                        'fin_cal2': fin_cal_H_2,
-                        'fin_cal3': fin_cal_H_3
-                        }
+                'fin_cal_H_1': fin_cal_H_1,
+                'fin_cal_H_2': fin_cal_H_2,
+                'fin_cal_H_3': fin_cal_H_3
                 }
 
-    return(dict_cals[species][result](sim))
+    return(dict_cals[result](sim))
 
 
 def make_f_eloss():
@@ -152,7 +156,7 @@ def grids_n_spokes(instrument_config = 'IMAP_flight'):
                             'p2_grid': 1,
                             },
             'IBEX_finCal':{
-                            'coll_grid':.92,
+                            'coll_grid':.67,
                             'coll_grnd_grid':.9,
                             'p2_grid': .855,
                             'p10_Trans':.83,
