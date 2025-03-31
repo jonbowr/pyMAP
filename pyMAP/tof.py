@@ -314,9 +314,20 @@ def de_effic(rawDE,time_ind = 'SHCOARSE'):
     df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
     return(df)
     
-def de_rates(rawDE,time_ind = 'SPIN_SECONDS',spec_rng = {'H': [10,22.2],
-                                                    'O':[60,120],
-                                                    'D':[22.2,29]
+def de_rates(rawDE,time_ind = 'SPIN_SECONDS',
+                                    TOF_spec_rng = {\
+                                            'TOF0':{'H': [20,40],
+                                                    'D':[40,80],
+                                                    'O':[80,np.inf],
+                                                    },
+                                            'TOF1':{'H': [10,20],
+                                                    'D':[20,30],
+                                                    'O':[30,np.inf]
+                                                    },
+                                            'TOF2':{'H': [12,21],
+                                                    'D':[21,35],
+                                                    'O':[35,np.inf]
+                                                    }
                                                     }):
     val_keys = rawDE.keys().to_series()
     dt = max(rawDE[time_ind])-min(rawDE[time_ind])
@@ -335,11 +346,12 @@ def de_rates(rawDE,time_ind = 'SPIN_SECONDS',spec_rng = {'H': [10,22.2],
     df['DE_Eff_TRIP'] = df['DE_Eff_A']*df['DE_Eff_C']*df['DE_Eff_B']
     
     # pick species based on TOF2 measuremnts
-    for spec,rng in spec_rng.items():
-        log_spec = ((rawDE['TOF2']>rng[0])&(rawDE['TOF2']<rng[1]))
-        df['cDE_SILVER_%s'%spec] = np.sum(log_trips(rawDE.loc[log_spec])) 
-        df['rDE_SILVER_%s'%spec] = df['cDE_SILVER_%s'%spec]/dt 
-        df['cDE_TOF2_%s'%spec] = np.sum(log_spec)
+    for tof,spec_rng in TOF_spec_rng.items():
+        for spec,rng in spec_rng.items():
+            log_spec = ((rawDE[tof]>rng[0])&(rawDE[tof]<rng[1]))
+            df['cDE_SILVER_%s_%s'%(tof,spec)] = np.sum(log_trips(rawDE.loc[log_spec])) 
+            df['rDE_SILVER_%s_%s'%(tof,spec)] = df['cDE_SILVER_%s_%s'%(tof,spec)]/dt 
+            df['cDE_%s_%s'%(tof,spec)] = np.sum(log_spec)
     return(df)
 
 def de_effic_filt(df_in,elec_ns = 15):
