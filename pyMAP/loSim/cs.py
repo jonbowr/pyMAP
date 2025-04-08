@@ -231,7 +231,7 @@ class cs_scatterer:
         fwhm = (ke-mean)*2
         direction = -1
         
-        new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.ke['pdf']['b'])*fwhm*direction+mean
+        new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.theta['pdf']['b']/self.theta['pdf']['k'])*fwhm*direction+mean
         # take the values that show up below 0 and mark them as sputtered
         neg_log = new_ke<0
         self.is_sputtered[neg_log] = True
