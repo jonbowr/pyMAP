@@ -141,7 +141,8 @@ class simulator:
 
     def fast_adjust(self,scale_fact = 1,
                             estep = None,
-                                up_un = None):
+                                up_un = None,
+                                v_mode = None):
         if up_un is not None:
             v_nom = self.__set_upos_uneg__(*up_un)
         elif estep is not None:

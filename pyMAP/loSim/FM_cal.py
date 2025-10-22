@@ -80,29 +80,118 @@ def set_simulator_cal(sim, result = 'fin_cal_H_2'):
         sim[1].scatter_type = 'inelastic'
         sim[1].ke['modulator_f'] = make_f_eloss()[1]
         
+
         sim[1].theta['modulator_f'].p0 = array([0.92923537, 2.        , 0.1530386 ])
         sim[1].phi['modulator_f'].p0 = array([ 1.16825037, 36.99865872,  0.22471439])
         return(sim)
 
-    def fin_cal_O_0(sim):
+
+    def spot_cal_H_4(sim):
         '''
         Simulator settings defined following IMAP-Lo FM cal
-        - model regression performed primarily against final cal results, 20250324-FMv3_T105_PSPL_FinalCal_DER.csv
-            - regression performed against parameter: 'eDE_SILVER_H_CS_H2fix'
-        - model checked against IBEX-lo H final cal results and precal2 results
-        - see 20241204_FinalCal_DER1 H Model Comparison.ipynb for exact definition
         '''
         from numpy import array
         sim[1].part['surf_binding'] = .1
         sim[1].part['sputtering'] = .2
         sim.params['cs_scatter']['ke']['pdf']['b'] = .3
-        sim[1].effic.p0 =array([0.00721197/.8, 0.19172372*.8])*.9*.438*.84716
+        sim[1].effic.p0 =sim[1].cal_fits['effic']['H'].p0
 
         sim[1].scatter_type = 'inelastic'
-        # sim[1].ke['modulator_f'] = make_f_eloss()[1]
+        sim[1].ke['modulator_f'] = make_f_eloss()[1]
+        
+        sim[1].theta['modulator_f'].p0 = sim[1].cal_fits['theta']['O'].p0#array([ 1.16825037, 36.99865872,  0.22471439])*1.2
+        sim[1].phi['modulator_f'].p0 = sim[1].cal_fits['phi']['O'].p0#array([ 1.16825037, 36.99865872,  0.22471439])*1.2
+        return(sim)
+
+
+    def fin_cal_O_0(sim):
+        '''
+        Simulator settings defined following IMAP-Lo FM cal
+        - model regression performed primarily against final cal results, 20250331-FMv3_T105_PSPL_FinalCal_DER.csv
+            - regression performed against parameter: 'eDE_SILVER_O_ESA_CS'
+        - Fit regresssion can be seen in '20250331_FinalCal_DER1 O Model Regression.ipynb'
+            - results are stored in 
+        '''
+        from numpy import array
+        from bowPy import Jonda
+        sim.source['mass'] = 16
+        sim[1].part['surf_binding'] = .1
+        sim[1].part['sputtering'] = .3
+        sim.params['cs_scatter']['ke']['pdf']['b'] = .45
+        
+        sim[1].effic = Jonda(xy_data = sim[1].effic.xy,func = 'power_law')
+
+        H_off = 211.12*.55
+        sim[1].effic.p0 = [1.67664469e-05*H_off*2, 1.58156040e+00, 5.11102927e-05*H_off, 3.59291274e+00]
+        sim[1].effic.f = sim[1].effic.func
+        # sim[1].effic.p0 =array([ 0.0002274 , -0.00335699])*400*1.23
+
+        sim[1].scatter_type = 'inelastic'
+
+        sim[1].ke['modulator_f'].p0 = [-0.0019832,0.76422464*.9]
         
         # sim[1].theta['modulator_f'].p0 = array([0.92923537, 2.        , 0.1530386 ])
         # sim[1].phi['modulator_f'].p0 = array([ 1.16825037, 36.99865872,  0.22471439])
+        return(sim)
+
+    def fin_cal_O_1(sim):
+        '''
+        Simulator settings defined following IMAP-Lo FM cal
+        - model regression performed primarily against final cal results, 20250331-FMv3_T105_PSPL_FinalCal_DER.csv
+            - regression performed against parameter: 'eDE_SILVER_O_ESA_CS'
+        - Fit regresssion can be seen in '20250331_FinalCal_DER1 O Model Regression.ipynb'
+            - results are stored in 
+        '''
+        from numpy import array
+        from bowPy import Jonda
+        sim.source['mass'] = 16
+        sim[1].part['surf_binding'] = .1
+        sim[1].part['sputtering'] = .3/5 # for sake of energy response sputtered H wont show up, so we should
+        sim.params['cs_scatter']['ke']['pdf']['b'] = .3
+        
+        sim[1].effic = Jonda(xy_data = sim[1].effic.xy,func = 'power_law')
+
+        H_off = 211.12*.55
+        sim[1].effic.p0 = [ 2.91021338e-07*H_off*2,  2.75855908e+00,  5.00000000e-05*H_off, -1.00000000e-01]
+        sim[1].effic.f = sim[1].effic.func
+        # sim[1].effic.p0 =array([ 0.0002274 , -0.00335699])*400*1.23
+
+        # sim[1].scatter_type = 'inelastic'
+
+        sim[1].ke['modulator_f'].p0 = [-0.0019832,0.76422464*.95]
+        return(sim)
+
+    def fin_cal_O_2(sim):
+        '''
+        Simulator settings defined following IMAP-Lo FM cal
+        - model regression performed primarily against final cal results, 20250331-FMv3_T105_PSPL_FinalCal_DER.csv
+            - regression performed against parameter: 'eDE_SILVER_O_ESA_CS'
+        - Fit regresssion can be seen in '20250331_FinalCal_DER1 O Model Regression.ipynb'
+            - results are stored in
+        - same as fin-cal01, but now I'm not assuming that the energy dispsersion is being caused by  beam and background 
+        '''
+        from numpy import array
+        from bowPy import Jonda
+        sim.source['mass'] = 16
+        sim[0].source['mass'] = 16
+        sim[2].source['mass'] = 16
+
+        sim[1].part['surf_binding'] = .1
+        sim[1].part['sputtering'] = .3/4.4 # for sake of energy response sputtered H wont show up, so we should
+        # sim.params['cs_scatter']['ke']['pdf']['b'] = .2
+        sim[1].ke['pdf'].kwargs = {'c':-.075,'b':.405*2**1.6,'k':3}
+        
+        sim[1].effic = Jonda(xy_data = sim[1].effic.xy,func = 'power_law')
+
+        H_off = 211.12*.55
+        # sim[1].effic.p0 = [ 2.91021338e-07*H_off*2,  2.75855908e+00,  5.00000000e-05*H_off, -1.00000000e-01]
+        sim[1].effic.p0 = [ 1.23873235e-05*H_off*2,  1.59737600e+00,  1.68663966e-05*H_off, 1.00000000e-01]
+        sim[1].effic.f = sim[1].effic.func
+        
+        # sim[1].effic.p0 =array([ 0.0002274 , -0.00335699])*400*1.23
+
+        # sim[1].scatter_type = 'inelastic'
+        sim[1].ke['modulator_f'].p0 = [-0.0019832*.82,0.76422464*.82]
         return(sim)
 
     dict_cals = {
@@ -110,6 +199,9 @@ def set_simulator_cal(sim, result = 'fin_cal_H_2'):
                 'fin_cal_H_2': fin_cal_H_2,
                 'fin_cal_H_3': fin_cal_H_3,
                 'fin_cal_O_0': fin_cal_O_0,
+                'fin_cal_O_1': fin_cal_O_1,
+                'fin_cal_O_2': fin_cal_O_2,
+                'spot_cal_H_4':spot_cal_H_4,
                 }
 
     return(dict_cals[result](sim))
@@ -236,11 +328,18 @@ def get_inst_response(species = 'H'):
     Output:
     '''
 
-    from pandas import read_pickle
+    # from pandas import read_pickle
+    from pandas import read_csv
     from os.path import dirname,join
     lpath = dirname(__file__)
     for up in range(2):
         lpath = dirname(lpath+'..')
 
-    f_data = join(lpath,"cal/cal_results/20250326-FMv3_T105_PSPL_FinalCal_DERH_Response.pkl")
-    return(read_pickle(f_data))
+    if species == 'H':
+        f_data = join(lpath,"cal/cal_results/20250326-FMv3_T105_PSPL_FinalCal_DERH_Response.csv")
+        from pandas import read_pickle
+        return(read_pickle(f_data.replace('.csv','.pkl')))
+    elif species == 'O':
+        f_data = join(lpath,"cal/cal_results/20250331-FMv3_T105_PSPL_FinalCal_DERO_Response.csv")
+    # return(read_pickle(f_data))
+    return(read_csv(f_data))
