@@ -199,7 +199,8 @@ def dat_combiner(asrun_df,dat_cols = ['ILO_RAW_CNT','ILO_APP_NHK','DE_rates'],
 
 def comp_plt(all_data,norm_group = ['E_mode'],plot_group = ['E_step'],
                  obs_x = 'volt_scale_fact',obs_y = 'eSILVER',
-                     err_y = 'cDE_SILVER_H', single_col = True,do_norm = True):
+                     err_y = 'cDE_SILVER_H', single_col = True,do_norm = True,
+                     fig = None,ax = None):
     def plt_both(x):
         xx = x.reset_index()[obs_x]
         obs = x[obs_y]
@@ -225,8 +226,9 @@ def comp_plt(all_data,norm_group = ['E_mode'],plot_group = ['E_step'],
             picr = (stuff.index.to_frame()==max_group).all(axis = 1)
             col = stuff[picr].values[0].get_color()
             stuff.apply(lambda x: x.set_color(col))
-        
-    fig,ax = plt.subplots()
+    
+    if fig is None or ax is None:
+        fig,ax = plt.subplots()
     thing = all_data.groupby(norm_group).apply(norm_plot)
     from pyMAP import bowPy as bp
     bp.plotJon.legend.legend_loc(fig,ax,'(%s)'%','.join(plot_group))

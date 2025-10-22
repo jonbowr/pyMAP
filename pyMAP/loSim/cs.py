@@ -208,6 +208,7 @@ class cs_scatterer:
         return('%s\n'%str(type(self))+
                'cs_scatterer.part:\n   '+'   '.join(['%12s: %s\n'%(lab,str(val)) for lab,val in self.part.items()])+
                'cs_scatterer.ke:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.ke.items()])+
+               'cs_scatterer.effic:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in {'modulator_f':self.effic}.items()])+
                'cs_scatterer.theta:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.theta.items()])+
                'cs_scatterer.phi:\n   '+'   '.join(['%s:\n\t%s\n'%(lab,str(val))for lab,val in self.phi.items()])
                )
@@ -230,7 +231,7 @@ class cs_scatterer:
         fwhm = (ke-mean)*2
         direction = -1
         
-        new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.ke['pdf']['b'])*fwhm*direction+mean
+        new_ke = (self.ke['pdf'].sample(len(ke),0,4)-self.theta['pdf']['b']/self.theta['pdf']['k'])*fwhm*direction+mean
         # take the values that show up below 0 and mark them as sputtered
         neg_log = new_ke<0
         self.is_sputtered[neg_log] = True
