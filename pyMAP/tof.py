@@ -313,7 +313,8 @@ def de_effic(rawDE,time_ind = 'SHCOARSE'):
     df['Eff_B'] = df['SILVER']/df['VALIDTOF2']
     df['Eff_TRIP'] = df['Eff_A']*df['Eff_C']*df['Eff_B']
     return(df)
-    
+
+
 def de_rates(rawDE,time_ind = 'SPIN_SECONDS',
                                     TOF_spec_rng = {\
                                             'TOF0':{'H': [20,40],
@@ -353,6 +354,15 @@ def de_rates(rawDE,time_ind = 'SPIN_SECONDS',
             df['rDE_SILVER_%s_%s'%(tof,spec)] = df['cDE_SILVER_%s_%s'%(tof,spec)]/dt 
             df['cDE_%s_%s'%(tof,spec)] = np.sum(log_spec)
     return(df)
+
+def de_effic_spec(de_rates):
+    for spec in ['H','D','O']:
+        for tof in ['TOF0','TOF1','TOF2']:
+            csilver = de_rates['cDE_SILVER_%s_%s'%(tof,spec)]
+            cdouble = de_rates['cDE_%s_%s'%(tof,spec)]
+            de_rates['eDE_%s_%s'%(tof,spec)] = csilver/cdouble
+        de_rates['eDE_SILVER_%s'%spec] = de_rates['eDE_TOF0_%s'%spec]*de_rates['eDE_TOF1_%s'%spec]*de_rates['eDE_TOF2_%s'%spec] 
+    return(de_rates)
 
 def de_effic_filt(df_in,elec_ns = 15):
     rawDE = df_in.copy()
