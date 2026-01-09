@@ -1,5 +1,9 @@
 
 
+import os
+
+
+
 test_db = {
             'T001':{
                     'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv1\EMv1_T001-ToF First Light Princeton',
@@ -100,15 +104,15 @@ test_db = {
                     'eboxDB':r'\Test Data\Sensor',
                     'instrument': 'FMv2'
                     },
-            'T103':{
-                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_FM_CAL\FMv3_T103_PSPL_PreCal2',
-                    'asrun':'FMv3_T103_PSPL_PreCal2_AsRun.xlsx',
-                    'testTitle':'FMv3_T103_PSPL_PreCal2',
-                    'asrun_pages':['Global','TOF','FM_optics','Princeton_PSPL'],
-                    'snifferDB':r'\Test Data\Sniffer',
-                    'eboxDB':r'\Test Data\Sensor',
-                    'instrument': 'FMv3'
-                    },
+        #     'T103':{
+        #             'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_FM_CAL\FMv3_T103_PSPL_PreCal2',
+        #             'asrun':'FMv3_T103_PSPL_PreCal2_AsRun.xlsx',
+        #             'testTitle':'FMv3_T103_PSPL_PreCal2',
+        #             'asrun_pages':['Global','TOF','FM_optics','Princeton_PSPL'],
+        #             'snifferDB':r'\Test Data\Sniffer',
+        #             'eboxDB':r'\Test Data\Sensor',
+        #             'instrument': 'FMv3'
+        #             },
             'T104':{
                     'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_FM_CAL\FMv3_T104_PSPL_PreCal2',
                     'asrun':'FMv3_T104_PSPL_PreCal2_AsRun.xlsx',
@@ -129,11 +133,126 @@ test_db = {
                     },
             'T106':{
                     'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_FM_CAL\FMv3_T106_LANL_CrossCal',
-                    'asrun':'FMv3_T106_LANL_CrossCal_AsRun.xlsx',
+                    'asrun':'FMv3_T106_LANL_CrossCal_AsRun_cew.xlsx',
                     'testTitle':'FMv3_T106_LANL_CrossCal',
-                    'asrun_pages':['Global','TOF','FM_optics','LANL'],
+                    'asrun_pages':['Global','TOF','FM_optics','LANL_beam'],
                     'snifferDB':'',
                     'eboxDB':r'\Test Data\Instrument Data',
                     'instrument': 'FMv3'
                     },
             }
+
+
+def get_asruns(instrument = ''):
+    def get_runrs(x):
+        from pyMAP.pyMAP.data import asRunr
+        runtab = os.path.join(x['testDB'],x['asrun'])
+        db = os.path.join(x['testDB'],'Test Data/')
+        pages = x['asrun_pages']
+                        
+        return(asRunr(runtab,db,pages,instrument = 'imap_lo_fm'))
+
+    from pandas import DataFrame
+    test_df = DataFrame(test_db).T
+    tests = test_df.loc[test_df['instrument'].str.contains(instrument)]
+    tests['df'] = tests.apply(get_runrs,axis =1)
+    return(tests)
+
+def verify_asrun_pages(instrument='', verbose=True):
+    """
+    Verify that all pages listed in asrun_pages exist in the Excel files.
+    
+    Parameters:
+    -----------
+    instrument : str
+        Filter by instrument name (default: '' for all instruments)
+    verbose : bool
+        If True, print detailed information for each test
+    
+    Returns:
+    --------
+    dict : Dictionary with test IDs as keys and verification results as values
+    """
+    from pandas import DataFrame, ExcelFile
+    import os
+    
+    test_df = DataFrame(test_db).T
+    if instrument:
+        tests = test_df.loc[test_df['instrument'].str.contains(instrument)]
+    else:
+        tests = test_df
+    
+    results = {}
+    all_valid = True
+    
+    for test_id, test_info in tests.iterrows():
+        # Skip tests without AsRun files
+        if not test_info['asrun']:
+            if verbose:
+                print(f"\n{test_id}: No AsRun file specified - SKIPPED")
+            results[test_id] = {'status': 'skipped', 'reason': 'No AsRun file'}
+            continue
+        
+        file_path = os.path.join(test_info['testDB'], test_info['asrun'])
+        
+        # Check if file exists
+        if not os.path.exists(file_path):
+            if verbose:
+                print(f"\n{test_id}: AsRun file NOT FOUND")
+                print(f"  Path: {file_path}")
+            results[test_id] = {'status': 'error', 'reason': 'File not found', 'path': file_path}
+            all_valid = False
+            continue
+        
+        try:
+            # Get actual sheet names from Excel file
+            xl_file = ExcelFile(file_path)
+            actual_sheets = xl_file.sheet_names
+            expected_sheets = test_info['asrun_pages']
+            
+            # Find missing and extra sheets
+            missing_sheets = [sheet for sheet in expected_sheets if sheet not in actual_sheets]
+            extra_sheets = [sheet for sheet in actual_sheets if sheet not in expected_sheets]
+            
+            if missing_sheets:
+                all_valid = False
+                status = 'FAILED'
+            else:
+                status = 'PASSED'
+            
+            results[test_id] = {
+                'status': status,
+                'expected': expected_sheets,
+                'actual': actual_sheets,
+                'missing': missing_sheets,
+                'extra': extra_sheets
+            }
+            
+            if verbose:
+                print(f"\n{test_id} ({test_info['testTitle']}): {status}")
+                print(f"  Expected pages: {expected_sheets}")
+                
+                if missing_sheets:
+                    print(f"  ❌ MISSING pages: {missing_sheets}")
+                else:
+                    print(f"  ✓ All expected pages found")
+                
+                if extra_sheets:
+                    print(f"  ℹ️  Additional pages in file: {extra_sheets}")
+        
+        except Exception as e:
+            if verbose:
+                print(f"\n{test_id}: ERROR reading file")
+                print(f"  Error: {str(e)}")
+            results[test_id] = {'status': 'error', 'reason': str(e), 'path': file_path}
+            all_valid = False
+    
+    if verbose:
+        print("\n" + "="*80)
+        if all_valid:
+            print("✓ All verifications PASSED")
+        else:
+            print("❌ Some verifications FAILED - check details above")
+        print("="*80)
+    
+    return results
