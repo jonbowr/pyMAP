@@ -256,3 +256,191 @@ def verify_asrun_pages(instrument='', verbose=True):
         print("="*80)
     
     return results
+
+
+def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True):
+    """
+    Find potentially redundant column keys across all test DataFrames.
+    Identifies keys that are similar but not identical between tables.
+    
+    Parameters:
+    -----------
+    tests : DataFrame
+        Tests DataFrame with 'df' column containing asRunr objects
+    similarity_threshold : float
+        Threshold for string similarity (0-1), default 0.8
+    verbose : bool
+        If True, print detailed information
+    
+    Returns:
+    --------
+    dict : Dictionary with similar key groups and their occurrences
+    """
+    from difflib import SequenceMatcher
+    from collections import defaultdict
+    import pandas as pd
+    
+    # Collect all unique keys from all DataFrames
+    all_keys = {}  # {key: [(test_id, sheet_name), ...]}
+    
+    for test_id, test_row in tests.iterrows():
+        if 'df' not in test_row or test_row['df'] is None:
+            continue
+            
+        try:
+            # Get the asRunr object
+            asrun_obj = test_row['df']
+            
+            # Access the df attribute which contains the DataFrame
+            if hasattr(asrun_obj, 'df') and asrun_obj.df is not None:
+                df = asrun_obj.df
+                for col in df.columns:
+                    if col not in all_keys:
+                        all_keys[col] = []
+                    all_keys[col].append(test_id)
+        except Exception as e:
+            if verbose:
+                print(f"Warning: Could not extract keys from {test_id}: {e}")
+            continue
+    
+    if not all_keys:
+        if verbose:
+            print("No keys found in test DataFrames")
+        return {}
+    
+    # Find similar but not identical keys
+    keys_list = list(all_keys.keys())
+    similar_groups = []
+    processed = set()
+    
+    def string_similarity(a, b):
+        """Calculate similarity ratio between two strings"""
+        return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+    
+    for i, key1 in enumerate(keys_list):
+        if key1 in processed:
+            continue
+            
+        similar = [key1]
+        for key2 in keys_list[i+1:]:
+            if key2 in processed:
+                continue
+                
+            # Check if keys are similar but not identical
+            if key1 != key2:
+                similarity = string_similarity(key1, key2)
+                if similarity >= similarity_threshold:
+                    similar.append(key2)
+                    processed.add(key2)
+        
+        if len(similar) > 1:
+            similar_groups.append(similar)
+            processed.add(key1)
+    
+    # Build results
+    results = {}
+    for group in similar_groups:
+        group_info = {}
+        for key in group:
+            group_info[key] = {
+                'test_ids': all_keys[key],
+                'count': len(all_keys[key])
+            }
+        results[f"Group_{len(results)+1}"] = group_info
+    
+    # Print results
+    if verbose:
+        print("\n" + "="*80)
+        print("POTENTIALLY REDUNDANT KEYS ANALYSIS")
+        print("="*80)
+        
+        if not results:
+            print("\n✓ No redundant keys found")
+        else:
+            print(f"\nFound {len(results)} groups of similar keys:\n")
+            
+            for group_name, group_data in results.items():
+                print(f"\n{group_name}:")
+                for key, info in group_data.items():
+                    print(f"  '{key}'")
+                    print(f"    Used in tests: {info['test_ids']} ({info['count']} tests)")
+                
+                # Calculate similarity scores within group
+                keys_in_group = list(group_data.keys())
+                if len(keys_in_group) > 1:
+                    print(f"    Similarity scores:")
+                    for i in range(len(keys_in_group)-1):
+                        sim = string_similarity(keys_in_group[i], keys_in_group[i+1])
+                        print(f"      '{keys_in_group[i]}' ↔ '{keys_in_group[i+1]}': {sim:.2%}")
+        
+        print("\n" + "="*80)
+    
+    return results
+
+
+def compare_all_keys(tests, verbose=True):
+    """
+    Compare all column keys across test DataFrames and show statistics.
+    
+    Parameters:
+    -----------
+    tests : DataFrame
+        Tests DataFrame with 'df' column containing asRunr objects
+    verbose : bool
+        If True, print detailed information
+    
+    Returns:
+    --------
+    DataFrame : Summary of all keys and their usage across tests
+    """
+    import pandas as pd
+    from collections import Counter
+    
+    # Collect all keys with test information
+    key_usage = {}  # {key: [test_ids]}
+    
+    for test_id, test_row in tests.iterrows():
+        if 'df' not in test_row or test_row['df'] is None:
+            continue
+            
+        try:
+            asrun_obj = test_row['df']
+            if hasattr(asrun_obj, 'df') and asrun_obj.df is not None:
+                df = asrun_obj.df
+                for col in df.columns:
+                    if col not in key_usage:
+                        key_usage[col] = []
+                    key_usage[col].append(test_id)
+        except Exception as e:
+            if verbose:
+                print(f"Warning: Could not extract keys from {test_id}: {e}")
+            continue
+    
+    if not key_usage:
+        if verbose:
+            print("No keys found in test DataFrames")
+        return pd.DataFrame()
+    
+    # Create summary DataFrame
+    summary_data = []
+    for key, test_ids in sorted(key_usage.items()):
+        summary_data.append({
+            'Key': key,
+            'Used_In_Tests': ', '.join(test_ids),
+            'Test_Count': len(test_ids),
+            'Unique_Tests': len(set(test_ids))
+        })
+    
+    summary_df = pd.DataFrame(summary_data)
+    
+    if verbose:
+        print("\n" + "="*80)
+        print("ALL KEYS SUMMARY")
+        print("="*80)
+        print(f"\nTotal unique keys: {len(key_usage)}")
+        print(f"Total tests analyzed: {len(tests)}")
+        print("\nKey usage statistics:")
+        print(summary_df.to_string(index=False))
+        print("\n" + "="*80)
+    
+    return summary_df
