@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
+from pyMAP.pyMAP.loSim.esa_cs_const import cent_eng
 
 def db_init(loc = './',
                     instrument_version = '',
@@ -136,22 +137,26 @@ def break_out(dat,by = 'BHV_ESA_POS_V',
     fin.index.set_names('v_bins',level = -1,inplace = True)
     return(fin)
 
-def calc_vals(dat,v_modes,):
+def calc_vals(dat,v_modes,up = 'BHV_ESA_POS_V',un = 'BHV_ESA_NEG_V'):
     # calculate the voltage scale factor and incident kinetic energy
     conv_name = {'HiTh':'imap_hiTh',
                     'HiRes':'imap_hiRes'}
     oot = {}
-    use_x ='BHV_ESA_POS_V'
+    use_x = up
     up_nom = dat['beam_ke']/np.round(dat['amu'])
     try:
-        v_rel = up_nom/dat[use_x]*v_modes[int(dat['E_step'])][conv_name[dat['E_mode']]]['P10 Electrode']
+        volt_cent = v_modes[int(dat['E_step'])][conv_name[dat['E_mode']]]['P10 Electrode']
+        nom_E_step = cent_eng[int(dat['E_step'])-1]
+
+        v_rel = up_nom/dat[use_x]*volt_cent
         oot['ke_inc'] = v_rel
+        oot['ke_cent'] = dat[use_x]/volt_cent*nom_E_step
     except:
         oot['ke_inc'] = np.nan
-
+        oot['ke_cent'] = np.nan
 
     scale_norm = []
-    for use_x,ref_elec in zip(['BHV_ESA_POS_V','BHV_ESA_NEG_V'],['P10 Electrode','P2 Electrode']):
+    for use_x,ref_elec in zip([up,un],['P10 Electrode','P2 Electrode']):
         scale_norm.append(abs(dat[use_x]/v_modes[6][conv_name[dat['E_mode']]][ref_elec]))
     oot['volt_scale_fact'] =np.mean(scale_norm)
     return(pd.Series(oot))
