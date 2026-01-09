@@ -98,7 +98,7 @@ class asRunr:
         self.instrument = instrument
         self.source = 'Sniffer'
         self.ref_nam = 'file_name'
-        self.df = run.load(fasrun,'',page_names,instrument).drop_duplicates()
+        self.df = run.load(fasrun,'',page_names,instrument)#.drop_duplicates()
         self.df.reset_index(inplace = True)
         self.df.set_index('run_n',inplace = True)
         self.df = self.df.loc[~self.df.index.duplicated(keep='first')]
