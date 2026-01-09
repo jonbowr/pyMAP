@@ -92,19 +92,33 @@ class asRunr:
                     ref_nam = 'file_name'):
 
         from numpy import nan
+        import pandas as pd
         self.doc = fasrun
         self.dhome = data_home
         self.pages = page_names
         self.instrument = instrument
         self.source = 'Sniffer'
         self.ref_nam = 'file_name'
-        self.df = run.load(fasrun,'',page_names,instrument)#.drop_duplicates()
+        self.df = run.load(fasrun,'',page_names,instrument)
         self.df.reset_index(inplace = True)
         self.df.set_index('run_n',inplace = True)
         self.df = self.df.loc[~self.df.index.duplicated(keep='first')]
         self.df = self.df.replace('x',nan)
         self.__df__ = self.df.copy()
         self.data_cols = []
+        self.info = []  # List to track modifications and changes
+        
+        # Import sheet-separated headers from rows 1, 2, 3
+        self.df_header = {}
+        for sheet in page_names:
+            try:
+                # Read first 3 rows as headers (rows 0, 1, 2 in 0-indexed)
+                header_df = pd.read_excel(fasrun, sheet_name=sheet, nrows=3, header=None)
+                self.df_header[sheet] = header_df
+            except Exception as e:
+                print(f"Warning: Could not load headers from sheet '{sheet}': {e}")
+                self.df_header[sheet] = None
+        
 
     def import_dat(self,d_types = {'dat_sensor':['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT'],
                                     'dat_DE':['ILO_RAW_DE']

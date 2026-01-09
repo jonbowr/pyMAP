@@ -6,7 +6,7 @@ import os
 
 test_db = {
             'T001':{
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv1\EMv1_T001-ToF First Light Princeton',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv1\EMv1_T001-ToF First Light Princeton',
                     'asrun':r'EMv1_ToF_FirstLight_PSPL_AsRun.xlsx',
                     'testTitle':'EMv1_T001-ToF_First_Light_Princeton',
                     'asrun_pages':['Global','ETU_tof','ETU_sensor','Princeton_SPL'],
@@ -15,7 +15,7 @@ test_db = {
                     'instrument': 'EMv1'
                     },
             'T002': {
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv1\EMv1_T002-ToF First Light UNHSPLAT',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv1\EMv1_T002-ToF First Light UNHSPLAT',
                     'asrun':r'EMv1_UNHSPLAT_FirstLight-AsRun.xlsx',
                     'testTitle':'EMv1_T002-ToF_First_Light_UNHSPLAT',
                     'asrun_pages':['Global','M145_beam','M145_system','ETU_tof'],
@@ -24,7 +24,7 @@ test_db = {
                     'instrument': 'EMv1'
                     },
             'T003': {
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv1\EMv1_T003-ToF Cal Beam Test UNHSPLAT',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv1\EMv1_T003-ToF Cal Beam Test UNHSPLAT',
                     'asrun':'EMv1_ToFcal_Beam_Test_AsRun.xlsx',
                     'testTitle':'EMv1_T003-ToF_Cal_Beam_Test_UNHSPLAT',
                     'asrun_pages':['Global','M145_beam','M145_system','ETU_tof'],
@@ -33,7 +33,7 @@ test_db = {
                     'instrument': 'EMv1'
                     },
             'T004': {
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv1\EMv1_T004-ToF Cal Beam Test 2 UNHSPLAT',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv1\EMv1_T004-ToF Cal Beam Test 2 UNHSPLAT',
                     'asrun':'EMv1_ToF_Cal_Beam_Test2_AsRun.xlsx',
                     'testTitle':'EMv1_ToF_Cal_Beam_Test2_UNHSPLAT',
                     'asrun_pages':['Global','M145_beam','M145_system','EM_tof'],
@@ -42,7 +42,7 @@ test_db = {
                     'instrument': 'EMv1'
                     },
             'T005': {
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv1\EMv1_T005_PSPL_ToFCal3',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv1\EMv1_T005_PSPL_ToFCal3',
                     'asrun':'EMV1_T005_PSPL_ToFCal3_AsRun.xlsx',
                     'testTitle':'EMV1_T005_PSPL_ToFCal3',
                     'asrun_pages':['Global','EM_tof','Princeton_PSPL'],
@@ -51,7 +51,7 @@ test_db = {
                     'instrument': 'EMv1'
                     },
             'T006':{
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv2\EMV2_T006_PSPL_FirstLight',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv2\EMV2_T006_PSPL_FirstLight',
                     'asrun':'EMv2_T006_PSPL_FirstLight_AsRun.xlsx',
                     'testTitle':'EMv2_T006_PSPL_FirstLight',
                     'asrun_pages':['Global','EM_tof','Princeton_PSPL'],
@@ -60,7 +60,7 @@ test_db = {
                     'instrument': 'EMv2'
                     },
             'T007':{
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv2\EMV2_rev2_T007_PSPL_FirstLight',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv2\EMV2_rev2_T007_PSPL_FirstLight',
                     'asrun':'',
                     'testTitle':'EMv2_rev2_T007_PSPL_FirstLight',
                     'asrun_pages':[],
@@ -69,7 +69,7 @@ test_db = {
                     'instrument': 'EMv2'
                     },
             'T011':{
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv2\EMv2c_T011_PSPL_FirstLight_20230424',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv2\EMv2c_T011_PSPL_FirstLight_20230424',
                     'asrun':'EMv2c_T011_PSPL_FirstLight_20230424_AsRun.xlsx',
                     'testTitle':'EMv2c_T011_PSPL_FirstLight_20230424',
                     'asrun_pages':['Global','EM_optics','EM_tof','Princeton_PSPL'],
@@ -78,7 +78,7 @@ test_db = {
                     'instrument': 'EMv2c'
                     },
             'T012':{
-                    'testDB':r'C:\Users\Jonny Woof\Box\IMAP-Lo-box (1)\Science\Testing\IMAP_lo\EMv2\EMv2c_T012_PSPL_20230516',
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_EM_CAL\EMv2\EMv2c_T012_PSPL_20230516',
                     'asrun':'EMv2c_T012_PSPL_20230515_AsRun.xlsx',
                     'testTitle':'EMv2c_T012_PSPL_20230516',
                     'asrun_pages':['Global','EM_optics','EM_tof','Princeton_PSPL'],
@@ -258,7 +258,7 @@ def verify_asrun_pages(instrument='', verbose=True):
     return results
 
 
-def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True):
+def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True, interactive_resolve=False):
     """
     Find potentially redundant column keys across all test DataFrames.
     Identifies keys that are similar but not identical between tables.
@@ -271,6 +271,8 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True):
         Threshold for string similarity (0-1), default 0.8
     verbose : bool
         If True, print detailed information
+    interactive_resolve : bool
+        If True, prompt user to resolve redundancies by renaming keys
     
     Returns:
     --------
@@ -374,6 +376,98 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True):
                         print(f"      '{keys_in_group[i]}' ↔ '{keys_in_group[i+1]}': {sim:.2%}")
         
         print("\n" + "="*80)
+    
+    # Interactive resolution
+    if interactive_resolve and results:
+        print("\n" + "="*80)
+        print("INTERACTIVE RESOLUTION")
+        print("="*80)
+        
+        rename_map = {}  # {old_key: new_key}
+        
+        for group_name, group_data in results.items():
+            keys_in_group = list(group_data.keys())
+            print(f"\n{group_name}: Found {len(keys_in_group)} similar keys")
+            for idx, key in enumerate(keys_in_group):
+                print(f"  [{idx}] '{key}' (used in {group_data[key]['count']} tests)")
+            
+            print(f"\nOptions:")
+            print(f"  [0-{len(keys_in_group)-1}]: Choose a key as canonical name")
+            print(f"  [c]: Enter custom canonical name")
+            print(f"  [s]: Skip this group")
+            
+            choice = input(f"\nYour choice for {group_name}: ").strip().lower()
+            
+            if choice == 's':
+                print("  Skipped.")
+                continue
+            elif choice == 'c':
+                canonical = input("  Enter canonical key name: ").strip()
+                if not canonical:
+                    print("  Invalid name. Skipped.")
+                    continue
+            else:
+                try:
+                    idx = int(choice)
+                    if 0 <= idx < len(keys_in_group):
+                        canonical = keys_in_group[idx]
+                    else:
+                        print(f"  Invalid index. Skipped.")
+                        continue
+                except ValueError:
+                    print(f"  Invalid choice. Skipped.")
+                    continue
+            
+            # Add to rename map
+            for key in keys_in_group:
+                if key != canonical:
+                    rename_map[key] = canonical
+            
+            print(f"  ✓ Will rename {len(keys_in_group)-1} keys to '{canonical}'")
+        
+        # Apply renaming to all test DataFrames
+        if rename_map:
+            print(f"\n" + "="*80)
+            print(f"APPLYING RENAMING ({len(rename_map)} keys to rename)")
+            print("="*80)
+            
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            
+            for test_id, test_row in tests.iterrows():
+                if 'df' not in test_row or test_row['df'] is None:
+                    continue
+                    
+                try:
+                    asrun_obj = test_row['df']
+                    if hasattr(asrun_obj, 'df') and asrun_obj.df is not None:
+                        df = asrun_obj.df
+                        cols_to_rename = {old: new for old, new in rename_map.items() if old in df.columns}
+                        
+                        if cols_to_rename:
+                            df.rename(columns=cols_to_rename, inplace=True)
+                            
+                            # Record changes to asRunr.info
+                            if hasattr(asrun_obj, 'info'):
+                                for old_key, new_key in cols_to_rename.items():
+                                    change_record = {
+                                        'timestamp': timestamp,
+                                        'action': 'key_rename',
+                                        'test_id': test_id,
+                                        'old_key': old_key,
+                                        'new_key': new_key,
+                                        'function': 'find_redundant_keys'
+                                    }
+                                    asrun_obj.info.append(change_record)
+                            
+                            print(f"  {test_id}: Renamed {len(cols_to_rename)} columns")
+                except Exception as e:
+                    print(f"  {test_id}: ERROR - {e}")
+            
+            print("\n✓ Renaming complete!")
+            print(f"\nChanges recorded to asRunr.info for affected tests.")
+        else:
+            print("\nNo renaming performed.")
     
     return results
 
