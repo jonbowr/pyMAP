@@ -99,14 +99,16 @@ class asRunr:
         self.instrument = instrument
         self.source = 'Sniffer'
         self.ref_nam = 'file_name'
+
         self.df = run.load(fasrun,'',page_names,instrument)
         self.df.reset_index(inplace = True)
         self.df.set_index('run_n',inplace = True)
         self.df = self.df.loc[~self.df.index.duplicated(keep='first')]
         self.df = self.df.replace('x',nan)
         self.__df__ = self.df.copy()
+        
         self.data_cols = []
-        self.info = []  # List to track modifications and changes
+        self.chng_log = []  # List to track modifications and changes
         
         # Import sheet-separated headers from rows 1, 2, 3
         self.df_header = {}
