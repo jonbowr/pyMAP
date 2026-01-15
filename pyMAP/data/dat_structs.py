@@ -33,6 +33,8 @@
 #             - tof_range:  
 #         ```
 import os
+
+from pandas import DataFrame
 from . import asrun as run
 
 class asRunr:
@@ -178,7 +180,8 @@ class asRunr:
     
     def find_data(self,d_types = ['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT','ILO_RAW_DE','ILO_APP_NHK'],
                         dat_home = None,source = ['Sniffer','EU.csv'],
-                        name_format = r"^(Instrument|Sniffer)_FM\d+_T\d+_R\d+_.*_\d{8}T\d{6}_[A-Z]{2}\.csv$"):
+                        name_format = r"^(Instrument|Sniffer)_FM\d+_T\d+_R\d+_.*_\d{8}T\d{6}_[A-Z]{2}\.csv$",
+                        inplace = True,verbose = False):
         '''
         Find file locations for the given data types without loading them. Adds columns with 
         file paths to the asRunr via pyMAP.data.load.get_all_dfils
@@ -219,9 +222,27 @@ class asRunr:
                       required_tag = source,name_format = name_format).reset_index()
 
         stuff = stuff.set_index(['run_tag','dtype']).sort_index()
+        # Check for file redundancies before combining paths
+        if verbose:
+            from os.path import commonpath
+        def redundant_check(x):
+            keep_fil = x.iloc[0]
+            if len(x)>1 and verbose:
+                drop_fils = x.iloc[1:]
+                cpath = commonpath(x['file_path'].to_list())
+                print('Redundant files found for [%s] in\n %s \n\tKEEP: %s \n\tDrop %s'%(
+                        ','.join(keep_fil[['run_tag','dtype']].values),
+                        cpath,
+                        keep_fil['file_path'].replace(cpath,''),
+                        '\n,'.join([s.replace(cpath,'') for s in drop_fils['file_path']])))
+            return(keep_fil)
+        inds = stuff.index.names
+        stuff = stuff.reset_index().groupby('name',group_keys = False).apply(redundant_check).set_index(inds).sort_index()
+
         def path_finder(x,dt,df_dfils):
             if (x,tp) in df_dfils.index:
-                t = df_dfils.loc[(x,dt),'file_path']
+                r_fils = df_dfils.loc[(x,dt),'file_path']
+                t = r_fils
                 if type(t) is str:
                     return([t])
                 else:
@@ -233,16 +254,18 @@ class asRunr:
             for tp in d_types:
                 col_name = f'{tp}_paths'
                 self.df[col_name] = self.df[self.ref_nam].apply(path_finder,dt = tp,df_dfils = stuff)
-                self.__df__[col_name] = self.df[col_name]
-        elif type(d_types) is dict:
-            for lab in d_types.keys():
-                col_name = f'{lab}_paths'
-                if col_name in self.df.columns:
-                    self.__df__[col_name] = self.df[col_name]
-        elif type(d_types) is str:
-            col_name = f'{d_types}_paths'
-            if col_name in self.df.columns:
-                self.__df__[col_name] = self.df[col_name]
+        
+        if inplace:
+            self.store()
+        # elif type(d_types) is dict:
+        #     for lab in d_types.keys():
+        #         col_name = f'{lab}_paths'
+        #         if col_name in self.df.columns:
+        #             self.__df__[col_name] = self.df[col_name]
+        # elif type(d_types) is str:
+        #     col_name = f'{d_types}_paths'
+        #     if col_name in self.df.columns:
+        #         self.__df__[col_name] = self.df[col_name]
         
         return stuff
     
@@ -284,6 +307,19 @@ class asRunr:
                 self.__df__.loc[self.df[l].index,l] = self.df[l]
         return(self)
 
+    def store(self):
+        import numpy as np
+        for l in self.df.keys():
+            if l not in self.__df__.keys():
+                print('Storing %s'%str(l))
+                if np.any(self.df.apply(lambda xx: type(xx) is DataFrame)):
+                    self.data_cols.append(l)
+                    print('DataColumn identified')
+                self.__df__[l] = self.df[l]
+            else:
+                self.__df__.loc[self.df[l].index,l] = self.df[l]
+        return(self)
+    
     def save_dat(self,dat_fil = 'auto'):
         '''
         Save asRunr.__df__ to pandas.DataFrame.to_pickle, if dat_fil == 'auto' then the resulting 
