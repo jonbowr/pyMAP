@@ -94,40 +94,120 @@ def get_all_dat(dirName = './',
 
 def get_all_dfils(dirName = './',
                     dtype = '',
-                    load_dt = lambda x: np.nan,
-                    load_params = {},
-                    run_tag = ''):
+                    run_tag = '',
+                    required_tag = None,
+                    name_format = None):
     # Function to search directory and find all data files of a given type and grab some metadata
+    # dtype and run_tag can be strings or lists (optional filters)
+    # required_tag is a required filter if provided (string or list)
+    # name_format is an optional regex pattern or callable to validate filename format
+    #   Example regex: r"^Instrument_FM\d+_T\d{3}_R\d{3}_.*_\d{8}T\d{6}_[A-Z]{2}\.csv$"
+    #   Example callable: lambda fname: fname.startswith("Instrument_") and fname.endswith(".csv")
     import os
     import pandas as pd
+    import re
     import pyMAP.pyMAP.tools.time as time_set
     fils = getListOfFiles(dirName)
+    
+    # Convert dtype and run_tag to lists if they're strings
+    if isinstance(dtype, str):
+        dtype_list = [dtype] if dtype else ['']
+    else:
+        dtype_list = list(dtype)
+    
+    if isinstance(run_tag, str):
+        run_tag_list = [run_tag] if run_tag else ['']
+    else:
+        run_tag_list = list(run_tag)
+    
+    # Convert required_tag to list if it's a string
+    if required_tag is not None:
+        if isinstance(required_tag, str):
+            required_tag_list = [required_tag] if required_tag else []
+        else:
+            required_tag_list = list(required_tag)
+    else:
+        required_tag_list = None
+    
+    # Compile regex pattern if name_format is a string
+    if name_format is not None:
+        if isinstance(name_format, str):
+            name_pattern = re.compile(name_format)
+            format_checker = lambda fname: name_pattern.search(fname) is not None
+        elif callable(name_format):
+            format_checker = name_format
+        else:
+            raise ValueError("name_format must be a string (regex) or callable")
+    else:
+        format_checker = None
     
     ds = {}
     ds['name'] = []
     ds['file_path'] = []
     ds['file_size'] = []
     ds['dtype'] = []
+    ds['run_tag'] = []
+    ds['required_tag'] = []
     ds['created'] = []
     ds['last_modified'] = [] 
+    
 
     for fil in fils:
         f = os.path.basename(fil)#.split('.')[0]
-        if dtype in f and run_tag in f:
-            # try:
-                nam = f.replace(dtype,'').lower()
-                # add name as a tag, remove last 4 characters to give files with same tag,
-                # generated within same 100s the same name
+        
+        # Check name format if provided
+        if format_checker is not None:
+            try:
+                format_valid = format_checker(f)
+            except Exception as e:
+                format_valid = False
+                print(f"Warning: Format check failed for '{f}': {e}")
+            
+            if not format_valid:
+                continue  # Skip files that don't match format
+        else:
+            format_valid = True
+        
+        # Check required_tag first (all required tags must be present)
+        if required_tag_list is not None:
+            req_match = all(rt in f for rt in required_tag_list if rt)
+            if not req_match:
+                continue  # Skip files that don't match all required tags
+            matched_required = ', '.join([rt for rt in required_tag_list if rt in f])
+        else:
+            matched_required = ''
+        
+        # Check if any dtype matches
+        dtype_match = any(dt in f for dt in dtype_list if dt)
+        if not dtype_list[0]:  # If empty list or empty string
+            dtype_match = True
+            matched_dtype = ''
+        else:
+            matched_dtype = next((dt for dt in dtype_list if dt in f), None)
+        
+        # Check if any run_tag matches
+        run_tag_match = any(rt in f for rt in run_tag_list if rt)
+        if not run_tag_list[0]:  # If empty list or empty string
+            run_tag_match = True
+            matched_run_tag = ''
+        else:
+            matched_run_tag = next((rt for rt in run_tag_list if rt in f), None)
+        
+        if dtype_match and run_tag_match:
+                nam = f
+                if matched_dtype:
+                    nam = nam.replace(matched_dtype, '').lower()
+                
                 ds['name'].append(f)
                 ds['file_path'].append(fil)
                 ds['file_size'].append(os.path.getsize(fil)*10**-6)
-                ds['dtype'].append(dtype)
+                ds['dtype'].append(matched_dtype if matched_dtype else dtype_list[0])
+                ds['run_tag'].append(matched_run_tag if matched_run_tag else run_tag_list[0])
+                ds['required_tag'].append(matched_required)
                 file_times = time_set.get_file_times(fil)
                 ds['created'].append(file_times[0])
                 ds['last_modified'].append(file_times[1])
 
-            # except: 
-            #     print('LOAD FAILED ON FILE: %s'%f)
     dats = pd.DataFrame(ds)
     dats.groupby('name').agg({'file_path':list})
     return(dats.set_index('name'))
