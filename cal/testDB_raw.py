@@ -310,7 +310,7 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True, interacti
             print("No keys found in test DataFrames")
         return {}
     
-    # Find similar but not identical keys
+    # Find similar but not identical keys (only between different tests)
     keys_list = list(all_keys.keys())
     similar_groups = []
     processed = set()
@@ -318,6 +318,13 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True, interacti
     def string_similarity(a, b):
         """Calculate similarity ratio between two strings"""
         return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+    
+    def keys_in_different_tests(key1, key2):
+        """Check if two keys appear in different tests"""
+        tests1 = set(all_keys[key1])
+        tests2 = set(all_keys[key2])
+        # Keys must not share all the same tests (should be in different tests)
+        return tests1 != tests2
     
     for i, key1 in enumerate(keys_list):
         if key1 in processed:
@@ -328,8 +335,8 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True, interacti
             if key2 in processed:
                 continue
                 
-            # Check if keys are similar but not identical
-            if key1 != key2:
+            # Check if keys are similar but not identical AND in different tests
+            if key1 != key2 and keys_in_different_tests(key1, key2):
                 similarity = string_similarity(key1, key2)
                 if similarity >= similarity_threshold:
                     similar.append(key2)
@@ -447,8 +454,8 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True, interacti
                         if cols_to_rename:
                             df.rename(columns=cols_to_rename, inplace=True)
                             
-                            # Record changes to asRunr.info
-                            if hasattr(asrun_obj, 'info'):
+                            # Record changes to asRunr.chng_log
+                            if hasattr(asrun_obj, 'chng_log'):
                                 for old_key, new_key in cols_to_rename.items():
                                     change_record = {
                                         'timestamp': timestamp,
@@ -458,14 +465,14 @@ def find_redundant_keys(tests, similarity_threshold=0.8, verbose=True, interacti
                                         'new_key': new_key,
                                         'function': 'find_redundant_keys'
                                     }
-                                    asrun_obj.info.append(change_record)
+                                    asrun_obj.chng_log.append(change_record)
                             
                             print(f"  {test_id}: Renamed {len(cols_to_rename)} columns")
                 except Exception as e:
                     print(f"  {test_id}: ERROR - {e}")
             
             print("\n✓ Renaming complete!")
-            print(f"\nChanges recorded to asRunr.info for affected tests.")
+            print(f"\nChanges recorded to asRunr.chng_log for affected tests.")
         else:
             print("\nNo renaming performed.")
     
