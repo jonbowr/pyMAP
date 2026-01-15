@@ -175,7 +175,77 @@ class asRunr:
         #     self.__df__[d_types].loc[self.df.index] = self.df[d_types]
             # self.data_cols.append(d_types)
         return(self)
+    
+    def find_data(self,d_types = ['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT','ILO_RAW_DE','ILO_APP_NHK'],
+                        dat_home = None,source = ['Sniffer','EU.csv'],
+                        name_format = r"^(Instrument|Sniffer)_FM\d+_T\d+_R\d+_.*_\d{8}T\d{6}_[A-Z]{2}\.csv$"):
+        '''
+        Find file locations for the given data types without loading them. Adds columns with 
+        file paths to the asRunr via pyMAP.data.load.get_all_dfils
+        
+        Inputs:
+            d_types: str/list/dict, data types to find via search functions. Available data types 
+                are dependent on the instrument load package, and can be found via pyMAP.data.loadlib
+                Examples: 
+                    - 'ILO_IFB'
+                    - 'ILO_TOF_BD'
+                    - 'ILO_RAW_CNT'
+                - If the input d_types is a string, a single column with file paths is added
+                - If the input d_types is a list, each element adds a column with `{dtype}_paths`
+                - If the input is a dict, it must be of the form:
+                    d_types = {'dat_sensor':['ILO_IFB','ILO_TOF_BD','ILO_RAW_CNT'],
+                                    'dat_DE':['ILO_RAW_DE']}
+                    where the resulting columns ['dat_sensor_paths','dat_DE_paths'] will be 
+                    generated with combined file paths
+            dat_home: str, folder location to search for data files. If None, uses asRunr.dhome
+            source: list, required tags that must all be present in filename (e.g., ['Sniffer','EU.csv'])
+                If None, uses self.source
+            name_format: str or callable, optional regex pattern or function to validate filename format
+                Example: r"^(Instrument|Sniffer)_FM\d+_T\d+_R\d+_.*_\d{8}T\d{6}_[A-Z]{2}\.csv$"
+        
+        Returns:
+            DataFrame: indexed by ['run_tag','dtype'] with file_path column containing matching files
+        '''
+        from pyMAP.pyMAP.data import get_all_dfils
+        
+        if dat_home is None:
+            dl = self.dhome
+        else:
+            dl = dat_home
+        
+        if source is None:
+            source = list(self.source)
+        stuff = get_all_dfils(self.dhome,dtype = d_types,run_tag = list(self[self.ref_nam].values),
+                      required_tag = source,name_format = name_format).reset_index()
 
+        stuff = stuff.set_index(['run_tag','dtype']).sort_index()
+        def path_finder(x,dt,df_dfils):
+            if (x,tp) in df_dfils.index:
+                t = df_dfils.loc[(x,dt),'file_path']
+                if type(t) is str:
+                    return([t])
+                else:
+                    return(t.to_list())
+            else:
+                return([])
+        # Update __df__ with file location columns
+        if type(d_types) is list:
+            for tp in d_types:
+                col_name = f'{tp}_paths'
+                self.df[col_name] = self.df[self.ref_nam].apply(path_finder,dt = tp,df_dfils = stuff)
+                self.__df__[col_name] = self.df[col_name]
+        elif type(d_types) is dict:
+            for lab in d_types.keys():
+                col_name = f'{lab}_paths'
+                if col_name in self.df.columns:
+                    self.__df__[col_name] = self.df[col_name]
+        elif type(d_types) is str:
+            col_name = f'{d_types}_paths'
+            if col_name in self.df.columns:
+                self.__df__[col_name] = self.df[col_name]
+        
+        return stuff
+    
     def load_dat(self,dat_fil = 'auto'):
         '''
             load data from pandas.DataFrame pickle, asRunr.data_cols from the pickle are appended 
