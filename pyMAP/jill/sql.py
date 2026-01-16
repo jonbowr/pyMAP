@@ -249,6 +249,65 @@ def ingest_asRunDataFiles(dfils,prop_tags = [],
                           admin_pwd = '',
                           purge = False,
                           add_missing_cols = True):
+    """
+    Ingest as-run test data files to the Jill SQL database.
+    
+    This function processes a DataFrame of file metadata, loads each file's data,
+    and uploads it to the specified SQL tables. It includes intelligent features like
+    duplicate detection, column schema management, and comprehensive logging.
+    
+    Parameters
+    ----------
+    dfils : pandas.DataFrame
+        DataFrame containing file metadata with required columns:
+        - 'name': Unique file identifier
+        - 'file_path': Full path to the data file
+        - 'dtype': Data type identifier for loading
+        - 'inst_loader': Instrument loader library name
+        - 'to_table': Target SQL table name
+        Additional columns are preserved and can be logged via prop_tags
+    prop_tags : list, optional
+        List of column names from dfils to propagate as additional columns 
+        in the uploaded data tables (default: [])
+    replace : bool, optional
+        If True, deletes existing entries from SQL tables before uploading.
+        If False, skips files already present in ingest_log (default: False)
+    admin_pwd : str, optional
+        Admin password for database connection. If empty, prompts user (default: '')
+    purge : bool, optional
+        If True, prompts to drop all target tables before ingestion.
+        Use with caution - this deletes all data in target tables (default: False)
+    add_missing_cols : bool, optional
+        If True, automatically adds missing columns to existing SQL tables.
+        If False, filters DataFrame to only include existing columns (default: True)
+    
+    Returns
+    -------
+    None
+        Updates ingest_log table with results. Sets dfils['pass_fail'] to True/False
+        for each file based on upload success.
+    
+    Notes
+    -----
+    - Uses connection pooling (pool_size=10, max_overflow=20) for performance
+    - Batch uploads with method='multi', chunksize=5000 for data
+    - Automatically checks ingest_log to avoid duplicate uploads
+    - Logs all ingestion attempts with timestamps and pass/fail status
+    - Prints progress and performance metrics (rows/sec, elements/sec)
+    
+    Examples
+    --------
+    >>> # Basic usage - upload new files
+    >>> dfils = find_data(source='path/to/data', dtype='System')
+    >>> ingest_asRunDataFiles(dfils, admin_pwd='password')
+    
+    >>> # Replace existing data with propagated tags
+    >>> ingest_asRunDataFiles(dfils, prop_tags=['run_tag', 'test_phase'],
+    ...                       replace=True, admin_pwd='password')
+    
+    >>> # Purge and rebuild tables
+    >>> ingest_asRunDataFiles(dfils, purge=True, admin_pwd='password')
+    """
     # Function to load raw data of a provided type and ingest it to a given table on jill
 
 
