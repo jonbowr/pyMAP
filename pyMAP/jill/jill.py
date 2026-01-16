@@ -11,10 +11,16 @@ class jill:
         self.tables = self.metadata.tables
 
     def __del__(self):
-        self.connection.close()
-        self.connection.dispose()
-        self.server.stop()
-        del(self)
+        try:
+            if hasattr(self, 'connection') and self.connection:
+                self.connection.close()
+            if hasattr(self, 'engine') and self.engine:
+                self.engine.dispose()
+            if hasattr(self, 'server') and self.server:
+                self.server.stop()
+        except Exception as e:
+            # Suppress errors during cleanup
+            pass
 
     def query(self, sql_query):
         from sqlalchemy import text

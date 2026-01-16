@@ -266,7 +266,7 @@ class asRunr:
         #     col_name = f'{d_types}_paths'
         #     if col_name in self.df.columns:
         #         self.__df__[col_name] = self.df[col_name]
-        
+        stuff['inst_loader'] = self.instrument
         return stuff
     
     def load_dat(self,dat_fil = 'auto'):
