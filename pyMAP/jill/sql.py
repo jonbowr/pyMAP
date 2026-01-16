@@ -274,30 +274,25 @@ def ingest_asRunDataFiles(dfils,prop_tags = [],
             if missing_cols:
                 if add_cols:
                     print(f'Adding {len(missing_cols)} missing columns to {to_table}: {missing_cols}')
-                    with engine.connect() as conn_local:
-                        for col in missing_cols:
-                            # Infer SQL type from DataFrame dtype
-                            if col == dat.index.name:
-                                dtype = dat.index.dtype
-                            else:
-                                dtype = dat[col].dtype
-                            
-                            if 'int' in str(dtype):
-                                sql_type = 'INT'
-                            elif 'float' in str(dtype):
-                                sql_type = 'DOUBLE'
-                            elif 'datetime' in str(dtype):
-                                sql_type = 'DATETIME'
-                            elif 'bool' in str(dtype):
-                                sql_type = 'BOOLEAN'
-                            else:
-                                sql_type = 'TEXT'
-                            
-                            try:
-                                conn_local.execute(text(f"ALTER TABLE {to_table} ADD COLUMN `{col}` {sql_type}"))
-                            except Exception as e:
-                                print(f"Warning: Could not add column '{col}': {e}")
-                        conn_local.commit()
+                    for col in missing_cols:
+                        # Infer SQL type from DataFrame dtype
+                        if col == dat.index.name:
+                            dtype = dat.index.dtype
+                        else:
+                            dtype = dat[col].dtype
+                        
+                        if 'int' in str(dtype):
+                            sql_type = 'INT'
+                        elif 'float' in str(dtype):
+                            sql_type = 'DOUBLE'
+                        elif 'datetime' in str(dtype):
+                            sql_type = 'DATETIME'
+                        elif 'bool' in str(dtype):
+                            sql_type = 'BOOLEAN'
+                        else:
+                            sql_type = 'TEXT'
+                        
+                        add_column(engine, to_table, col, sql_type)
                 else:
                     print(f'Ignoring {len(missing_cols)} missing columns: {missing_cols}')
                     # Filter DataFrame to only include existing columns
@@ -349,51 +344,58 @@ def ingest_asRunDataFiles(dfils,prop_tags = [],
 
     
     def load_up(fil_line):
+        try:
+            lab = fil_line['name']
+            floc = fil_line['file_path']
+            data_dtype = fil_line['dtype']
+            inst_load_lib = fil_line['inst_loader']
+            to_table = fil_line['to_table']
 
-        lab = fil_line['name']
-        floc = fil_line['file_path']
-        data_dtype = fil_line['dtype']
-        inst_load_lib = fil_line['inst_loader']
-        to_table = fil_line['to_table']
+            if replace:
+                if 'ingest_log' in metadata.tables:
+                    table_log = metadata.tables['ingest_log']
+                    conn.execute(table_log.delete().where(table_log.c.name == lab))
+                    print('Scrubbing %s from ingest_log on Jill'%(lab))
+                
+                if to_table in metadata.tables:
+                    table = metadata.tables[to_table]
+                    conn.execute(table.delete().where(table.c.name == lab))
+                    print('Scrubbing %s data from %s on Jill'%(lab,to_table))
 
-        if replace:
-            if 'ingest_log' in metadata.tables:
-                table_log = metadata.tables['ingest_log']
-                conn.execute(table_log.delete().where(table_log.c.name == lab))
-                print('Scrubbing %s from ingest_log on Jill'%(lab))
+            print('Processing %s data from %s to add to %s'%(data_dtype,lab,to_table))
+            df = load(floc,dtype = data_dtype,instrument = inst_load_lib)
             
-            if to_table in metadata.tables:
-                table = metadata.tables[to_table]
-                conn.execute(table.delete().where(table.c.name == lab))
-                print('Scrubbing %s data from %s on Jill'%(lab,to_table))
+            df['name'] = lab
+            for tag in prop_tags:
+                df[tag] = fil_line[tag]
+            print('=======')
+            print('Uploading %s data to table %s on Jill'%(data_dtype,to_table))
+            t = time.time()
+            df.name = lab
+            uploader(df,engine,to_table,add_cols=add_missing_cols)
+            fil_line['pass_fail'] = True
+        except:
+            fil_line['pass_fail'] = False
+            Warning('Failed to process file: %s' % fil_line['name'])
+        
+        try:
+            # Write to ingest_log - only include columns that exist in ingest_log
+            fil_line_copy = fil_line.copy()
+            fil_line_copy['ingest_time'] = dt.now()
+            if df_ingest is not None:
+                # Filter to only columns that exist in ingest_log
+                log_cols = [k for k in df_ingest.keys() if k in fil_line_copy.index]
+                fil_line_to_log = fil_line_copy[log_cols].to_frame().T
+            else:
+                # First upload, write all columns
+                fil_line_to_log = fil_line_copy.to_frame().T
+            
+            fil_line_to_log.to_sql('ingest_log', engine, index=False, if_exists='append',
+                                method='multi', chunksize=1000)
+            print('=====================================')
+        except:
+            Warning('Failed to Write to ingest_log for file: %s' % fil_line['name'])
 
-        print('Processing %s data from %s to add to %s'%(data_dtype,lab,to_table))
-        df = load(floc,dtype = data_dtype,instrument = inst_load_lib)
-        
-        df['name'] = lab
-        for tag in prop_tags:
-            df[tag] = fil_line[tag]
-        print('=======')
-        print('Uploading %s data to table %s on Jill'%(data_dtype,to_table))
-        t = time.time()
-        df.name = lab
-        uploader(df,engine,to_table,add_cols=add_missing_cols)
-        
-        # Write to ingest_log - only include columns that exist in ingest_log
-        fil_line_copy = fil_line.copy()
-        fil_line_copy['ingest_time'] = dt.now()
-        if df_ingest is not None:
-            # Filter to only columns that exist in ingest_log
-            log_cols = [k for k in df_ingest.keys() if k in fil_line_copy.index]
-            fil_line_to_log = fil_line_copy[log_cols].to_frame().T
-        else:
-            # First upload, write all columns
-            fil_line_to_log = fil_line_copy.to_frame().T
-        
-        fil_line_to_log.to_sql('ingest_log', engine, index=False, if_exists='append',
-                               method='multi', chunksize=1000)
-        print('=====================================')
-    
     if purge:
         print('Purging tables %s' % dfils['to_table'].unique())
         res = input('y to continue')
