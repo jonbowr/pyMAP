@@ -188,6 +188,9 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'
     
     print('Loading %s'%as_runloc)
     df = loadlib[dtype][version](as_runloc)
+    
+    from datetime import datetime as dt
+    
 
     # attempt to assign datetime index if index fails, resort to default SHCOARSE
     try:
@@ -225,7 +228,6 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'
         #         warnings.warn('Time Stamp Localization Failed')
     except: 
         import warnings
-        from datetime import datetime as dt
         warnings.warn('Time Indexing Failed, Use SHCOARSE instead')
         df['dateTime'] = time_set.localize_to_tz(dt(2010, 1, 1, 0, 0, 0))
 
@@ -233,4 +235,6 @@ def load(as_runloc,dtype = 'TOF_DE_sample',version = 'v001',local = 'US/Eastern'
     # df.data_type = dtype
     # from os.time import now
     # df.import_time = now()
+    if 'dateTime' not in df.columns:
+        df['dateTime'] = time_set.localize_to_tz(dt(2010, 1, 1, 0, 0, 0))
     return(df.reset_index().set_index('dateTime'))
