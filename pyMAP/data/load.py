@@ -154,6 +154,7 @@ def get_all_dfils(dirName = './',
 
     for fil in fils:
         f = os.path.basename(fil)#.split('.')[0]
+        f_lower = f.lower()  # Case-insensitive comparison
         
         # Check name format if provided
         if format_checker is not None:
@@ -168,30 +169,30 @@ def get_all_dfils(dirName = './',
         else:
             format_valid = True
         
-        # Check required_tag first (all required tags must be present)
+        # Check required_tag first (all required tags must be present) - case insensitive
         if required_tag_list is not None:
-            req_match = all(rt in f for rt in required_tag_list if rt)
+            req_match = all(rt.lower() in f_lower for rt in required_tag_list if rt)
             if not req_match:
                 continue  # Skip files that don't match all required tags
-            matched_required = ', '.join([rt for rt in required_tag_list if rt in f])
+            matched_required = ', '.join([rt for rt in required_tag_list if rt.lower() in f_lower])
         else:
             matched_required = ''
         
-        # Check if any dtype matches
-        dtype_match = any(dt in f for dt in dtype_list if dt)
+        # Check if any dtype matches - case insensitive
+        dtype_match = any(dt.lower() in f_lower for dt in dtype_list if dt)
         if not dtype_list[0]:  # If empty list or empty string
             dtype_match = True
             matched_dtype = ''
         else:
-            matched_dtype = next((dt for dt in dtype_list if dt in f), None)
+            matched_dtype = next((dt for dt in dtype_list if dt.lower() in f_lower), None)
         
-        # Check if any run_tag matches
-        run_tag_match = any(rt in f for rt in run_tag_list if rt)
+        # Check if any run_tag matches - case insensitive
+        run_tag_match = any(rt.lower() in f_lower for rt in run_tag_list if rt)
         if not run_tag_list[0]:  # If empty list or empty string
             run_tag_match = True
             matched_run_tag = ''
         else:
-            matched_run_tag = next((rt for rt in run_tag_list if rt in f), None)
+            matched_run_tag = next((rt for rt in run_tag_list if rt.lower() in f_lower), None)
         
         if dtype_match and run_tag_match:
                 nam = f
