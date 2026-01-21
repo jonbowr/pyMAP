@@ -140,6 +140,15 @@ test_db = {
                     'eboxDB':r'\Test Data\Instrument Data',
                     'instrument': 'FMv3'
                     },
+            'T201':{
+                    'testDB':r'C:\Users\Jonny Woof\OneDrive - USNH\IMAP-Lo_Cal_Science\IMAP-Lo_Cal_DB\IMAP-Lo_PostFM_EM_CAL\EMv3_T201_PSPL_PostFinalCal',
+                    'asrun':'FMv3_T201_PSPL_PostFinalCal_AsRun.xlsx',
+                    'testTitle':'FMv3_T201_PSPL_PostFinalCal',
+                    'asrun_pages':['Global','TOF','EM_optics','Princeton_PSPL'],
+                    'snifferDB':r'\Test Data',
+                    'eboxDB':r'\Test Data',
+                    'instrument': 'EMv3'
+                    },
             }
 
 
