@@ -441,6 +441,16 @@ def ingest_asRunDataFiles(dfils,prop_tags = [],
             # Write to ingest_log - only include columns that exist in ingest_log
             fil_line_copy = fil_line.copy()
             fil_line_copy['ingest_time'] = dt.now()
+
+            # Add current git hash
+            try:
+                import subprocess
+                git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'], 
+                                                  stderr=subprocess.DEVNULL).decode('ascii').strip()
+                fil_line_copy['git_hash'] = git_hash
+            except:
+                fil_line_copy['git_hash'] = 'unknown'
+            
             if df_ingest is not None:
                 # Filter to only columns that exist in ingest_log
                 log_cols = [k for k in df_ingest.keys() if k in fil_line_copy.index]
