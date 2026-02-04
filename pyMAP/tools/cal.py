@@ -100,21 +100,33 @@ def raw_DE_import(f_ILO_RAW_DE,
 Funcitons for generating DER Curve data 
 '''
 
-def bin_makr(mode,estep,DER='DER1'):
+def bin_makr(mode,estep,DER='DER1',auto_bins = False):
+
+    pow_lo = -8
+    pow_hi = 12
     if mode == 'HiTh':
-        scale = 1.2**(np.arange(-8,13))
+        scale = 1.2**(np.arange(pow_lo,pow_hi))
     else:                 
-        scale = 1.1**(np.arange(-8,13))
+        scale = 1.1**(np.arange(pow_lo,pow_hi))
     
     volt_step = {'HiTh':pd.DataFrame({'U+':[61.91,119.41,229.42,451.48,870.61,1782.40,3452],
                             'U-':[30.55,58.92,113.19,222.75,429.54,879.40,1701]}),
                  'HiRes':pd.DataFrame({'U+':[40.30,77.73,149.34,293.89,566.72,1160.24,2248.26],
                             'U-':[13.65,26.33,50.59,99.56,191.98,393.03,761.60]})}
-    if DER == 'DER1':
-        things = volt_step[mode]['U+'].loc[int(estep)-1]*scale
-    else: 
-        things = volt_step[mode]['U+'].values
-        things = np.append(things,[things[-1]*2])
+
+    if auto_bins:
+        if mode == 'HiTh':
+            bins=45
+        elif mode == 'HiRes':
+            bins = 64
+        things = np.geomspace(np.min(volt_step[mode]['U+']),np.max(volt_step[mode]['U+']),bins)
+    else:
+        if DER == 'DER1':
+            things = volt_step[mode]['U+'].loc[int(estep)-1]*scale
+        else: 
+            things = volt_step[mode]['U+'].values
+            things = np.append(things,[things[-1]*2])
+
     stuff = things-np.gradient(things)/2
     return(stuff)
 
@@ -173,22 +185,22 @@ def volt_builder(asrun_dat,
                                    'rDE_SILVER_H','rDE_SILVER_D','rDE_SILVER_O'],
                     sum_up = ['SILVER','TOF0','TOF1','TOF2','TOF3',
                                 'cDE_SILVER','cDE_SILVER_H',
-                                'cDE_SILVER_D','cDE_SILVER_O']):
+                                'cDE_SILVER_D','cDE_SILVER_O'],auto_bins= False):
     # apply voltage accumulator to asrun separated run data
     from pyMAP.pyMAP.loSim import v_modes
     by_col = 'BHV_ESA_POS_V'
     stuff = asrun_dat.set_index(new_index,append = True)
     stuff = pd.concat([stuff,stuff.index.to_frame()],axis = 1).apply(lambda x:break_out(x[dat_col],
                         by = by_col,
-                        v_bins = bin_makr(x['E_mode'],x['E_step'],x['u_pos']),
+                        v_bins = bin_makr(x[esa_mode_lab],x[Estep_lab],x[esa_up_volt_lab],auto_bins = auto_bins),
                         av_out = av_out,
                         sum_up = sum_up,
-                        ),axis=1).stack(level = 0).stack().dropna().unstack(level = -2)
-#     return(stuff)
+                        ),axis=1).stack(level = 0).stack().dropna().unstack(level = -2).dropna()
+    # return(stuff)
     v_modes = v_modes()
     new_vals = pd.concat([stuff,stuff.index.to_frame()],axis = 1).T.apply(lambda x: calc_vals(x,v_modes = v_modes)).T
     stuff = pd.concat([stuff,new_vals],axis = 1)
-    return(stuff.set_index('ke_inc',append = True).dropna())
+    return(stuff.set_index('ke_inc',append = True))
 
     
 def dat_combiner(asrun_df,dat_cols = ['ILO_RAW_CNT','ILO_APP_NHK','DE_rates'],
